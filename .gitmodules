@@ -7,3 +7,6 @@
 [submodule "projects/ci-cd-template"]
 	path = projects/ci-cd-template
 	url = https://github.com/butbeautifulv/ci-cd_template.git
+[submodule "projects/asoc-api"]
+	path = projects/asoc-api
+	url = https://github.com/butbeautifulv/asoc-api.git
