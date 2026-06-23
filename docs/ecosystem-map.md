@@ -36,6 +36,31 @@ flowchart TB
 | **cxado-skills** | 13 Cursor dev skills | Veil corpus (754 playbooks), cys-agi runtime skills |
 | **cxado-references** | JCSF, DAF, hexstrike, OWASP PDFs | Anthropic Skills upstream (Veil-local) |
 
+## Agent rules & skills (by project)
+
+Veil is the **template** for agent workflow rules; Fish and cys-agi adapt via `.agents/rules/` (see [Veil cursor-rules-index](projects/veil/docs/agents/cursor-rules-index.md)).
+
+| Project | Rules path | Cursor dev skills | Product / runtime skills |
+|---------|------------|-------------------|--------------------------|
+| **veil** | `.cursor/rules/veil-*.mdc` | cxado-skills/veil | `corpus/` (754 playbooks) |
+| **ci-cd-template** | `.cursor/rules/` | cxado-skills/devsecops | — |
+| **cys-agi** | `.agents/rules/cys-agi-*.mdc` | `.agents/skills/` stubs | `agents/skills/` (Skill Gateway) |
+| **fish** (external) | `.agents/rules/fish-*.mdc` | `.agents/skills/` | — |
+
+```mermaid
+flowchart TB
+  subgraph layers [Three layers — do not mix]
+    RULES["Rules: workflow critic branches"]
+    DEV["Dev skills: Cursor IDE discovery"]
+    PROD["Product skills: runtime gateway"]
+  end
+  RULES --> DEV
+  DEV -.->|"stubs only"| PROD
+```
+
+- **cxado-skills** (`make skills-install`): cross-repo dev skills only — **not** cys-agi `ai-agent-security`.
+- **cys-agi** OWASP batch: vendored in `docs/reference/owasp/`; sync via `scripts/generate_owasp_skills.py`.
+
 ## Data flows (planned / partial)
 
 ```mermaid
