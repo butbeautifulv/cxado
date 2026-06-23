@@ -1,3 +1,6 @@
 [submodule "projects/veil"]
 	path = projects/veil
 	url = https://github.com/butbeautifulv/veil.git
+[submodule "projects/cys-agi"]
+	path = projects/cys-agi
+	url = https://github.com/butbeautifulv/cys_agi.git
