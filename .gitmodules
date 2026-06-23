@@ -10,3 +10,6 @@
 [submodule "projects/asoc-api"]
 	path = projects/asoc-api
 	url = https://github.com/butbeautifulv/asoc-api.git
+[submodule "shared/skills"]
+	path = shared/skills
+	url = https://github.com/butbeautifulv/cxado-skills.git
