@@ -4,3 +4,6 @@
 [submodule "projects/cys-agi"]
 	path = projects/cys-agi
 	url = https://github.com/butbeautifulv/cys_agi.git
+[submodule "projects/ci-cd-template"]
+	path = projects/ci-cd-template
+	url = https://github.com/butbeautifulv/ci-cd_template.git
