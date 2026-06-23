@@ -1,0 +1,22 @@
+# Submodule working trees (managed by git submodules)
+# projects/* and shared/* are submodules — see .gitmodules
+
+# Legacy manual clones (removed in Phase 4 cleanup)
+.external/
+
+# Local IDE / plans
+.cursor/
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+
+# Local env
+.env
+.env.*
+
+# Python / Node artifacts inside submodules (belt-and-suspenders)
+**/.venv/
+**/node_modules/
+**/__pycache__/
