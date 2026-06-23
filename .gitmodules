@@ -13,3 +13,6 @@
 [submodule "shared/skills"]
 	path = shared/skills
 	url = https://github.com/butbeautifulv/cxado-skills.git
+[submodule "shared/references"]
+	path = shared/references
+	url = https://github.com/butbeautifulv/cxado-references.git
