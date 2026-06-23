@@ -1,0 +1,11 @@
+{
+  "folders": [
+    { "path": "projects/veil", "name": "Veil" },
+    { "path": "projects/cys-agi", "name": "cys-agi" },
+    { "path": "projects/ci-cd-template", "name": "CI/CD Template" },
+    { "path": "projects/asoc-api", "name": "ASOC API" },
+    { "path": "shared/skills", "name": "Skills Hub" },
+    { "path": "shared/references", "name": "References" }
+  ],
+  "settings": {}
+}
