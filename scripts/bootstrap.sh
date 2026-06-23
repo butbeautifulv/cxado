@@ -5,5 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 git submodule update --init --recursive
+"$ROOT/scripts/link-references.sh"
+"$ROOT/scripts/install-skills.sh"
 
-echo "cxado submodules initialized."
+echo "cxado bootstrap complete."
