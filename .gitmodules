@@ -1,0 +1,3 @@
+[submodule "projects/veil"]
+	path = projects/veil
+	url = https://github.com/butbeautifulv/veil.git
