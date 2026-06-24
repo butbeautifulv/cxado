@@ -8,6 +8,7 @@ flowchart TB
     RULES[shared/agent-rules]
     SKILLS[shared/skills]
     REFS[shared/references]
+    CTR[shared/contracts]
     subgraph projects [projects]
       VEIL[veil knowledge]
       VENENO[veneno pentest]
@@ -21,8 +22,10 @@ flowchart TB
   RULES -->|make rules-link| VENENO
   RULES -->|make rules-link| AGI
   SKILLS -->|make skills-install| CURSOR[Cursor IDE]
+  SKILLS -->|make skills-link| FAB[fabrica skills]
   REFS -->|refs symlink| VEIL
   REFS -->|refs symlink| CICD
+  REFS -->|refs symlink| AGI
 ```
 
 ## DRY agent rules & skills
@@ -71,7 +74,7 @@ flowchart TB
 |-----|----------|--------------|
 | **cxado-agent-rules** | 6 core Cursor rules (karpathy, critic, branches, kaizen, docs, workflow) | Project overlays |
 | **cxado-skills** | 12 devsecops + veil + 5 agent/* generic skills | Veil corpus (754 playbooks), egregore product runtime |
-| **cxado-references** | JCSF, DAF, hexstrike, OWASP PDFs | Anthropic Skills upstream (Veil-local) |
+| **cxado-references** | JCSF, DAF, OWASP cheat sheets, hexstrike extracts | Anthropic Skills upstream (Veil-local) |
 
 ## Agent rules & skills (by project)
 
@@ -82,11 +85,12 @@ Core rules linked via `make rules-link`; see [Veil cursor-rules-index](projects/
 | **veil** | `core-*.mdc` symlinks | 4 `veil-*.mdc` (knowledge) | `corpus/` (754 playbooks) |
 | **veneno** | `core-*.mdc` symlinks | 2 `project-*.mdc` | tool catalog runtime |
 | **egregore** | `core-*.mdc` symlinks | 2 `project-*.mdc` | `agents/skills/` (Skill Gateway) |
-| **fabrica** | — | `.cursor/rules/` | — |
+| **fabrica** | `core-*.mdc` symlinks | `project-workflow.mdc` + `.cursor/rules/` | `skills-link` devsecops |
 | **fish** (external) | copy (pre-DRY) | `.agents/rules/fish-*.mdc` | — |
 
-- **cxado-skills** (`make skills-install`): devsecops + agent/* generic — **not** egregore runtime overlays.
-- **egregore** OWASP batch: vendored in `docs/reference/owasp/`; sync via `scripts/generate_owasp_skills.py`.
+- **cxado-skills** (`make skills-install` + `make skills-link`): devsecops symlinks in fabrica; agent/* via global install — **not** egregore runtime overlays.
+- **egregore** OWASP: `shared/references/owasp/` via `refs-link`; sync pointers via `scripts/generate_owasp_skills.py`.
+- **Wire contracts:** `shared/contracts/` — `make test-contracts`.
 
 ## Data flows (planned / partial)
 

@@ -19,5 +19,7 @@ link_ref() {
 
 link_ref veil
 link_ref fabrica
+link_ref veneno
+link_ref egregore
 
 echo "Reference symlinks created."

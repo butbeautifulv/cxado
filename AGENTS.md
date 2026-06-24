@@ -12,7 +12,8 @@ Meta-repo umbrella. Load project-specific rules from each submodule:
 
 ## Shared hubs
 
-- `make bootstrap` — submodules + `refs-link` + `rules-link` + `skills-install`
+- `make bootstrap` — submodules + `refs-link` + `rules-link` + `skills-link` + `skills-install`
 - `make rules-link` — symlink `shared/agent-rules/core/` into project rules dirs
+- `make skills-link` — symlink `shared/skills/devsecops/` into fabrica `.agents/skills/`
 - [docs/ecosystem-map.md](docs/ecosystem-map.md) — DRY rules/skills layers, projects, data flows
 - [docs/integration/egregore-veil-mcp.md](docs/integration/egregore-veil-mcp.md) — planned Veil MCP wiring (stub)
