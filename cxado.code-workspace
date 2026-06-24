@@ -7,7 +7,6 @@
     { "path": "projects/asoc-api", "name": "ASOC API" },
     { "path": "projects/tabula", "name": "Tabula (compliance)" },
     { "path": "projects/tabula/fstec", "name": "FSTEC (Tabula)" },
-    { "path": "projects/fish/fish", "name": "Fish (archive)" },
     { "path": "projects/hexenhammer", "name": "Hexenhammer (awareness)" },
     { "path": "shared/skills", "name": "Skills Hub" },
     { "path": "shared/references", "name": "References" },

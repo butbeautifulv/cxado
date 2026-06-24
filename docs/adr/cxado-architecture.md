@@ -32,7 +32,7 @@ cxado (cys_framework) is a meta-repository umbrella for cybersecurity products: 
 
 **Indexed graph (59k nodes, 167k edges):**
 
-- **Core hubs (high fan-in):** egregore, fstec, fish, references, veneno
+- **Core hubs (high fan-in):** egregore, tabula/fstec, references, veneno
 - **Outbound-heavy:** veil (fan-out ~6943), hexenhammer (entry layer)
 - **Cross-project boundaries (call graph):** veil↔egregore, veil↔fstec, veneno↔veil strongest
 
@@ -46,7 +46,7 @@ cxado (cys_framework) is a meta-repository umbrella for cybersecurity products: 
 | DevSecOps | fabrica | active submodule |
 | Compliance | tabula → fstec | submodule; GUI migration on `fstec/gui-detach-wip` |
 | Awareness | hexenhammer | submodule; phase 04 generic branding done |
-| Archive | fish | external; donor for hexenhammer |
+| Archive | fish | [butbeautifulv/fish](https://github.com/butbeautifulv/fish) — external; not in workspace |
 
 **Data flows (planned/partial):** Veneno → Veil (engage.events); ASOC → NATS → Egregore; Fabrica `adopt.sh` → projects.
 
@@ -102,10 +102,10 @@ flowchart TB
 
 ## TRADEOFFS
 
-- **Monorepo workspace vs submodule autonomy:** tabula and hexenhammer are proper submodules; legacy `projects/fstec/` local drop deprecated
+- **Monorepo workspace vs submodule autonomy:** tabula and hexenhammer are proper submodules; legacy local drops (`projects/fstec/`, `projects/fish/`) removed — fstec via `tabula/fstec`, fish on GitHub only
 - **Full codebase index includes references/corpus:** large graph (Veil 754 playbooks inflates nodes); use MCP filters or `moderate` mode for focused queries
 - **GUI detachment paused on fstec:** master stays self-contained; WIP on `fstec/gui-detach-wip` avoids breaking production builds
-- **fish kept as archive:** avoids МАШ coupling in hexenhammer; duplicate maintenance until hexenhammer fully replaces active use
+- **fish as external archive:** GitHub-only; hexenhammer extracted org-agnostic mechanisms; МАШ-specific assets stay in fish repo
 - **MCP cross-repo boundaries** are partly similarity/import artifacts — validate with `trace_path` before trusting fan-in counts
 
 ## PHILOSOPHY
@@ -114,5 +114,5 @@ flowchart TB
 - **Domains over monolith:** Tabula (compliance) and Hexenhammer (awareness) are separate product lines under cxado
 - **Pause before merge:** GUI and domain migrations snapshot to branches; master stays green
 - **Agent-native docs:** AGENTS.md per project + ecosystem-map + this ADR for session continuity
-- **Agent MCP (Cursor):** codebase-memory-mcp + Serena + Context7 — see [docs/agents/cursor-mcp-tooling.md](../agents/cursor-mcp-tooling.md)
+- **Agent MCP (Cursor):** mandatory routing via `core-agent-mcp-tooling.mdc` — codebase-memory-mcp + Serena + Context7 — see [docs/agents/cursor-mcp-tooling.md](../agents/cursor-mcp-tooling.md)
 - **Index artifact:** `.codebase-memory/graph.db.zst` for team bootstrap; re-index after major structural changes

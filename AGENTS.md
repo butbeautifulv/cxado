@@ -12,7 +12,44 @@ Meta-repo umbrella. Load project-specific rules from each submodule:
 | Tabula | `projects/tabula/` | [AGENTS.md](projects/tabula/AGENTS.md) — compliance domain (fstec submodule) |
 | ASOC API | `projects/asoc-api/` | `.cursor/rules/` in repo |
 
-**Local drops (deprecated):** `projects/fstec/` → use [projects/tabula/fstec](projects/tabula/fstec) · [fish](projects/fish/fish) archive
+## MCP-first (mandatory)
+
+Agents **must** use the MCP stack before blind grep loops or API guesses. Core rule: `shared/agent-rules/core/agent-mcp-tooling.mdc` (symlinked via `make rules-link`).
+
+### Exploration ladder (internal code)
+
+Use in order; stop when you have a hit:
+
+1. **codebase-memory** — `search_code` or `trace_path` with **project scope** (see below)
+2. **Serena** — `find_symbol` / `find_referencing_symbols` with `relative_path` scoped to the target submodule
+3. **Blind grep** — only if MCP returned 0 *and* you noted stale index or MCP failure
+
+| Task | MCP |
+|------|-----|
+| Architecture / cross-module / "where is X?" | **codebase-memory-mcp** |
+| Rename / references / symbols | **Serena** (`initial_instructions` at task start) |
+| Library docs (React, Next, shadcn, Tailwind) | **Context7** — third-party only, not internal Python/Go |
+| UI smoke test | **cursor-ide-browser** |
+
+### Scoping (avoid references / veil corpus noise)
+
+| Target | codebase-memory | Serena |
+|--------|-----------------|--------|
+| egregore | `project=home-bbv-Desktop-cys_framework`, `path_filter=projects/egregore` | `relative_path=projects/egregore` |
+| veil | `path_filter=projects/veil` | `relative_path=projects/veil` |
+| hexenhammer | `path_filter=projects/hexenhammer` | `relative_path=projects/hexenhammer` |
+| tabula/fstec | `path_filter=projects/tabula/fstec` | `relative_path=projects/tabula/fstec` |
+
+If `search_code` returns 0 but you expect hits: call `index_status` — index is likely stale. **Do not** run full `index_repository` while another agent has an open egregore branch; re-index **after merge** (`scripts/reindex-post-merge.sh`).
+
+Full routing + pitfalls: [docs/agents/cursor-mcp-tooling.md](docs/agents/cursor-mcp-tooling.md)
+
+## Archives (external, not in workspace)
+
+| Legacy | Canonical path |
+|--------|----------------|
+| fish (МАШ phishing) | [github.com/butbeautifulv/fish](https://github.com/butbeautifulv/fish) — donor for hexenhammer; do not clone into `projects/` |
+| fstec (pre-Tabula) | [projects/tabula/fstec](projects/tabula/fstec) submodule |
 
 ## Shared hubs
 

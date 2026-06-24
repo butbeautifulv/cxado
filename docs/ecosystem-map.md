@@ -86,14 +86,14 @@ flowchart TB
 | **Tabula** | `projects/tabula` (submodule) | Compliance umbrella | active |
 | **fstec** | `projects/tabula/fstec` (submodule) | First Tabula module — FSTEC measures | active; GUI migration on `fstec/gui-detach-wip` |
 | **Hexenhammer** | `projects/hexenhammer` (submodule) | Awareness: phishing simulation, campaigns | phase 04 done |
-| **fish** | `projects/fish/fish` (external archive) | Legacy МАШ phishing audit — donor for hexenhammer | archive |
+| **fish** | [butbeautifulv/fish](https://github.com/butbeautifulv/fish) (external archive) | Legacy МАШ phishing audit — donor for hexenhammer | archive — not cloned in cxado workspace |
 
 ## Shared hubs
 
 | Hub | Contents | Not included |
 |-----|----------|--------------|
 | **@cxado/gui** (`shared/gui`) | Compliance/cybersec UI kit (tiers 1–3) | App domain logic, Prisma/API |
-| **cxado-agent-rules** | 6 core Cursor rules (karpathy, critic, branches, kaizen, docs, workflow) | Project overlays |
+| **cxado-agent-rules** | 7 core Cursor rules (karpathy, critic, branches, kaizen, docs, workflow, **mcp-tooling**) | Project overlays |
 | **cxado-skills** | 12 devsecops + veil + 5 agent/* generic skills | Veil corpus (754 playbooks), egregore product runtime |
 | **cxado-references** | JCSF, DAF, OWASP cheat sheets, hexstrike extracts | Anthropic Skills upstream (Veil-local) |
 

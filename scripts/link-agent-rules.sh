@@ -28,6 +28,7 @@ declare -A RULES=(
   [agent-critic.mdc]=core-agent-critic.mdc
   [kaizen.mdc]=core-kaizen.mdc
   [agent-documentation.mdc]=core-agent-documentation.mdc
+  [agent-mcp-tooling.mdc]=core-agent-mcp-tooling.mdc
 )
 
 link_project() {
@@ -44,5 +45,6 @@ link_project "$ROOT/projects/veneno/.agents/rules"
 link_project "$ROOT/projects/fabrica/.agents/rules"
 link_project "$ROOT/projects/hexenhammer/.agents/rules"
 link_project "$ROOT/projects/tabula/.agents/rules"
+link_project "$ROOT/.cursor/rules"
 
 echo "Agent rules symlinks created."

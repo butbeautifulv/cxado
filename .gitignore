@@ -1,8 +1,10 @@
 # Submodule working trees (managed by git submodules)
 # projects/* and shared/* are submodules — see .gitmodules
 
-# Legacy manual clones (removed in Phase 4 cleanup)
+# Legacy manual clones (removed — use submodules / GitHub archives)
 .external/
+projects/fish/
+projects/fstec/
 
 # Local IDE / plans
 .cursor/
