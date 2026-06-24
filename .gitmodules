@@ -1,12 +1,12 @@
 [submodule "projects/veil"]
 	path = projects/veil
 	url = https://github.com/butbeautifulv/veil.git
-[submodule "projects/cys-agi"]
-	path = projects/cys-agi
-	url = https://github.com/butbeautifulv/cys_agi.git
-[submodule "projects/ci-cd-template"]
-	path = projects/ci-cd-template
-	url = https://github.com/butbeautifulv/ci-cd_template.git
+[submodule "projects/egregore"]
+	path = projects/egregore
+	url = https://github.com/butbeautifulv/egregore.git
+[submodule "projects/fabrica"]
+	path = projects/fabrica
+	url = https://github.com/butbeautifulv/fabrica.git
 [submodule "projects/asoc-api"]
 	path = projects/asoc-api
 	url = https://github.com/butbeautifulv/asoc-api.git
@@ -16,3 +16,9 @@
 [submodule "shared/references"]
 	path = shared/references
 	url = https://github.com/butbeautifulv/cxado-references.git
+[submodule "shared/agent-rules"]
+	path = shared/agent-rules
+	url = https://github.com/butbeautifulv/cxado-agent-rules.git
+[submodule "projects/veneno"]
+	path = projects/veneno
+	url = https://github.com/butbeautifulv/veneno.git

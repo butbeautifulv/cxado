@@ -4,12 +4,15 @@ Meta-repo umbrella. Load project-specific rules from each submodule:
 
 | Project | Path | Agent docs |
 |---------|------|------------|
-| Veil | `projects/veil/` | [AGENTS.md](projects/veil/AGENTS.md) |
-| cys-agi | `projects/cys-agi/` | [AGENTS.md](projects/cys-agi/AGENTS.md) |
-| CI/CD template | `projects/ci-cd-template/` | [AGENTS.md](projects/ci-cd-template/AGENTS.md) |
+| Veil | `projects/veil/` | [AGENTS.md](projects/veil/AGENTS.md) — knowledge layer |
+| Veneno | `projects/veneno/` | [AGENTS.md](projects/veneno/AGENTS.md) — pentest execution |
+| Egregore | `projects/egregore/` | [AGENTS.md](projects/egregore/AGENTS.md) |
+| Fabrica | `projects/fabrica/` | [AGENTS.md](projects/fabrica/AGENTS.md) |
 | ASOC API | `projects/asoc-api/` | `.cursor/rules/` in repo |
 
-## Ecosystem
+## Shared hubs
 
-- [docs/ecosystem-map.md](docs/ecosystem-map.md) — projects, shared hubs, data flows
-- [docs/integration/cys-agi-veil-mcp.md](docs/integration/cys-agi-veil-mcp.md) — planned Veil MCP wiring (stub)
+- `make bootstrap` — submodules + `refs-link` + `rules-link` + `skills-install`
+- `make rules-link` — symlink `shared/agent-rules/core/` into project rules dirs
+- [docs/ecosystem-map.md](docs/ecosystem-map.md) — DRY rules/skills layers, projects, data flows
+- [docs/integration/egregore-veil-mcp.md](docs/integration/egregore-veil-mcp.md) — planned Veil MCP wiring (stub)

@@ -18,6 +18,6 @@ link_ref() {
 }
 
 link_ref veil
-link_ref ci-cd-template
+link_ref fabrica
 
 echo "Reference symlinks created."

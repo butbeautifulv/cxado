@@ -1,6 +1,6 @@
 # cxado
 
-Meta-repo for the cxado ecosystem: Veil, cys-agi, CI/CD template, and ASOC API.
+Meta-repo for the cxado ecosystem: Veil, Veneno, Egregore, Fabrica, and ASOC API.
 
 ## Clone workflow
 
@@ -23,8 +23,9 @@ make bootstrap
 | Submodule | Repository |
 |-----------|------------|
 | `projects/veil` | [butbeautifulv/veil](https://github.com/butbeautifulv/veil) |
-| `projects/cys-agi` | [butbeautifulv/cys_agi](https://github.com/butbeautifulv/cys_agi) |
-| `projects/ci-cd-template` | [butbeautifulv/ci-cd_template](https://github.com/butbeautifulv/ci-cd_template) |
+| `projects/veneno` | [butbeautifulv/veneno](https://github.com/butbeautifulv/veneno) |
+| `projects/egregore` | [butbeautifulv/egregore](https://github.com/butbeautifulv/egregore) |
+| `projects/fabrica` | [butbeautifulv/fabrica](https://github.com/butbeautifulv/fabrica) |
 | `projects/asoc-api` | [butbeautifulv/asoc-api](https://github.com/butbeautifulv/asoc-api) |
 
 ## Shared hubs

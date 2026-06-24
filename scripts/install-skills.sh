@@ -33,4 +33,10 @@ for skill_dir in "$SKILLS_ROOT"/veil/*/; do
   install_skill "$(cd "$skill_dir" && pwd)"
 done
 
+echo "Installing agent skills..."
+for skill_dir in "$SKILLS_ROOT"/agent/*/; do
+  [[ -d "$skill_dir" ]] || continue
+  install_skill "$(cd "$skill_dir" && pwd)"
+done
+
 echo "Skills installed to $CURSOR_SKILLS"
