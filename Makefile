@@ -1,4 +1,4 @@
-.PHONY: bootstrap skills-install skills-link refs-link rules-link gui-link test-contracts help
+.PHONY: bootstrap skills-install skills-link refs-link rules-link gui-link auth-broker-test test-contracts help
 
 help:
 	@echo "Targets:"
@@ -8,6 +8,7 @@ help:
 	@echo "  refs-link       Symlink shared/references into project refs/"
 	@echo "  rules-link      Symlink shared/agent-rules core into project rules/"
 	@echo "  gui-link        Symlink shared/gui into project node_modules/@cxado/gui"
+	@echo "  auth-broker-test  Run shared/go/auth-broker unit tests"
 	@echo "  test-contracts  Cross-repo engage.events wire contract smoke"
 
 bootstrap:
@@ -28,5 +29,9 @@ rules-link:
 gui-link:
 	@./scripts/link-gui.sh
 
+auth-broker-test:
+	@cd shared/go/auth-broker && go test ./...
+
 test-contracts:
 	@./scripts/test/cross-repo-engage-contract.sh
+	@./scripts/test/auth-broker-contract-smoke.sh

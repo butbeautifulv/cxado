@@ -82,8 +82,6 @@ flowchart LR
 
 Agent entry points per project: [AGENTS.md](AGENTS.md).
 
-**External archive (do not clone into `projects/`):** [fish](https://github.com/butbeautifulv/fish) — legacy МАШ phishing; mechanisms extracted into hexenhammer.
-
 ## Shared hubs
 
 | Path | Repository | Purpose |
@@ -149,7 +147,7 @@ Local artifact: `.codebase-memory/graph.db.zst` (gitignored; optional team share
 | Doc | Contents |
 |-----|----------|
 | [AGENTS.md](AGENTS.md) | Agent index, MCP scoping cheat sheet |
-| [docs/ecosystem-map.md](docs/ecosystem-map.md) | Rules/skills layers, project matrix |
+| [docs/ecosystem-map.md](docs/ecosystem-map.md) | Public catalog, rules/skills layers, project matrix |
 | [docs/adr/cxado-architecture.md](docs/adr/cxado-architecture.md) | Architecture ADR |
 | [docs/bootstrap-smoke-test.md](docs/bootstrap-smoke-test.md) | Post-clone checklist |
 | [docs/legacy-cleanup.md](docs/legacy-cleanup.md) | Migration from `.external/` |
@@ -161,6 +159,6 @@ Local artifact: `.codebase-memory/graph.db.zst` (gitignored; optional team share
 | Copy repos into `.external/` by hand | `git clone cxado && make bootstrap` |
 | Per-project skills copies | `make skills-install` |
 | JCSF/DAF in multiple trees | `shared/references/` + `make refs-link` |
-| Local `projects/fish`, `projects/fstec` clones | hexenhammer + `tabula/fstec` submodules; fish on GitHub only |
+| Local `projects/fstec` clone | `tabula/fstec` submodule |
 
 Legacy `.external/` at workspace root is **removed**.

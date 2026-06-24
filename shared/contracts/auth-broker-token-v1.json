@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cxado.dev/schemas/auth-broker-token-v1.json",
+  "title": "AuthBrokerTokenV1",
+  "description": "HTTP POST /v1/token wire format for cxado auth-broker",
+  "oneOf": [
+    { "$ref": "#/$defs/TokenRequest" },
+    { "$ref": "#/$defs/TokenResponse" }
+  ],
+  "$defs": {
+    "TokenRequest": {
+      "type": "object",
+      "required": ["audience"],
+      "properties": {
+        "audience": { "type": "string", "minLength": 1 },
+        "scopes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        { "audience": "veil-api", "scopes": ["openid"] }
+      ]
+    },
+    "TokenResponse": {
+      "type": "object",
+      "required": ["access_token", "expires_in", "token_type"],
+      "properties": {
+        "access_token": { "type": "string", "minLength": 1 },
+        "expires_in": { "type": "integer", "minimum": 1 },
+        "token_type": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "expires_in": 300,
+          "token_type": "Bearer"
+        }
+      ]
+    }
+  }
+}

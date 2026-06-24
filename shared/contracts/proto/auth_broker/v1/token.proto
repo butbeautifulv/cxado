@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package auth_broker.v1;
+
+option go_package = "github.com/butbeautifulv/cxado/shared/go/auth-broker/internal/transport/grpc/pb;pb";
+
+service TokenService {
+  rpc GetAccessToken(GetAccessTokenRequest) returns (GetAccessTokenResponse);
+}
+
+message GetAccessTokenRequest {
+  string audience = 1;
+  repeated string scopes = 2;
+}
+
+message GetAccessTokenResponse {
+  string access_token = 1;
+  int32 expires_in = 2;
+  string token_type = 3;
+}

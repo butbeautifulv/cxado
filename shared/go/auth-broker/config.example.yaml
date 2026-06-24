@@ -1,0 +1,16 @@
+audiences:
+  veil-api:
+    provider: keycloak
+    client_id: veneno-engage
+    client_secret: ${VEIL_API_CLIENT_SECRET}
+    token_url: https://keycloak.example/realms/cxado/protocol/openid-connect/token
+    scopes:
+      - openid
+
+callers:
+  veneno-engage:
+    audiences:
+      - veil-api
+  egregore:
+    audiences:
+      - veil-api

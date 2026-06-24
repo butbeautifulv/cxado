@@ -23,7 +23,7 @@ cxado (cys_framework) is a meta-repository umbrella for cybersecurity products: 
 - **Veil / Veneno / ASOC:** Go, Neo4j/NATS where applicable
 - **Egregore:** Python, event-driven multi-agent SOC; optional Keycloak JWT on API and tool gateway (`AUTH_ENABLED`)
 - **Fabrica:** YAML CI/CD templates, DevSecOps scripts
-- **fstec / hexenhammer / fish:** Next.js 16, React 19, Drizzle or Prisma, PostgreSQL
+- **fstec / hexenhammer:** Next.js 16, React 19, Drizzle or Prisma, PostgreSQL
 - **Bootstrap:** `make bootstrap` → submodules, rules-link, skills-link, refs-link, gui-link
 
 ## ARCHITECTURE
@@ -44,9 +44,8 @@ cxado (cys_framework) is a meta-repository umbrella for cybersecurity products: 
 | Pentest | veneno | active submodule |
 | SOC | egregore | active submodule |
 | DevSecOps | fabrica | active submodule |
-| Compliance | tabula → fstec | submodule; GUI migration on `fstec/gui-detach-wip` |
-| Awareness | hexenhammer | submodule; phase 04 generic branding done |
-| Archive | fish | [butbeautifulv/fish](https://github.com/butbeautifulv/fish) — external; not in workspace |
+| Compliance | tabula → fstec | submodule on `master`; `fstec/gui-detach-wip` abandoned |
+| Awareness | hexenhammer | submodule; module 1 (phishing); [domain doc](../domains/awareness.md) |
 
 **Data flows (planned/partial):** Veneno → Veil (engage.events); ASOC → NATS → Egregore; Fabrica `adopt.sh` → projects.
 
@@ -73,7 +72,6 @@ flowchart TB
 
   subgraph domains [domain submodules]
     TABULA[tabula]
-    FISH[fish archive]
   end
 
   subgraph tabula_mod [tabula/fstec]
@@ -87,7 +85,6 @@ flowchart TB
   RULES --> TABULA
   GUI -.-> FSTEC
   TABULA --> FSTEC
-  HEX -.-> FISH
   VENENO -->|engage.events| VEIL
 ```
 
@@ -96,16 +93,15 @@ flowchart TB
 - **Submodule per product** with independent git lifecycle; meta-repo pins versions
 - **DRY agent layer:** `shared/agent-rules/core` symlinked via `make rules-link`; thin project overlays (1–4 `.mdc`)
 - **Strangler fig (fstec GUI):** re-export shims `@/components/ui` → `@cxado/gui/*`; domain logic stays in app `lib/`
-- **Domain extraction (hexenhammer):** mechanisms from fish archive; org-agnostic env (`HEX_*`, `HEX_PUBLIC_*`)
+- **Domain extraction (hexenhammer):** org-agnostic env (`HEX_*`, `HEX_PUBLIC_*`)
 - **Three-context Next.js apps:** `(public)/`, `(admin)/` or `(platform)/`, `api/` — public never imports admin
 - **Phased plans:** `docs/plans/*_master.plan.md` with branch-per-phase workflow
 
 ## TRADEOFFS
 
-- **Monorepo workspace vs submodule autonomy:** tabula and hexenhammer are proper submodules; legacy local drops (`projects/fstec/`, `projects/fish/`) removed — fstec via `tabula/fstec`, fish on GitHub only
+- **Monorepo workspace vs submodule autonomy:** tabula and hexenhammer are proper submodules; legacy local drop `projects/fstec/` removed — fstec via `tabula/fstec`
 - **Full codebase index includes references/corpus:** large graph (Veil 754 playbooks inflates nodes); use MCP filters or `moderate` mode for focused queries
-- **GUI detachment paused on fstec:** master stays self-contained; WIP on `fstec/gui-detach-wip` avoids breaking production builds
-- **fish as external archive:** GitHub-only; hexenhammer extracted org-agnostic mechanisms; МАШ-specific assets stay in fish repo
+- **GUI detachment abandoned on fstec:** `fstec/gui-detach-wip` is dead (UI regression with `shared/gui`); `master` stays self-contained
 - **MCP cross-repo boundaries** are partly similarity/import artifacts — validate with `trace_path` before trusting fan-in counts
 
 ## PHILOSOPHY

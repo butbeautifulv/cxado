@@ -2,6 +2,56 @@
 
 High-level view of projects, shared hubs, and planned integrations.
 
+**Public entrypoint:** [github.com/butbeautifulv/cxado](https://github.com/butbeautifulv/cxado) — clone with submodules, then `make bootstrap`.
+
+## Public catalog
+
+All repositories under [butbeautifulv](https://github.com/butbeautifulv) that form the cxado ecosystem. Submodule URLs match [`.gitmodules`](../.gitmodules). Catalog repos are public on GitHub.
+
+### Meta-repo
+
+| Path | Repository | Role |
+|------|------------|------|
+| `.` | [cxado](https://github.com/butbeautifulv/cxado) | Umbrella: submodules, docs, `shared/contracts`, `shared/go/auth-broker` |
+
+### Platform projects (submodules)
+
+| Path | Repository | Role | Stack |
+|------|------------|------|-------|
+| `projects/veil` | [veil](https://github.com/butbeautifulv/veil) | TI graph, ingest, veil-api, veil-mcp | Go, Neo4j |
+| `projects/veneno` | [veneno](https://github.com/butbeautifulv/veneno) | Pentest execution, veneno-api, veneno-mcp | Go |
+| `projects/egregore` | [egregore](https://github.com/butbeautifulv/egregore) | Event-driven multi-agent SOC | Python, FastAPI |
+| `projects/fabrica` | [fabrica](https://github.com/butbeautifulv/fabrica) | DevSecOps CI/CD reference (`adopt.sh`) | YAML, scripts |
+| `projects/asoc-api` | [asoc-api](https://github.com/butbeautifulv/asoc-api) | Scan aggregation → NATS | Go |
+
+### Domain umbrellas & products (submodules)
+
+| Path | Repository | Role | Stack |
+|------|------------|------|-------|
+| `projects/tabula` | [tabula](https://github.com/butbeautifulv/tabula) | Compliance domain umbrella | meta |
+| `projects/tabula/fstec` | [fstec](https://github.com/butbeautifulv/fstec) | FSTEC measures, orders, reporting | Next.js, Prisma |
+| `projects/hexenhammer` | [hexenhammer](https://github.com/butbeautifulv/hexenhammer) | Awareness module 1: phishing simulation | Next.js, Drizzle |
+
+Domain vision: [docs/domains/](domains/README.md) · Awareness: [awareness.md](domains/awareness.md)
+
+### Shared hubs (submodules)
+
+| Path | Repository | Purpose |
+|------|------------|---------|
+| `shared/agent-rules` | [cxado-agent-rules](https://github.com/butbeautifulv/cxado-agent-rules) | Core Cursor rules (`make rules-link`) |
+| `shared/skills` | [cxado-skills](https://github.com/butbeautifulv/cxado-skills) | DevSecOps + agent skills (`make skills-install`) |
+| `shared/references` | [cxado-references](https://github.com/butbeautifulv/cxado-references) | JCSF, DAF, OWASP, hexstrike extracts |
+| `shared/gui` | [cxado-gui](https://github.com/butbeautifulv/cxado-gui) | `@cxado/gui` UI kit (`make gui-link`) |
+
+### In meta-repo only (no separate repo yet)
+
+| Path | Purpose |
+|------|---------|
+| `shared/contracts/` | Wire schemas (`engage.events`, auth-broker token v1) — `make test-contracts` |
+| `shared/go/auth-broker/` | OAuth2 M2M token broker (gRPC + HTTP) — `make auth-broker-test` |
+| `shared/python/cxado_auth_client/` | Python HTTP client for auth-broker |
+| `docs/` | ADR, ecosystem map, agent MCP tooling, integration stubs |
+
 ```mermaid
 flowchart TB
   subgraph cxado [cxado meta-repo]
@@ -10,6 +60,7 @@ flowchart TB
     REFS[shared/references]
     CTR[shared/contracts]
     GUI[shared/gui]
+    AUTHBROKER[shared/go/auth-broker]
     subgraph projects [projects]
       VEIL[veil knowledge]
       VENENO[veneno pentest]
@@ -27,7 +78,6 @@ flowchart TB
   GUI -->|make gui-link| VEIL
   GUI -.->|file: dep| FSTEC
   TABULA --> FSTEC
-  HEX -.->|mechanisms from| FISH[fish archive]
 
   RULES -->|make rules-link| VEIL
   RULES -->|make rules-link| VENENO
@@ -37,6 +87,9 @@ flowchart TB
   REFS -->|refs symlink| VEIL
   REFS -->|refs symlink| CICD
   REFS -->|refs symlink| AGI
+  AUTHBROKER -.->|token HTTP/gRPC| VEIL
+  AUTHBROKER -.->|token HTTP/gRPC| VENENO
+  AUTHBROKER -.->|token HTTP| AGI
 ```
 
 ## DRY agent rules & skills
@@ -71,45 +124,49 @@ flowchart TB
 
 ## Projects
 
-| Project | Role | Stack |
-|---------|------|-------|
-| **veil** | TI graph, ingest, veil-api, veil-mcp | Go, Neo4j |
-| **veneno** | Pentest execution, veneno-api, veneno-mcp | Go |
-| **egregore** | Event-driven multi-agent SOC | Python |
-| **fabrica** | DevSecOps CI/CD reference | YAML, scripts |
-| **asoc-api** | Scan aggregation → NATS | Go |
+| Project | Repo | Role | Stack |
+|---------|------|------|-------|
+| **veil** | [veil](https://github.com/butbeautifulv/veil) | TI graph, ingest, veil-api, veil-mcp | Go, Neo4j |
+| **veneno** | [veneno](https://github.com/butbeautifulv/veneno) | Pentest execution, veneno-api, veneno-mcp | Go |
+| **egregore** | [egregore](https://github.com/butbeautifulv/egregore) | Event-driven multi-agent SOC | Python |
+| **fabrica** | [fabrica](https://github.com/butbeautifulv/fabrica) | DevSecOps CI/CD reference | YAML, scripts |
+| **asoc-api** | [asoc-api](https://github.com/butbeautifulv/asoc-api) | Scan aggregation → NATS | Go |
 
 ## Domains
 
+Domain vision docs: [docs/domains/](domains/README.md).
+
 | Domain | Repo / path | Role | Status |
 |--------|-------------|------|--------|
-| **Tabula** | `projects/tabula` (submodule) | Compliance umbrella | active |
-| **fstec** | `projects/tabula/fstec` (submodule) | First Tabula module — FSTEC measures | active; GUI migration on `fstec/gui-detach-wip` |
-| **Hexenhammer** | `projects/hexenhammer` (submodule) | Awareness: phishing simulation, campaigns | phase 04 done |
-| **fish** | [butbeautifulv/fish](https://github.com/butbeautifulv/fish) (external archive) | Legacy МАШ phishing audit — donor for hexenhammer | archive — not cloned in cxado workspace |
+| **Awareness** | [awareness.md](domains/awareness.md) | Employee testing + training; phishing = module 1 | active |
+| **Hexenhammer** | [hexenhammer](https://github.com/butbeautifulv/hexenhammer) · `projects/hexenhammer` | Awareness module: phishing simulation, campaigns | phase 04 done |
+| **Tabula** | [tabula](https://github.com/butbeautifulv/tabula) · `projects/tabula` | Compliance umbrella | active |
+| **fstec** | [fstec](https://github.com/butbeautifulv/fstec) · `projects/tabula/fstec` | First Tabula module — FSTEC measures | active on `master` |
 
 ## Shared hubs
 
-| Hub | Contents | Not included |
-|-----|----------|--------------|
-| **@cxado/gui** (`shared/gui`) | Compliance/cybersec UI kit (tiers 1–3) | App domain logic, Prisma/API |
-| **cxado-agent-rules** | 7 core Cursor rules (karpathy, critic, branches, kaizen, docs, workflow, **mcp-tooling**) | Project overlays |
-| **cxado-skills** | 12 devsecops + veil + 5 agent/* generic skills | Veil corpus (754 playbooks), egregore product runtime |
-| **cxado-references** | JCSF, DAF, OWASP cheat sheets, hexstrike extracts | Anthropic Skills upstream (Veil-local) |
+| Hub | Repo / path | Contents | Not included |
+|-----|-------------|----------|--------------|
+| **@cxado/gui** | [cxado-gui](https://github.com/butbeautifulv/cxado-gui) · `shared/gui` | Compliance/cybersec UI kit (tiers 1–3) | App domain logic, Prisma/API |
+| **cxado-agent-rules** | [cxado-agent-rules](https://github.com/butbeautifulv/cxado-agent-rules) · `shared/agent-rules` | 7 core Cursor rules | Project overlays |
+| **cxado-skills** | [cxado-skills](https://github.com/butbeautifulv/cxado-skills) · `shared/skills` | 12 devsecops + veil + 5 agent/* generic skills | Veil corpus (754 playbooks), egregore product runtime |
+| **cxado-references** | [cxado-references](https://github.com/butbeautifulv/cxado-references) · `shared/references` | JCSF, DAF, OWASP cheat sheets, hexstrike extracts | Anthropic Skills upstream (Veil-local) |
+| **cxado-contracts** | in [cxado](https://github.com/butbeautifulv/cxado) · `shared/contracts` | Cross-repo wire schemas | — |
+| **auth-broker** | in [cxado](https://github.com/butbeautifulv/cxado) · `shared/go/auth-broker` | OAuth2 M2M token broker (gRPC + HTTP) | JWT resource-server middleware |
+| **cxado_auth_client** | in [cxado](https://github.com/butbeautifulv/cxado) · `shared/python/cxado_auth_client` | Python client for auth-broker | — |
 
 ## Agent rules & skills (by project)
 
 Core rules linked via `make rules-link`; see [Veil cursor-rules-index](projects/veil/docs/agents/cursor-rules-index.md).
 
-| Project | Core rules | Project overlay | Product / runtime skills |
-|---------|------------|-----------------|--------------------------|
-| **veil** | `core-*.mdc` symlinks | 4 `veil-*.mdc` (knowledge) | `corpus/` (754 playbooks) |
-| **veneno** | `core-*.mdc` symlinks | 2 `project-*.mdc` | tool catalog runtime |
-| **egregore** | `core-*.mdc` symlinks | 2 `project-*.mdc` | `agents/skills/` (Skill Gateway) |
-| **fabrica** | `core-*.mdc` symlinks | `project-workflow.mdc` + `.cursor/rules/` | `skills-link` devsecops |
-| **fish** (external) | copy (pre-DRY) | `.agents/rules/fish-*.mdc` | — |
-| **hexenhammer** | `core-*.mdc` symlinks | `hexenhammer-*.mdc` overlay | campaign runtime |
-| **tabula** | `core-*.mdc` symlinks | `tabula-agent-workflow.mdc` | fstec product in submodule |
+| Project | Repo | Core rules | Project overlay | Product / runtime skills |
+|---------|------|------------|-----------------|--------------------------|
+| **veil** | [veil](https://github.com/butbeautifulv/veil) | `core-*.mdc` symlinks | 4 `veil-*.mdc` (knowledge) | `corpus/` (754 playbooks) |
+| **veneno** | [veneno](https://github.com/butbeautifulv/veneno) | `core-*.mdc` symlinks | 2 `project-*.mdc` | tool catalog runtime |
+| **egregore** | [egregore](https://github.com/butbeautifulv/egregore) | `core-*.mdc` symlinks | 2 `project-*.mdc` | `agents/skills/` (Skill Gateway) |
+| **fabrica** | [fabrica](https://github.com/butbeautifulv/fabrica) | `core-*.mdc` symlinks | `project-workflow.mdc` + `.cursor/rules/` | `skills-link` devsecops |
+| **hexenhammer** | [hexenhammer](https://github.com/butbeautifulv/hexenhammer) | `core-*.mdc` symlinks | `hexenhammer-*.mdc` overlay | campaign runtime |
+| **tabula** | [tabula](https://github.com/butbeautifulv/tabula) | `core-*.mdc` symlinks | `tabula-agent-workflow.mdc` | [fstec](https://github.com/butbeautifulv/fstec) product |
 
 - **cxado-skills** (`make skills-install` + `make skills-link`): devsecops symlinks in fabrica; agent/* via global install — **not** egregore runtime overlays.
 - **egregore** OWASP: `shared/references/owasp/` via `refs-link`; sync pointers via `scripts/generate_owasp_skills.py`.
@@ -143,6 +200,19 @@ egregore can consume Veil graph read and veneno tool execution via MCP — **not
 ## Architecture ADR
 
 See [adr/cxado-architecture.md](adr/cxado-architecture.md) for the accepted meta-repo architecture decision record (synced with codebase-memory-mcp).
+
+Domain docs: [docs/domains/](domains/README.md).
+
+## Make targets (public bootstrap)
+
+| Target | What it does |
+|--------|----------------|
+| `make bootstrap` | Submodules + `refs-link` + `rules-link` + `skills-link` + `skills-install` + `gui-link` |
+| `make rules-link` | Symlink core agent rules into projects |
+| `make skills-install` | Install cxado-skills to `~/.cursor/skills/` |
+| `make gui-link` | Symlink `@cxado/gui` into consumer projects |
+| `make test-contracts` | Cross-repo wire contract smoke |
+| `make auth-broker-test` | Unit tests for `shared/go/auth-broker` |
 
 ## Agent MCP tooling (Cursor IDE)
 

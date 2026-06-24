@@ -8,6 +8,7 @@ Canonical JSON schemas for cross-repo integrations in the cxado ecosystem.
 | `engage-events-finding.json` | veneno | veil `pipeline/engage-events` |
 | `ingest-engage-tool-run.json` | veil pipeline bridge | veil `knowledge/ingest` |
 | `ingest-engage-finding.json` | veil pipeline bridge | veil `knowledge/ingest` |
+| `auth-broker-token-v1.json` | auth-broker | Go/Python service clients |
 
 Veil keeps mirrors under `projects/veil/docs/schemas/` for standalone clones. When changing wire format, update **here first**, then mirror to veil.
 
