@@ -9,5 +9,6 @@ git submodule update --init --recursive
 "$ROOT/scripts/link-agent-rules.sh"
 "$ROOT/scripts/link-skills.sh"
 "$ROOT/scripts/install-skills.sh"
+"$ROOT/scripts/link-gui.sh"
 
 echo "cxado bootstrap complete."

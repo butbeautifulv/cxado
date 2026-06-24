@@ -6,7 +6,8 @@
     { "path": "projects/fabrica", "name": "Fabrica" },
     { "path": "projects/asoc-api", "name": "ASOC API" },
     { "path": "shared/skills", "name": "Skills Hub" },
-    { "path": "shared/references", "name": "References" }
+    { "path": "shared/references", "name": "References" },
+    { "path": "shared/gui", "name": "GUI Hub" }
   ],
   "settings": {}
 }

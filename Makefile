@@ -1,4 +1,4 @@
-.PHONY: bootstrap skills-install skills-link refs-link rules-link test-contracts help
+.PHONY: bootstrap skills-install skills-link refs-link rules-link gui-link test-contracts help
 
 help:
 	@echo "Targets:"
@@ -7,6 +7,7 @@ help:
 	@echo "  skills-install  Symlink cxado-skills into ~/.cursor/skills/"
 	@echo "  refs-link       Symlink shared/references into project refs/"
 	@echo "  rules-link      Symlink shared/agent-rules core into project rules/"
+	@echo "  gui-link        Symlink shared/gui into project node_modules/@cxado/gui"
 	@echo "  test-contracts  Cross-repo engage.events wire contract smoke"
 
 bootstrap:
@@ -23,6 +24,9 @@ refs-link:
 
 rules-link:
 	@./scripts/link-agent-rules.sh
+
+gui-link:
+	@./scripts/link-gui.sh
 
 test-contracts:
 	@./scripts/test/cross-repo-engage-contract.sh

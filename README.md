@@ -34,6 +34,7 @@ make bootstrap
 |-----------|------------|---------|
 | `shared/skills` | [cxado-skills](https://github.com/butbeautifulv/cxado-skills) | 13 Cursor dev skills |
 | `shared/references` | [cxado-references](https://github.com/butbeautifulv/cxado-references) | JCSF, DAF, hexstrike, OWASP PDFs |
+| `shared/gui` | [cxado-gui](https://github.com/butbeautifulv/cxado-gui) | Reusable compliance UI kit (`@cxado/gui`) |
 
 Open multi-root workspace: `cxado.code-workspace`
 

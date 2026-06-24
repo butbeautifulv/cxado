@@ -22,3 +22,6 @@
 [submodule "projects/veneno"]
 	path = projects/veneno
 	url = https://github.com/butbeautifulv/veneno.git
+[submodule "shared/gui"]
+	path = shared/gui
+	url = https://github.com/butbeautifulv/cxado-gui.git
