@@ -25,3 +25,6 @@
 [submodule "shared/gui"]
 	path = shared/gui
 	url = https://github.com/butbeautifulv/cxado-gui.git
+[submodule "projects/hexenhammer"]
+	path = projects/hexenhammer
+	url = https://github.com/butbeautifulv/hexenhammer.git

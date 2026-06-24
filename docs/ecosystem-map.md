@@ -9,6 +9,7 @@ flowchart TB
     SKILLS[shared/skills]
     REFS[shared/references]
     CTR[shared/contracts]
+    GUI[shared/gui]
     subgraph projects [projects]
       VEIL[veil knowledge]
       VENENO[veneno pentest]
@@ -16,7 +17,16 @@ flowchart TB
       CICD[fabrica]
       ASOC[asoc-api]
     end
+    subgraph domains_planned [domains planned]
+      TABULA[tabula compliance]
+      FSTEC[fstec module]
+      HEX[hexenhammer awareness]
+    end
   end
+
+  GUI -->|make gui-link| VEIL
+  TABULA --> FSTEC
+  HEX -.->|mechanisms from| FISH[fish archive]
 
   RULES -->|make rules-link| VEIL
   RULES -->|make rules-link| VENENO
@@ -68,10 +78,20 @@ flowchart TB
 | **fabrica** | DevSecOps CI/CD reference | YAML, scripts |
 | **asoc-api** | Scan aggregation → NATS | Go |
 
+## Domains (planned / local)
+
+| Domain | Repo / path | Role | Status |
+|--------|-------------|------|--------|
+| **Tabula** | umbrella (planned) | Compliance: measures, orders, reporting | planned |
+| **fstec** | `projects/fstec/fstec` (external) | First Tabula module — FSTEC measures | active; GUI migration paused on `fstec/gui-detach-wip` |
+| **Hexenhammer** | `projects/hexenhammer` (submodule) | Awareness: phishing simulation, campaigns | in progress |
+| **fish** | `projects/fish/fish` (external archive) | Legacy МАШ phishing audit — donor for hexenhammer | archive |
+
 ## Shared hubs
 
 | Hub | Contents | Not included |
 |-----|----------|--------------|
+| **@cxado/gui** (`shared/gui`) | Compliance/cybersec UI kit (tiers 1–3) | App domain logic, Prisma/API |
 | **cxado-agent-rules** | 6 core Cursor rules (karpathy, critic, branches, kaizen, docs, workflow) | Project overlays |
 | **cxado-skills** | 12 devsecops + veil + 5 agent/* generic skills | Veil corpus (754 playbooks), egregore product runtime |
 | **cxado-references** | JCSF, DAF, OWASP cheat sheets, hexstrike extracts | Anthropic Skills upstream (Veil-local) |
@@ -87,6 +107,7 @@ Core rules linked via `make rules-link`; see [Veil cursor-rules-index](projects/
 | **egregore** | `core-*.mdc` symlinks | 2 `project-*.mdc` | `agents/skills/` (Skill Gateway) |
 | **fabrica** | `core-*.mdc` symlinks | `project-workflow.mdc` + `.cursor/rules/` | `skills-link` devsecops |
 | **fish** (external) | copy (pre-DRY) | `.agents/rules/fish-*.mdc` | — |
+| **hexenhammer** | `core-*.mdc` symlinks | `hexenhammer-*.mdc` overlay | campaign runtime |
 
 - **cxado-skills** (`make skills-install` + `make skills-link`): devsecops symlinks in fabrica; agent/* via global install — **not** egregore runtime overlays.
 - **egregore** OWASP: `shared/references/owasp/` via `refs-link`; sync pointers via `scripts/generate_owasp_skills.py`.

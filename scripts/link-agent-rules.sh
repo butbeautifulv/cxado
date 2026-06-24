@@ -42,5 +42,6 @@ link_project "$ROOT/projects/veil/.cursor/rules"
 link_project "$ROOT/projects/egregore/.agents/rules"
 link_project "$ROOT/projects/veneno/.agents/rules"
 link_project "$ROOT/projects/fabrica/.agents/rules"
+link_project "$ROOT/projects/hexenhammer/.agents/rules"
 
 echo "Agent rules symlinks created."

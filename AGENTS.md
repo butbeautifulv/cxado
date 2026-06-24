@@ -8,7 +8,10 @@ Meta-repo umbrella. Load project-specific rules from each submodule:
 | Veneno | `projects/veneno/` | [AGENTS.md](projects/veneno/AGENTS.md) — pentest execution |
 | Egregore | `projects/egregore/` | [AGENTS.md](projects/egregore/AGENTS.md) |
 | Fabrica | `projects/fabrica/` | [AGENTS.md](projects/fabrica/AGENTS.md) |
+| Hexenhammer | `projects/hexenhammer/` | [AGENTS.md](projects/hexenhammer/AGENTS.md) — awareness domain |
 | ASOC API | `projects/asoc-api/` | `.cursor/rules/` in repo |
+
+**Domains (local / planned):** [Tabula](projects/tabula/README.md) (compliance, fstec module) · fstec/fish repos under `projects/` (not submodules yet)
 
 ## Shared hubs
 
