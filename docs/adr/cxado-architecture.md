@@ -5,7 +5,7 @@
 | Status | accepted |
 | Date | 2026-06-24 |
 | Source | codebase-memory-mcp (`get_architecture` + `manage_adr`) |
-| Index | `.codebase-memory/graph.db.zst` (59k nodes, 167k edges at time of writing) |
+| Index | `.codebase-memory/graph.db.zst` (~57k nodes, ~151k edges, re-indexed 2026-06-24) |
 
 Canonical copy for git and human review. Agents can also load this via MCP `manage_adr(mode='get', project='home-bbv-Desktop-cys_framework')`. After major structural changes, re-index with `index_repository` and update this file if the ADR drifts.
 
@@ -21,7 +21,7 @@ cxado (cys_framework) is a meta-repository umbrella for cybersecurity products: 
 
 - **Languages:** Python (~1295 files), TypeScript (~1160), Go (~779), YAML, Bash
 - **Veil / Veneno / ASOC:** Go, Neo4j/NATS where applicable
-- **Egregore:** Python, event-driven multi-agent SOC
+- **Egregore:** Python, event-driven multi-agent SOC; optional Keycloak JWT on API and tool gateway (`AUTH_ENABLED`)
 - **Fabrica:** YAML CI/CD templates, DevSecOps scripts
 - **fstec / hexenhammer / fish:** Next.js 16, React 19, Drizzle or Prisma, PostgreSQL
 - **Bootstrap:** `make bootstrap` → submodules, rules-link, skills-link, refs-link, gui-link
@@ -30,11 +30,11 @@ cxado (cys_framework) is a meta-repository umbrella for cybersecurity products: 
 
 **Meta-repo layout:** `projects/*` submodules + `shared/*` hubs + `docs/` ecosystem map.
 
-**Indexed graph (59k nodes, 167k edges):**
+**Indexed graph (~57k nodes, ~151k edges):**
 
-- **Core hubs (high fan-in):** egregore, tabula/fstec, references, veneno
-- **Outbound-heavy:** veil (fan-out ~6943), hexenhammer (entry layer)
-- **Cross-project boundaries (call graph):** veil↔egregore, veil↔fstec, veneno↔veil strongest
+- **Core hubs (high fan-in):** egregore, references, veneno
+- **Outbound-heavy:** veil (fan-out ~4189), hexenhammer and gui (entry layer)
+- **Cross-project boundaries (call graph):** veil→egregore (~2528), veil→references (~1064), veil↔veneno (~600), references→egregore/veneno
 
 **Domains:**
 
