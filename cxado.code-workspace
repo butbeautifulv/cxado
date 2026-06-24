@@ -5,10 +5,10 @@
     { "path": "projects/egregore", "name": "Egregore" },
     { "path": "projects/fabrica", "name": "Fabrica" },
     { "path": "projects/asoc-api", "name": "ASOC API" },
-    { "path": "projects/fstec/fstec", "name": "FSTEC (Tabula)" },
+    { "path": "projects/tabula", "name": "Tabula (compliance)" },
+    { "path": "projects/tabula/fstec", "name": "FSTEC (Tabula)" },
     { "path": "projects/fish/fish", "name": "Fish (archive)" },
     { "path": "projects/hexenhammer", "name": "Hexenhammer (awareness)" },
-    { "path": "projects/tabula", "name": "Tabula (compliance)" },
     { "path": "shared/skills", "name": "Skills Hub" },
     { "path": "shared/references", "name": "References" },
     { "path": "shared/gui", "name": "GUI Hub" }

@@ -9,9 +9,10 @@ Meta-repo umbrella. Load project-specific rules from each submodule:
 | Egregore | `projects/egregore/` | [AGENTS.md](projects/egregore/AGENTS.md) |
 | Fabrica | `projects/fabrica/` | [AGENTS.md](projects/fabrica/AGENTS.md) |
 | Hexenhammer | `projects/hexenhammer/` | [AGENTS.md](projects/hexenhammer/AGENTS.md) — awareness domain |
+| Tabula | `projects/tabula/` | [AGENTS.md](projects/tabula/AGENTS.md) — compliance domain (fstec submodule) |
 | ASOC API | `projects/asoc-api/` | `.cursor/rules/` in repo |
 
-**Domains (local / planned):** [Tabula](projects/tabula/README.md) (compliance, fstec module) · fstec/fish repos under `projects/` (not submodules yet)
+**Local drops (deprecated):** `projects/fstec/` → use [projects/tabula/fstec](projects/tabula/fstec) · [fish](projects/fish/fish) archive
 
 ## Shared hubs
 
@@ -20,4 +21,6 @@ Meta-repo umbrella. Load project-specific rules from each submodule:
 - `make skills-link` — symlink `shared/skills/devsecops/` into fabrica `.agents/skills/`
 - `make gui-link` — symlink `shared/gui` into pilot project `node_modules/@cxado/gui` (Veil)
 - [docs/ecosystem-map.md](docs/ecosystem-map.md) — DRY rules/skills layers, projects, data flows
+- [docs/adr/cxado-architecture.md](docs/adr/cxado-architecture.md) — architecture ADR (also in codebase-memory-mcp)
+- [docs/agents/cursor-mcp-tooling.md](docs/agents/cursor-mcp-tooling.md) — agent MCP stack: **codebase-memory-mcp**, **Serena**, **Context7 (ctx7)**
 - [docs/integration/egregore-veil-mcp.md](docs/integration/egregore-veil-mcp.md) — planned Veil MCP wiring (stub)

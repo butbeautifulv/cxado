@@ -27,5 +27,6 @@ link_gui_project() {
 
 echo "Linking @cxado/gui into pilot projects"
 link_gui_project veil
+link_gui_project tabula/fstec
 
 echo "GUI symlinks created."

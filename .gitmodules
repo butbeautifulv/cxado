@@ -28,3 +28,6 @@
 [submodule "projects/hexenhammer"]
 	path = projects/hexenhammer
 	url = https://github.com/butbeautifulv/hexenhammer.git
+[submodule "projects/tabula"]
+	path = projects/tabula
+	url = https://github.com/butbeautifulv/tabula.git

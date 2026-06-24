@@ -17,7 +17,7 @@ flowchart TB
       CICD[fabrica]
       ASOC[asoc-api]
     end
-    subgraph domains_planned [domains planned]
+    subgraph domains [domains]
       TABULA[tabula compliance]
       FSTEC[fstec module]
       HEX[hexenhammer awareness]
@@ -25,6 +25,7 @@ flowchart TB
   end
 
   GUI -->|make gui-link| VEIL
+  GUI -.->|file: dep| FSTEC
   TABULA --> FSTEC
   HEX -.->|mechanisms from| FISH[fish archive]
 
@@ -78,13 +79,13 @@ flowchart TB
 | **fabrica** | DevSecOps CI/CD reference | YAML, scripts |
 | **asoc-api** | Scan aggregation → NATS | Go |
 
-## Domains (planned / local)
+## Domains
 
 | Domain | Repo / path | Role | Status |
 |--------|-------------|------|--------|
-| **Tabula** | umbrella (planned) | Compliance: measures, orders, reporting | planned |
-| **fstec** | `projects/fstec/fstec` (external) | First Tabula module — FSTEC measures | active; GUI migration paused on `fstec/gui-detach-wip` |
-| **Hexenhammer** | `projects/hexenhammer` (submodule) | Awareness: phishing simulation, campaigns | in progress |
+| **Tabula** | `projects/tabula` (submodule) | Compliance umbrella | active |
+| **fstec** | `projects/tabula/fstec` (submodule) | First Tabula module — FSTEC measures | active; GUI migration on `fstec/gui-detach-wip` |
+| **Hexenhammer** | `projects/hexenhammer` (submodule) | Awareness: phishing simulation, campaigns | phase 04 done |
 | **fish** | `projects/fish/fish` (external archive) | Legacy МАШ phishing audit — donor for hexenhammer | archive |
 
 ## Shared hubs
@@ -108,6 +109,7 @@ Core rules linked via `make rules-link`; see [Veil cursor-rules-index](projects/
 | **fabrica** | `core-*.mdc` symlinks | `project-workflow.mdc` + `.cursor/rules/` | `skills-link` devsecops |
 | **fish** (external) | copy (pre-DRY) | `.agents/rules/fish-*.mdc` | — |
 | **hexenhammer** | `core-*.mdc` symlinks | `hexenhammer-*.mdc` overlay | campaign runtime |
+| **tabula** | `core-*.mdc` symlinks | `tabula-agent-workflow.mdc` | fstec product in submodule |
 
 - **cxado-skills** (`make skills-install` + `make skills-link`): devsecops symlinks in fabrica; agent/* via global install — **not** egregore runtime overlays.
 - **egregore** OWASP: `shared/references/owasp/` via `refs-link`; sync pointers via `scripts/generate_owasp_skills.py`.
@@ -137,6 +139,14 @@ flowchart LR
 ```
 
 egregore can consume Veil graph read and veneno tool execution via MCP — **not implemented** in this meta-repo bootstrap. See [integration/egregore-veil-mcp.md](integration/egregore-veil-mcp.md).
+
+## Architecture ADR
+
+See [adr/cxado-architecture.md](adr/cxado-architecture.md) for the accepted meta-repo architecture decision record (synced with codebase-memory-mcp).
+
+## Agent MCP tooling (Cursor IDE)
+
+For development in this meta-repo, agents use **codebase-memory-mcp** (graph + ADR), **Serena** (LSP symbols/refactor), and **Context7 / ctx7** (live library docs). See [agents/cursor-mcp-tooling.md](agents/cursor-mcp-tooling.md).
 
 ## Clone entrypoint
 

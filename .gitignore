@@ -6,6 +6,8 @@
 
 # Local IDE / plans
 .cursor/
+.codebase-memory/
+.serena/
 
 # OS / editor
 .DS_Store
