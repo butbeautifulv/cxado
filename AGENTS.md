@@ -6,7 +6,7 @@ Meta-repo umbrella. Load project-specific rules from each submodule:
 |---------|------|------------|
 | Veil | `projects/veil/` | [AGENTS.md](projects/veil/AGENTS.md) — knowledge layer |
 | Veneno | `projects/veneno/` | [AGENTS.md](projects/veneno/AGENTS.md) — pentest execution |
-| Egregore | `projects/egregore/` | [AGENTS.md](projects/egregore/AGENTS.md) |
+| Egregore | `projects/egregore/` (API root + `ui/`) | [AGENTS.md](projects/egregore/AGENTS.md) |
 | Fabrica | `projects/fabrica/` | [AGENTS.md](projects/fabrica/AGENTS.md) |
 | Hexenhammer | `projects/hexenhammer/` | [AGENTS.md](projects/hexenhammer/AGENTS.md) — awareness module 1 (phishing); domain: [docs/domains/awareness.md](docs/domains/awareness.md) |
 | Tabula | `projects/tabula/` | [AGENTS.md](projects/tabula/AGENTS.md) — compliance domain (fstec submodule) |
