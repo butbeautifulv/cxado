@@ -12,12 +12,15 @@ check() {
 }
 
 echo "cxado status"
+PROFILE="${CXADO_PROFILE:-default}"
 check "veil-api" "http://localhost:8090/health"
 check "veil-mcp" "http://localhost:8091/health"
 check "egregore-api" "http://localhost:8080/health"
 check "grafana" "http://localhost:3002/api/health"
 check "prometheus" "http://localhost:9091/-/healthy"
-check "tempo" "http://localhost:3200/ready"
+if [[ "$PROFILE" != "lite" ]]; then
+  check "tempo" "http://localhost:3200/ready"
+fi
 
 if curl -sf -m 3 "http://localhost:9091/api/v1/targets" 2>/dev/null | grep -q '"health":"up"'; then
   echo ""

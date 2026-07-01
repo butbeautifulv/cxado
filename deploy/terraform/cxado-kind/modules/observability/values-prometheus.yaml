@@ -1,0 +1,30 @@
+grafana:
+  enabled: true
+  adminPassword: admin
+  service:
+    type: ClusterIP
+    port: 3000
+
+prometheus:
+  enabled: true
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    additionalScrapeConfigs:
+      - job_name: egregore-api
+        metrics_path: /metrics
+        static_configs:
+          - targets:
+              - egregore-api.cxado-app.svc.cluster.local:8080
+      - job_name: veil-api
+        metrics_path: /metrics
+        static_configs:
+          - targets:
+              - veil-api.veil.svc.cluster.local:8090
+      - job_name: veil-mcp
+        metrics_path: /metrics
+        static_configs:
+          - targets:
+              - veil-mcp.veil.svc.cluster.local:8091
+
+alertmanager:
+  enabled: false

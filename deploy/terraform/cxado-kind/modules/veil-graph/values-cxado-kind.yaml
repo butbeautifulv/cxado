@@ -1,0 +1,31 @@
+engage:
+  api:
+    enabled: false
+  mcp:
+    enabled: false
+  eventsWorker:
+    enabled: false
+  runner:
+    enabled: false
+
+global:
+  natsUrl: ""
+
+pipeline:
+  worker:
+    replicas: 0
+
+ingest:
+  worker:
+    replicas: 0
+
+scrape:
+  enabled: false
+
+graph:
+  api:
+    enabled: true
+    replicas: 1
+  mcp:
+    enabled: true
+    replicas: 1

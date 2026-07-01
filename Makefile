@@ -1,5 +1,7 @@
 .PHONY: bootstrap skills-install skills-link refs-link rules-link gui-link auth-broker-test test-contracts \
-	cxado-up cxado-up-lite cxado-up-obs cxado-up-langfuse cxado-down cxado-status cxado-obs-reload agent-skills-install help
+	cxado-up cxado-up-lite cxado-up-obs cxado-up-langfuse cxado-down cxado-status cxado-obs-reload \
+	cxado-kind-up cxado-kind-down cxado-k8s-build-images cxado-tf-init cxado-tf-apply cxado-tf-destroy \
+	cxado-k8s-up cxado-k8s-status cxado-k8s-smoke cxado-graph-bootstrap cxado-tf-validate agent-skills-install help
 
 help:
 	@echo "Targets:"
@@ -10,6 +12,12 @@ help:
 	@echo "  cxado-down      Stop obs + egregore infra (keeps veil by default)"
 	@echo "  cxado-status    Health checks for cxado-default"
 	@echo "  cxado-obs-reload  Reload Prometheus config"
+	@echo "  cxado-kind-up     Create kind cluster + ingress (cxado profile)"
+	@echo "  cxado-k8s-up      kind-up + build images + terraform apply"
+	@echo "  cxado-k8s-status  kubectl + curl health checks"
+	@echo "  cxado-k8s-smoke   Post-deploy smoke tests"
+	@echo "  cxado-graph-bootstrap  One-shot Neo4j seed (GRAPH_PACK_SKIP=0)"
+	@echo "  cxado-tf-validate terraform validate in deploy/terraform/cxado-kind"
 	@echo "  skills-link     Symlink shared/skills into project .agents/skills/"
 	@echo "  skills-install  Symlink cxado-skills into ~/.cursor/skills/"
 	@echo "  refs-link       Symlink shared/references into project refs/"
@@ -72,3 +80,40 @@ cxado-status:
 
 cxado-obs-reload:
 	@curl -fsS -X POST http://localhost:9091/-/reload
+
+cxado-kind-up:
+	@chmod +x scripts/k8s/bootstrap-kind.sh
+	@./scripts/k8s/bootstrap-kind.sh
+
+cxado-kind-down:
+	@chmod +x scripts/k8s/teardown-kind.sh
+	@./scripts/k8s/teardown-kind.sh
+
+cxado-k8s-build-images:
+	@chmod +x scripts/k8s/build-load-images.sh
+	@./scripts/k8s/build-load-images.sh
+
+cxado-tf-init:
+	@cd deploy/terraform/cxado-kind && terraform init
+
+cxado-tf-apply:
+	@cd deploy/terraform/cxado-kind && terraform apply -auto-approve
+
+cxado-tf-destroy:
+	@cd deploy/terraform/cxado-kind && terraform destroy -auto-approve
+
+cxado-k8s-up: cxado-kind-up cxado-k8s-build-images cxado-tf-init cxado-tf-apply
+
+cxado-k8s-status:
+	@chmod +x scripts/k8s/k8s-status.sh
+	@./scripts/k8s/k8s-status.sh
+
+cxado-k8s-smoke:
+	@chmod +x scripts/k8s/smoke-test.sh
+	@./scripts/k8s/smoke-test.sh
+
+cxado-graph-bootstrap:
+	@GRAPH_PACK_SKIP=0 docker compose -f deploy/compose/veil-graph.yml run --rm graph-bootstrap
+
+cxado-tf-validate:
+	@cd deploy/terraform/cxado-kind && terraform init -backend=false && terraform validate

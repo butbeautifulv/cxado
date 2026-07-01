@@ -1,0 +1,5 @@
+profile        = "default"
+kube_context   = "kind-cxado"
+enable_langfuse = false
+egregore_image_tag = "local"
+veil_image_tag     = "local"
