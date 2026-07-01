@@ -1,0 +1,5 @@
+# Optional Langfuse stack (not part of cxado-default).
+name: cxado-langfuse
+
+include:
+  - path: ../../projects/egregore/deploy/langfuse/docker-compose.yml

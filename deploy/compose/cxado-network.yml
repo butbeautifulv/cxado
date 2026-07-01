@@ -1,0 +1,5 @@
+# Shared network for cxado-default (created by scripts/cxado-up.sh if missing)
+networks:
+  cxado-net:
+    name: cxado-net
+    driver: bridge

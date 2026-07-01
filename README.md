@@ -14,6 +14,15 @@ make bootstrap
 
 `make bootstrap` runs: `git submodule update --init --recursive`, then `refs-link`, `rules-link`, `skills-link`, `skills-install`, `gui-link`.
 
+### Default local stack
+
+```bash
+make cxado-up
+make -C projects/egregore dev
+```
+
+Runbook: [docs/deploy/cxado-default-stack.md](docs/deploy/cxado-default-stack.md) · ports: [deploy/ports.md](deploy/ports.md).
+
 Already cloned without submodules:
 
 ```bash
@@ -102,6 +111,10 @@ Agent entry points per project: [AGENTS.md](AGENTS.md).
 | `make skills-link` | Symlink devsecops skills into fabrica |
 | `make refs-link` | Symlink `shared/references` → project `refs/` |
 | `make gui-link` | Symlink `@cxado/gui` into consumer `node_modules` |
+| `make agent-skills-install` | Fetch infra/agent skills into `.agents/skills/` |
+| `make cxado-up` | Veil graph + egregore infra + observability (Docker) |
+| `make cxado-up-lite` | Lite profile: no Tempo, Langfuse, 1 worker |
+| `make cxado-status` | Health checks for default stack |
 | `make test-contracts` | Cross-repo `engage.events` wire smoke |
 
 ## Agent development & MCP
@@ -140,7 +153,7 @@ Local artifact: `.codebase-memory/graph.db.zst` (gitignored; optional team share
 | Veneno → Veil | `engage.events` (NATS) | wired; `make test-contracts` |
 | ASOC → Egregore | NATS | planned |
 | Fabrica → projects | `adopt.sh` CI templates | reference |
-| Egregore ↔ Veil | veil-mcp | [stub](docs/integration/egregore-veil-mcp.md) |
+| Egregore ↔ Veil | veil-mcp | [wired](docs/integration/egregore-veil-mcp.md) |
 
 ## Docs index
 
@@ -149,6 +162,8 @@ Local artifact: `.codebase-memory/graph.db.zst` (gitignored; optional team share
 | [AGENTS.md](AGENTS.md) | Agent index, MCP scoping cheat sheet |
 | [docs/ecosystem-map.md](docs/ecosystem-map.md) | Public catalog, rules/skills layers, project matrix |
 | [docs/adr/cxado-architecture.md](docs/adr/cxado-architecture.md) | Architecture ADR |
+| [docs/deploy/cxado-default-stack.md](docs/deploy/cxado-default-stack.md) | Local dev stack runbook |
+| [deploy/README.md](deploy/README.md) | Compose layout and profiles |
 | [docs/bootstrap-smoke-test.md](docs/bootstrap-smoke-test.md) | Post-clone checklist |
 | [docs/legacy-cleanup.md](docs/legacy-cleanup.md) | Migration from `.external/` |
 

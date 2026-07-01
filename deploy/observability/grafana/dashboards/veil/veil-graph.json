@@ -1,0 +1,107 @@
+{
+  "uid": "veil-graph",
+  "title": "Veil Graph",
+  "tags": ["veil", "graph"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "editable": true,
+  "panels": [
+    {
+      "type": "row",
+      "title": "Scrape health",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "veil-api",
+      "id": 2,
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "up{job=\"veil-api\"}", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "type": "stat",
+      "title": "veil-mcp",
+      "id": 3,
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "up{job=\"veil-mcp\"}", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "type": "text",
+      "title": "Neo4j browser",
+      "id": 4,
+      "gridPos": { "h": 4, "w": 12, "x": 12, "y": 1 },
+      "options": {
+        "mode": "markdown",
+        "content": "Dev Neo4j Browser: [http://localhost:7474](http://localhost:7474) (when `compose.neo4j-publish` is enabled)."
+      }
+    },
+    {
+      "type": "row",
+      "title": "HTTP RED",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 10
+    },
+    {
+      "type": "timeseries",
+      "title": "Request rate by service",
+      "id": 11,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "sum(rate(veil_http_requests_total[5m])) by (service, method)",
+        "legendFormat": "{{service}} {{method}}",
+        "refId": "A"
+      }]
+    },
+    {
+      "type": "timeseries",
+      "title": "p95 latency by service",
+      "id": 12,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "histogram_quantile(0.95, sum(rate(veil_http_request_duration_seconds_bucket[5m])) by (le, service))",
+        "legendFormat": "{{service}}",
+        "refId": "A"
+      }]
+    },
+    {
+      "type": "timeseries",
+      "title": "5xx responses / sec",
+      "id": 13,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "sum(rate(veil_http_requests_total{status=~\"5..\"}[5m])) by (service, route)",
+        "legendFormat": "{{service}} {{route}}",
+        "refId": "A"
+      }]
+    }
+  ],
+  "links": [
+    { "title": "CXado Overview", "url": "/d/cxado-overview", "type": "dashboards" }
+  ]
+}
