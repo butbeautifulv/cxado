@@ -50,7 +50,8 @@ Domain vision: [docs/domains/](domains/README.md) · Awareness: [awareness.md](d
 | `shared/contracts/` | Wire schemas (`engage.events`, auth-broker token v1) — `make test-contracts` |
 | `shared/go/auth-broker/` | OAuth2 M2M token broker (gRPC + HTTP) — `make auth-broker-test` |
 | `shared/python/cxado_auth_client/` | Python HTTP client for auth-broker |
-| `docs/` | ADR, ecosystem map, agent MCP tooling, integration stubs |
+| `deploy/` | Unified Docker Compose for cxado default stack (`make cxado-up`) |
+| `docs/` | ADR, ecosystem map, agent MCP tooling, integration runbooks |
 
 ```mermaid
 flowchart TB
@@ -128,7 +129,7 @@ flowchart TB
 |---------|------|------|-------|
 | **veil** | [veil](https://github.com/butbeautifulv/veil) | TI graph, ingest, veil-api, veil-mcp | Go, Neo4j |
 | **veneno** | [veneno](https://github.com/butbeautifulv/veneno) | Pentest execution, veneno-api, veneno-mcp | Go |
-| **egregore** | [egregore](https://github.com/butbeautifulv/egregore) | Event-driven multi-agent SOC + Operator UI (`ui/`) | Python, Next.js |
+| **egregore** | [egregore](https://github.com/butbeautifulv/egregore) | Event-driven multi-agent SOC + Operator UI (`ui/`); kill-chain personas (intel, hunter, identity, dfir, cloud, purple) | Python, Next.js |
 | **fabrica** | [fabrica](https://github.com/butbeautifulv/fabrica) | DevSecOps CI/CD reference | YAML, scripts |
 | **asoc-api** | [asoc-api](https://github.com/butbeautifulv/asoc-api) | Scan aggregation → NATS | Go |
 
@@ -187,15 +188,16 @@ flowchart LR
 - **Veneno → veil:** engage.events ingest bridge (wired).
 - **Fabrica → projects:** `scripts/adopt.sh` copies gates and profiles.
 
-## MCP integration (planned)
+## MCP integration
 
 ```mermaid
 flowchart LR
-  AGI[egregore agents] -->|MCP client read| MCP[veil-mcp]
-  AGI -->|MCP client exec| VEN[veneno-mcp]
+  AGI[egregore agents] -->|MCP client read wired| MCP[veil-mcp]
+  AGI -.->|planned| VEN[veneno-mcp]
 ```
 
-egregore can consume Veil graph read and veneno tool execution via MCP — **not implemented** in this meta-repo bootstrap. See [integration/egregore-veil-mcp.md](integration/egregore-veil-mcp.md).
+- **egregore ↔ veil-mcp:** wired — graph read via tool gateway adapter. See [integration/egregore-veil-mcp.md](integration/egregore-veil-mcp.md).
+- **egregore ↔ veneno-mcp:** planned — pentest execution path.
 
 ## Architecture ADR
 
@@ -211,8 +213,23 @@ Domain docs: [docs/domains/](domains/README.md).
 | `make rules-link` | Symlink core agent rules into projects |
 | `make skills-install` | Install cxado-skills to `~/.cursor/skills/` |
 | `make gui-link` | Symlink `@cxado/gui` into consumer projects |
+| `make agent-skills-install` | Fetch HashiCorp/terraform + docker/grafana skills into `.agents/skills/` |
 | `make test-contracts` | Cross-repo wire contract smoke |
 | `make auth-broker-test` | Unit tests for `shared/go/auth-broker` |
+| `make cxado-up` | Default local stack: Veil graph + egregore infra + observability |
+| `make cxado-up-lite` | Lite profile: no Tempo, 1 worker, Langfuse |
+| `make cxado-down` | Stop obs + egregore infra (optional veil/langfuse) |
+| `make cxado-status` | Health checks (veil, egregore API, Grafana, Prometheus) |
+
+## Default local stack
+
+```bash
+make cxado-up
+make -C projects/egregore dev
+```
+
+See [deploy/cxado-default-stack.md](deploy/cxado-default-stack.md) and [deploy/ports.md](../deploy/ports.md).
+
 
 ## Agent MCP tooling (Cursor IDE)
 

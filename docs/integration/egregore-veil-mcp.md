@@ -1,39 +1,41 @@
-# egregore ↔ Veil / Veneno MCP integration (stub)
+# egregore ↔ Veil MCP integration
 
-**Status:** planned — not wired in either repository yet.
+**Status:** wired (read path via tool gateway adapter).
 
 ## Goal
 
-Allow egregore agents to:
-
-1. **Read** threat context via **veil-mcp** (graph queries, playbook lookup) — `projects/veil`.
-2. **Execute** approved tools via **veneno-mcp** (catalog-only) — `projects/veneno`.
+Allow egregore agents to **read** threat context via **veil-mcp** (graph queries, playbook lookup).
 
 ## Prerequisites
 
-- cxado meta-repo bootstrapped (`make bootstrap`)
-- Veil knowledge stack + Veneno pentest stack running (see deploy docs)
-- egregore runtime configured
+```bash
+make bootstrap
+make cxado-up
+make -C projects/egregore dev
+```
 
-## Environment variables (draft)
+## Environment
 
-| Variable | Service | Purpose |
-|----------|---------|---------|
-| `VEIL_MCP_URL` | veil-mcp | Graph read MCP endpoint |
-| `VENENO_MCP_URL` | veneno-mcp | Tool execution MCP endpoint |
-| `VEIL_MCP_TOKEN` | veil | Auth token when secure profile enabled |
-| `VENENO_MCP_TOKEN` | veneno | Auth token when secure profile enabled |
+In `projects/egregore/.env`:
 
-## Checklist (future PR in egregore)
+```env
+VEIL_MCP_URL=http://localhost:8091/mcp
+USE_TOOL_GATEWAY=false
+```
 
-- [ ] Add MCP client config to egregore agent runtime
-- [ ] Map veil-mcp tools to Skill Gateway (read-only)
-- [ ] Map veneno-mcp tools to execution policy (allowlist)
-- [ ] Integration test against combined smoke stack
-- [ ] Document in egregore `AGENTS.md`
+When Veil secure profile is enabled, set `VEIL_MCP_TOKEN` (or Keycloak bearer) per [veil auth docs](../../projects/veil/docs/deploy/auth-keycloak.md).
+
+## Implementation
+
+- MCP client: [`projects/egregore/cys_core/integrations/veil_mcp_client.py`](../../projects/egregore/cys_core/integrations/veil_mcp_client.py)
+- Tool gateway adapter: [`projects/egregore/interfaces/gateways/tool/adapters/veil_mcp.py`](../../projects/egregore/interfaces/gateways/tool/adapters/veil_mcp.py)
+
+## Veneno (execution)
+
+Pentest execution via **veneno-mcp** remains a separate integration — see veneno deploy docs.
 
 ## References
 
-- [veil AGENTS.md](https://github.com/butbeautifulv/veil/blob/main/AGENTS.md)
-- [veneno AGENTS.md](https://github.com/butbeautifulv/veneno/blob/main/AGENTS.md)
-- [cxado ecosystem map](../ecosystem-map.md)
+- [cxado default stack](../deploy/cxado-default-stack.md)
+- [deploy/ports.md](../../deploy/ports.md)
+- [veil AGENTS.md](../../projects/veil/AGENTS.md)

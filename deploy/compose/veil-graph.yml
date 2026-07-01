@@ -1,0 +1,34 @@
+# Veil graph layer on cxado-net (Neo4j published for dev browser).
+name: cxado-veil
+
+include:
+  - path: ../../projects/veil/docker-compose.yml
+  - path: ../../projects/veil/deploy/knowledge/compose.neo4j-publish.yml
+
+networks:
+  default:
+    name: cxado-net
+    external: true
+
+services:
+  graph-bootstrap:
+    environment:
+      GRAPH_PACK_SKIP: ${GRAPH_PACK_SKIP:-1}
+
+  api:
+    environment:
+      VEIL_REPO_ROOT: /veil
+    volumes:
+      - ../../projects/veil/docs/skills-index:/veil/docs/skills-index:ro
+
+  mcp:
+    environment:
+      MCP_HTTP_ENABLED: "1"
+      MCP_HTTP_LISTEN: ":8091"
+      VEIL_REPO_ROOT: /veil
+    volumes:
+      - ../../projects/veil/docs/skills-index:/veil/docs/skills-index:ro
+
+  ingest_worker:
+    profiles:
+      - full-pipeline

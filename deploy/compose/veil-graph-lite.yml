@@ -1,0 +1,51 @@
+# Lite Veil graph: capped Neo4j memory, no host Neo4j browser port, no ingest worker.
+name: cxado-veil
+
+include:
+  - path: ../../projects/veil/docker-compose.yml
+
+networks:
+  default:
+    name: cxado-net
+    external: true
+
+services:
+  neo4j:
+    environment:
+      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_max__size: 512m
+      NEO4J_server_memory_pagecache_size: 256m
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  graph-bootstrap:
+    environment:
+      GRAPH_PACK_SKIP: ${GRAPH_PACK_SKIP:-1}
+
+  api:
+    environment:
+      VEIL_REPO_ROOT: /veil
+    volumes:
+      - ../../projects/veil/docs/skills-index:/veil/docs/skills-index:ro
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  mcp:
+    environment:
+      MCP_HTTP_ENABLED: "1"
+      MCP_HTTP_LISTEN: ":8091"
+      VEIL_REPO_ROOT: /veil
+    volumes:
+      - ../../projects/veil/docs/skills-index:/veil/docs/skills-index:ro
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  ingest_worker:
+    profiles:
+      - full-pipeline

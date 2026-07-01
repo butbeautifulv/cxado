@@ -1,0 +1,29 @@
+apiVersion: 1
+
+providers:
+  - name: cxado
+    orgId: 1
+    folder: CXado
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards/cxado
+
+  - name: egregore
+    orgId: 1
+    folder: Egregore
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards/egregore
+
+  - name: veil
+    orgId: 1
+    folder: Veil
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards/veil

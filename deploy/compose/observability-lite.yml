@@ -1,0 +1,57 @@
+# Lite observability: Prometheus + Grafana only (no Tempo).
+name: cxado-observability
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    restart: unless-stopped
+    ports:
+      - "9091:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - cxado_prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=6h
+      - --web.enable-lifecycle
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    networks:
+      - cxado-net
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_DEFAULT_THEME: dark
+      GF_DATABASE_CACHE_CONNECTION_MAX_LIFETIME: 300
+    volumes:
+      - cxado_grafana_data:/var/lib/grafana
+      - ../observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - cxado-net
+
+networks:
+  cxado-net:
+    external: true
+    name: cxado-net
+
+volumes:
+  cxado_prometheus_data:
+  cxado_grafana_data:
