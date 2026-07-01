@@ -64,7 +64,23 @@ See [integration/egregore-veil-mcp.md](../integration/egregore-veil-mcp.md).
 - **Grafana** folders: CXado (overview), Egregore, Veil.
 - Reload Prometheus after config change: `make cxado-obs-reload`
 
-Optional LLM traces: `make cxado-up-langfuse` or `make -C projects/egregore dev-langfuse`.
+Optional LLM traces:
+
+```bash
+make langfuse-dev-setup          # first time: writes deploy/langfuse/.env + starts stack
+make -C projects/egregore dev-langfuse
+```
+
+Add to `projects/egregore/.env`:
+
+```env
+LANGFUSE_PUBLIC_KEY=pk-lf-dev-public
+LANGFUSE_SECRET_KEY=sk-lf-dev-secret
+LANGFUSE_HOST=http://localhost:3001
+CRITIC_USE_LLM_JUDGE=true   # optional: after make langfuse-setup-judge
+```
+
+Or via cxado: `make cxado-up-langfuse` or lite profile (`make cxado-up-lite`).
 
 ## Tear down
 

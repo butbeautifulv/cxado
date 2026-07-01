@@ -1,0 +1,34 @@
+# kind cluster config for cxado local Kubernetes profile.
+# extraPortMappings expose host ports on the control-plane node (ingress-nginx NodePort).
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: cxado
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 8080
+        protocol: TCP
+      - containerPort: 81
+        hostPort: 3000
+        protocol: TCP
+      - containerPort: 82
+        hostPort: 8090
+        protocol: TCP
+      - containerPort: 83
+        hostPort: 8091
+        protocol: TCP
+      - containerPort: 84
+        hostPort: 3002
+        protocol: TCP
+      - containerPort: 85
+        hostPort: 9091
+        protocol: TCP
+  - role: worker
+  - role: worker

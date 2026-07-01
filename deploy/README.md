@@ -59,3 +59,16 @@ deploy/
 | Egregore app in Docker | deferred — host dev preserves multiproc metrics |
 
 See [docs/deploy/cxado-default-stack.md](../docs/deploy/cxado-default-stack.md) for the full runbook.
+
+## Kubernetes (kind)
+
+> **Experimental** — health smoke works; see [known gaps](../docs/deploy/cxado-kubernetes-kind.md#known-gaps-experimental).
+
+Alternate profile via Terraform + Helm:
+
+```bash
+make cxado-k8s-up      # kind + images + terraform apply
+make cxado-k8s-status
+```
+
+Runbook: [docs/deploy/cxado-kubernetes-kind.md](../docs/deploy/cxado-kubernetes-kind.md).

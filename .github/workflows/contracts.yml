@@ -1,0 +1,17 @@
+name: Contracts
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  wire-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Engage events + auth-broker smoke
+        run: make test-contracts

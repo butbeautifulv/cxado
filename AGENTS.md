@@ -61,4 +61,4 @@ Full routing + pitfalls: [docs/agents/cursor-mcp-tooling.md](docs/agents/cursor-
 - [docs/ecosystem-map.md](docs/ecosystem-map.md) — DRY rules/skills layers, projects, data flows
 - [docs/adr/cxado-architecture.md](docs/adr/cxado-architecture.md) — architecture ADR (also in codebase-memory-mcp)
 - [docs/agents/cursor-mcp-tooling.md](docs/agents/cursor-mcp-tooling.md) — agent MCP stack: **codebase-memory-mcp**, **Serena**, **Context7 (ctx7)**
-- [docs/integration/egregore-veil-mcp.md](docs/integration/egregore-veil-mcp.md) — planned Veil MCP wiring (stub)
+- [docs/integration/egregore-veil-mcp.md](docs/integration/egregore-veil-mcp.md) — egregore ↔ veil-mcp (wired, read-only graph tools)

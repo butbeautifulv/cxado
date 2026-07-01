@@ -40,8 +40,8 @@ port_in_use() {
 
 stop_legacy_observability() {
   if docker ps -a --format '{{.Names}}' | grep -qE '^observability-'; then
-    log "stopping legacy egregore observability..."
-    docker compose -f "$ROOT/projects/egregore/deploy/observability/docker-compose.yml" down 2>/dev/null || true
+    log "stopping legacy egregore observability containers..."
+    docker rm -f $(docker ps -aq --filter 'name=observability-') 2>/dev/null || true
   fi
 }
 

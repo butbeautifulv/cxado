@@ -31,6 +31,7 @@ Run on a clean machine (or temp directory) to verify cxado bootstrap.
 ```
 cxado/
 ├── projects/veil/
+├── projects/veneno/
 ├── projects/egregore/
 ├── projects/fabrica/
 ├── projects/asoc-api/

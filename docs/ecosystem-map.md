@@ -193,11 +193,11 @@ flowchart LR
 ```mermaid
 flowchart LR
   AGI[egregore agents] -->|MCP client read wired| MCP[veil-mcp]
-  AGI -.->|planned| VEN[veneno-mcp]
+  AGI -->|partial stub| VEN[veneno-mcp]
 ```
 
-- **egregore ↔ veil-mcp:** wired — graph read via tool gateway adapter. See [integration/egregore-veil-mcp.md](integration/egregore-veil-mcp.md).
-- **egregore ↔ veneno-mcp:** planned — pentest execution path.
+- **egregore ↔ veil-mcp:** wired — graph read via direct HTTP or tool gateway adapter. See [integration/egregore-veil-mcp.md](integration/egregore-veil-mcp.md).
+- **egregore ↔ veneno-mcp:** partial — client stub + HITL-gated exec tools. See [integration/egregore-veneno-mcp.md](integration/egregore-veneno-mcp.md).
 
 ## Architecture ADR
 
