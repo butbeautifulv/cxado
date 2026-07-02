@@ -344,10 +344,34 @@
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 62 },
       "id": 161,
       "options": { "displayMode": "gradient", "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"] }, "showUnfilled": true },
-      "title": "Trust score by persona",
+      "title": "Empirical trust by persona (runtime quality)",
       "type": "bargauge",
       "targets": [
         { "expr": "cys_agent_trust_score", "legendFormat": "{{persona}}" }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 70 },
+      "id": 170,
+      "title": "Policy drift",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 71 },
+      "id": 171,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+      "title": "Catalog version by profile",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "cys_catalog_version", "legendFormat": "{{profile_id}}" }
       ]
     }
   ],

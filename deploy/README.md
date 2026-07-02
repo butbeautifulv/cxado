@@ -37,7 +37,23 @@ CXADO_STOP_VEIL=1 CXADO_STOP_LANGFUSE=1 make cxado-down
 ```
 
 
-## Layout
+## Dynamic catalog (Registry Platform)
+
+Production bootstrap with Postgres as runtime catalog truth:
+
+```bash
+export USE_DYNAMIC_CATALOG=true
+export USE_MEMORY_FALLBACK=false
+# Apply migrations (includes 004_registry_platform.sql)
+python -c "from cys_core.infrastructure.migrations.runner import apply_migrations; from bootstrap.settings import get_settings; print(apply_migrations(get_settings().postgres_url))"
+# Seed from agents/ git tree
+python projects/egregore/scripts/catalog_cli.py seed
+# Hot reload after API writes
+curl -X POST http://localhost:8080/catalog/reload -H "Authorization: Bearer $TOKEN"
+```
+
+CLI: `python projects/egregore/scripts/catalog_cli.py seed|reload|status`
+
 
 ```
 deploy/

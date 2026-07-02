@@ -1,0 +1,32 @@
+{
+  "title": "SGR Reasoning",
+  "uid": "egregore-sgr",
+  "panels": [
+    {
+      "id": 1,
+      "title": "SGR reasoning steps",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(cys_sgr_reasoning_steps_total[5m])",
+          "legendFormat": "reasoning_steps/s"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Iron parse retries",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(cys_sgr_iron_parse_retries_total[5m])",
+          "legendFormat": "retries/s"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "version": 1
+}
