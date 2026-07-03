@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cxado-tls-gateway
+  namespace: cxado-edge
+  labels:
+    app: cxado-tls-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cxado-tls-gateway
+  template:
+    metadata:
+      labels:
+        app: cxado-tls-gateway
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: nginx
+          image: docker.io/nginx:1.27-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: egregore-ui
+              containerPort: 30300
+            - name: egregore-api
+              containerPort: 30880
+            - name: veil-api
+              containerPort: 30990
+            - name: veil-mcp
+              containerPort: 30991
+            - name: neo4j-http
+              containerPort: 30474
+            - name: grafana
+              containerPort: 30002
+            - name: arch-docs
+              containerPort: 30080
+            - name: prometheus
+              containerPort: 30091
+            - name: langfuse
+              containerPort: 30001
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+            - name: tls
+              mountPath: /etc/nginx/tls
+              readOnly: true
+          readinessProbe:
+            tcpSocket:
+              port: 30002
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 30002
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: cxado-tls-gateway-nginx
+        - name: tls
+          secret:
+            secretName: cxado-offline-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cxado-tls-gateway
+  namespace: cxado-edge
+spec:
+  type: NodePort
+  selector:
+    app: cxado-tls-gateway
+  ports:
+    - name: egregore-ui
+      port: 30300
+      targetPort: 30300
+      nodePort: 30300
+    - name: egregore-api
+      port: 30880
+      targetPort: 30880
+      nodePort: 30880
+    - name: veil-api
+      port: 30990
+      targetPort: 30990
+      nodePort: 30990
+    - name: veil-mcp
+      port: 30991
+      targetPort: 30991
+      nodePort: 30991
+    - name: neo4j-http
+      port: 30474
+      targetPort: 30474
+      nodePort: 30474
+    - name: grafana
+      port: 30002
+      targetPort: 30002
+      nodePort: 30002
+    - name: prometheus
+      port: 30091
+      targetPort: 30091
+      nodePort: 30091
+    - name: langfuse
+      port: 30001
+      targetPort: 30001
+      nodePort: 30001
+    - name: arch-docs
+      port: 30080
+      targetPort: 30080
+      nodePort: 30080

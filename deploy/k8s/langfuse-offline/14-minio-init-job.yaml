@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-init
+  namespace: cxado-langfuse
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      enableServiceLinks: false
+      restartPolicy: OnFailure
+      containers:
+        - name: mc
+          image: docker.io/minio/mc:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-secrets
+                  key: minio-root-user
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-secrets
+                  key: minio-root-password
+          command: ["sh", "-lc"]
+          args:
+            - |
+              set -euo pipefail
+              for i in $(seq 1 60); do
+                if mc alias set local http://minio.cxado-langfuse.svc.cluster.local:9000 "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}"; then
+                  break
+                fi
+                sleep 2
+              done
+              mc mb -p local/langfuse || true
+              echo "minio bucket langfuse ready"

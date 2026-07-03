@@ -1,0 +1,3 @@
+files/airgap/*
+!files/airgap/.gitkeep
+inventories/offline/hosts.yml

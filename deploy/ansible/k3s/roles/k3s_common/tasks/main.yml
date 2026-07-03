@@ -1,0 +1,125 @@
+---
+- name: Resolve k3s airgap architecture suffix
+  ansible.builtin.set_fact:
+    k3s_airgap_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
+
+- name: Define expected airgap artifact paths on controller
+  ansible.builtin.set_fact:
+    k3s_airgap_binary_src: >-
+      {{ k3s_airgap_dir }}/{{ 'k3s-arm64' if k3s_airgap_arch == 'arm64' else 'k3s' }}
+    k3s_airgap_install_src: "{{ k3s_airgap_dir }}/install.sh"
+    k3s_airgap_images_src: "{{ k3s_airgap_dir }}/k3s-airgap-images-{{ k3s_airgap_arch }}.tar"
+    k3s_airgap_images_zst_src: "{{ k3s_airgap_dir }}/k3s-airgap-images-{{ k3s_airgap_arch }}.tar.zst"
+
+- name: Stat k3s binary on controller
+  ansible.builtin.stat:
+    path: "{{ k3s_airgap_binary_src }}"
+  delegate_to: localhost
+  become: false
+  run_once: true
+  register: k3s_binary_stat
+
+- name: Stat k3s install script on controller
+  ansible.builtin.stat:
+    path: "{{ k3s_airgap_install_src }}"
+  delegate_to: localhost
+  become: false
+  run_once: true
+  register: k3s_install_stat
+
+- name: Stat k3s airgap images tarball on controller
+  ansible.builtin.stat:
+    path: "{{ k3s_airgap_images_src }}"
+  delegate_to: localhost
+  become: false
+  run_once: true
+  register: k3s_images_tar_stat
+
+- name: Stat k3s airgap images zst tarball on controller
+  ansible.builtin.stat:
+    path: "{{ k3s_airgap_images_zst_src }}"
+  delegate_to: localhost
+  become: false
+  run_once: true
+  register: k3s_images_zst_stat
+
+- name: Fail when required airgap artifacts are missing
+  ansible.builtin.fail:
+    msg: >-
+      Missing airgap artifacts under {{ k3s_airgap_dir }}.
+      Run scripts/k8s/k3s-airgap-fetch.sh on the Ansible controller first.
+  when: >-
+    not k3s_binary_stat.stat.exists
+    or not k3s_install_stat.stat.exists
+    or (not k3s_images_tar_stat.stat.exists and not k3s_images_zst_stat.stat.exists)
+  run_once: true
+
+- name: Create airgap staging directory on node
+  ansible.builtin.file:
+    path: "{{ k3s_airgap_staging_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Copy k3s binary to node
+  ansible.builtin.copy:
+    src: "{{ k3s_airgap_binary_src }}"
+    dest: "{{ k3s_airgap_staging_dir }}/k3s"
+    mode: "0755"
+
+- name: Copy k3s install script to node
+  ansible.builtin.copy:
+    src: "{{ k3s_airgap_install_src }}"
+    dest: "{{ k3s_airgap_staging_dir }}/install.sh"
+    mode: "0755"
+
+- name: Copy k3s airgap images tarball to node
+  ansible.builtin.copy:
+    src: "{{ k3s_airgap_images_src }}"
+    dest: "{{ k3s_airgap_staging_dir }}/k3s-airgap-images-{{ k3s_airgap_arch }}.tar"
+    mode: "0644"
+  when: k3s_images_tar_stat.stat.exists
+
+- name: Copy k3s airgap images zst tarball to node
+  ansible.builtin.copy:
+    src: "{{ k3s_airgap_images_zst_src }}"
+    dest: "{{ k3s_airgap_staging_dir }}/k3s-airgap-images-{{ k3s_airgap_arch }}.tar.zst"
+    mode: "0644"
+  when: not k3s_images_tar_stat.stat.exists and k3s_images_zst_stat.stat.exists
+
+- name: Install k3s systemd network-online drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/k3s.service.d
+    state: directory
+    mode: "0755"
+
+- name: Install k3s systemd network-online drop-in
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/k3s.service.d/override.conf
+    mode: "0644"
+    content: |
+      [Unit]
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      ExecStartPre=/bin/sh -c 'for i in $(seq 1 60); do ip route | grep -q "^default" && exit 0; sleep 2; done; exit 1'
+  notify: Reload systemd
+
+- name: Install k3s-agent systemd network-online drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/k3s-agent.service.d
+    state: directory
+    mode: "0755"
+
+- name: Install k3s-agent systemd network-online drop-in
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/k3s-agent.service.d/override.conf
+    mode: "0644"
+    content: |
+      [Unit]
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      ExecStartPre=/bin/sh -c 'for i in $(seq 1 60); do ip route | grep -q "^default" && exit 0; sleep 2; done; exit 1'
+  notify: Reload systemd

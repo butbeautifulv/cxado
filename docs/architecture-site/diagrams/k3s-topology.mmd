@@ -1,0 +1,39 @@
+flowchart TB
+  subgraph edge [cxado-edge]
+    TLS[cxado-tls-gateway nginx]
+  end
+
+  subgraph app [cxado-app]
+    EUI[egregore-ui :30300]
+    EAPI[egregore-api :30880]
+    Arch[arch-docs :30080]
+  end
+
+  subgraph data [cxado-data]
+    PG[Postgres]
+    Redis[Redis]
+    Qdrant[Qdrant]
+    Neo4j[Neo4j]
+  end
+
+  subgraph obs [cxado-obs]
+    Graf[Grafana :30002]
+    Prom[Prometheus :30091]
+  end
+
+  subgraph veil_ns [veil]
+    VAPI[veil-api :30990]
+    VMCP[veil-mcp :30991]
+  end
+
+  TLS --> EUI
+  TLS --> EAPI
+  TLS --> Arch
+  TLS --> Graf
+  TLS --> Prom
+  TLS --> VAPI
+  TLS --> VMCP
+  EAPI --> PG
+  EAPI --> Redis
+  EAPI --> Qdrant
+  VAPI --> Neo4j

@@ -72,6 +72,9 @@ resource "kubernetes_stateful_set" "neo4j" {
     template {
       metadata { labels = { app = "neo4j" } }
       spec {
+        # Avoid Kubernetes service env var injection (NEO4J_PORT_7687_TCP_PORT etc.)
+        # which Neo4j can misinterpret as config settings (PORT.7687.TCP.PORT).
+        enable_service_links = false
         container {
           name  = "neo4j"
           image = "neo4j:5"

@@ -1,0 +1,35 @@
+---
+cxado_deploy_user: bbv
+
+k3s_version: v1.35.0+k3s1
+helm_version: v4.1.0
+
+# Populated by k3s-airgap-fetch.sh on the Ansible controller (laptop).
+k3s_airgap_dir: "{{ playbook_dir }}/../files/airgap"
+
+ssh_extra_ports:
+  - 22012
+ssh_dropin_name: 99-cxado-wifi.conf
+ssh_service_name: ssh
+
+k3s_cluster_cidr: 10.42.0.0/16
+k3s_service_cidr: 10.43.0.0/16
+k3s_disable_components: []
+k3s_write_kubeconfig_mode: "0644"
+
+k3s_airgap_staging_dir: /tmp/k3s-airgap
+k3s_config_path: /etc/rancher/k3s/config.yaml
+
+k3s_hostpaths:
+  - path: /var/lib/veil/playbooks/docs/skills-index
+    owner: root
+    group: root
+    mode: "0755"
+  - path: /home/bbv/cxado/arch-docs
+    owner: bbv
+    group: bbv
+    mode: "0755"
+  - path: /var/lib/cxado/prom-multiproc
+    owner: root
+    group: root
+    mode: "0755"

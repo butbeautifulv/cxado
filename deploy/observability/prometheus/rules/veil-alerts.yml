@@ -1,0 +1,51 @@
+groups:
+  - name: veil
+    rules:
+      - alert: VeilAPIDown
+        expr: up{job="veil-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          platform: veil
+        annotations:
+          summary: Veil API scrape target is down
+          description: Prometheus cannot scrape veil-api for more than 2 minutes.
+
+      - alert: VeilMCPDown
+        expr: up{job="veil-mcp"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          platform: veil
+        annotations:
+          summary: Veil MCP scrape target is down
+          description: Prometheus cannot scrape veil-mcp for more than 2 minutes.
+
+      - alert: VeilHTTP5xxSpike
+        expr: sum(rate(veil_http_requests_total{status=~"5.."}[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          platform: veil
+        annotations:
+          summary: Veil HTTP 5xx rate elevated
+          description: Veil graph API/MCP 5xx responses exceed threshold.
+
+      - alert: VeilIngestWorkerErrors
+        expr: sum(rate(veil_nats_messages_total{worker="ingest",status="error"}[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+          platform: veil
+        annotations:
+          summary: Veil ingest worker message errors
+          description: Ingest worker is NAK-ing or failing messages.
+
+      - alert: VeilNATSDown
+        expr: up{job="nats-veil"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          platform: veil
+        annotations:
+          summary: Veil NATS monitoring endpoint down

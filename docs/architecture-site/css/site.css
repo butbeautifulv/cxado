@@ -1,0 +1,497 @@
+:root {
+  --bg: #0f1419;
+  --surface: #1a2332;
+  --border: #2d3a4f;
+  --text: #e6edf3;
+  --muted: #8b9cb3;
+  --accent: #58a6ff;
+  --accent2: #3fb950;
+  --warn: #d29922;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+}
+
+nav.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 1.25rem 1rem;
+}
+
+nav.sidebar h1 {
+  font-size: 1rem;
+  margin: 0 0 0.25rem;
+  color: var(--accent);
+}
+
+nav.sidebar .subtitle {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 1.25rem;
+}
+
+nav.sidebar ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+nav.sidebar li {
+  margin: 0.15rem 0;
+}
+
+nav.sidebar a {
+  display: block;
+  padding: 0.35rem 0.5rem;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+  border-radius: 4px;
+}
+
+nav.sidebar a:hover,
+nav.sidebar a.active {
+  color: var(--text);
+  background: rgba(88, 166, 255, 0.12);
+}
+
+main {
+  max-width: 960px;
+  padding: 2rem 2.5rem 4rem;
+}
+
+.hero {
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.hero h2 {
+  font-size: 1.75rem;
+  margin: 0 0 0.5rem;
+}
+
+.hero p {
+  color: var(--muted);
+  margin: 0;
+}
+
+section {
+  margin-bottom: 3rem;
+  scroll-margin-top: 1rem;
+}
+
+section h2 {
+  font-size: 1.35rem;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.35rem;
+  margin-top: 0;
+}
+
+section h3 {
+  font-size: 1.05rem;
+  margin-top: 1.5rem;
+  color: var(--text);
+}
+
+p, li {
+  color: var(--text);
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 3px;
+  background: rgba(63, 185, 80, 0.15);
+  color: var(--accent2);
+  margin-right: 0.25rem;
+}
+
+.tag.stub {
+  background: rgba(210, 153, 34, 0.15);
+  color: var(--warn);
+}
+
+.tag.partial {
+  background: rgba(88, 166, 255, 0.15);
+  color: var(--accent);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  margin: 1rem 0;
+}
+
+th, td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.65rem;
+  text-align: left;
+}
+
+th {
+  background: var(--surface);
+  color: var(--accent);
+}
+
+code, .path {
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: 0.82rem;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+}
+
+.diagram {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  cursor: zoom-in;
+  min-height: 120px;
+  transition: border-color 0.15s;
+}
+
+.diagram:hover {
+  border-color: var(--accent);
+}
+
+.diagram::after {
+  content: "Нажмите для увеличения";
+  position: absolute;
+  right: 0.65rem;
+  bottom: 0.45rem;
+  font-size: 0.68rem;
+  color: var(--muted);
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.diagram .mermaid {
+  display: flex;
+  justify-content: center;
+  min-width: min-content;
+}
+
+.diagram .mermaid svg {
+  max-width: none;
+  height: auto;
+}
+
+.diagram-loading {
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 2rem;
+}
+
+ul.compact {
+  padding-left: 1.25rem;
+}
+
+ul.compact li {
+  margin: 0.25rem 0;
+}
+
+.references {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+}
+
+.references ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.service-dock {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.service-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.65rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.service-card:hover {
+  border-color: var(--accent);
+  background: rgba(88, 166, 255, 0.08);
+}
+
+.service-card.current {
+  border-color: var(--accent2);
+  background: rgba(63, 185, 80, 0.1);
+}
+
+.service-port {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: var(--accent);
+}
+
+.service-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.service-hint {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.services-note {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0.5rem 0 1rem;
+}
+
+.services-note code {
+  font-size: 0.8rem;
+}
+
+.credentials-warning {
+  padding: 0.65rem 0.85rem;
+  margin: 0.75rem 0;
+  border-radius: 6px;
+  border: 1px solid rgba(210, 153, 34, 0.45);
+  background: rgba(210, 153, 34, 0.12);
+  color: var(--warn);
+  font-size: 0.85rem;
+}
+
+.credentials-table td:nth-child(5) {
+  font-family: ui-monospace, monospace;
+  font-size: 0.78rem;
+  word-break: break-all;
+  max-width: 220px;
+}
+
+.credentials-table .cred-notes {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.credentials-table .cred-notes li {
+  margin: 0.1rem 0;
+}
+
+/* Diagram expand modal */
+.diagram-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: none;
+}
+
+.diagram-modal.open {
+  display: block;
+}
+
+.diagram-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(2px);
+}
+
+.diagram-modal-panel {
+  position: absolute;
+  inset: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.diagram-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.diagram-modal-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.diagram-modal-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.diagram-tool-btn {
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.diagram-tool-btn:hover {
+  border-color: var(--accent);
+  background: rgba(88, 166, 255, 0.12);
+}
+
+.diagram-tool-close {
+  margin-left: 0.35rem;
+}
+
+.diagram-zoom-label {
+  min-width: 3rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+}
+
+.diagram-modal-hint {
+  margin: 0;
+  padding: 0.35rem 1rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.diagram-modal-body {
+  flex: 1;
+  overflow: auto;
+  padding: 1.5rem;
+  cursor: grab;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--bg),
+    var(--bg) 10px,
+    rgba(255, 255, 255, 0.02) 10px,
+    rgba(255, 255, 255, 0.02) 20px
+  );
+}
+
+.diagram-modal-body.dragging {
+  cursor: grabbing;
+}
+
+.diagram-modal-stage {
+  display: inline-block;
+  transform-origin: 0 0;
+  min-width: min-content;
+}
+
+.diagram-modal-stage .mermaid {
+  display: flex;
+  justify-content: center;
+}
+
+.diagram-modal-stage .mermaid svg {
+  max-width: none !important;
+  height: auto !important;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  nav.sidebar {
+    position: relative;
+    height: auto;
+    max-height: 40vh;
+  }
+
+  main {
+    padding: 1.25rem;
+  }
+}
+
+@media print {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  nav.sidebar {
+    display: none;
+  }
+
+  main {
+    max-width: none;
+    padding: 0;
+  }
+
+  section {
+    break-inside: avoid;
+  }
+
+  .diagram {
+    break-inside: avoid;
+  }
+
+  .diagram-modal {
+    display: none !important;
+  }
+}

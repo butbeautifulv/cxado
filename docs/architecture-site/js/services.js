@@ -1,0 +1,34 @@
+/** k3s offline TLS gateway services — ports on node (10.8.185.15 or tunnel localhost). */
+window.CXADO_SERVICES = {
+  defaultHost: "10.8.185.15",
+  external: [
+    { port: 30300, name: "Egregore UI", group: "app", path: "/", hint: "Operator UI · Next.js" },
+    { port: 30880, name: "Egregore API", group: "app", path: "/health", hint: "FastAPI · /status · /metrics" },
+    { port: 30990, name: "Veil API", group: "app", path: "/health", hint: "Graph HTTP API" },
+    { port: 30991, name: "Veil MCP", group: "app", path: "/health", hint: "MCP Streamable HTTP" },
+    { port: 30474, name: "Neo4j Browser", group: "data", path: "/", hint: "cxado-data · graph UI" },
+    { port: 30002, name: "Grafana", group: "obs", path: "/", hint: "Dashboards · Tempo · Loki" },
+    { port: 30091, name: "Prometheus", group: "obs", path: "/targets", hint: "Scrape targets · metrics" },
+    { port: 30001, name: "Langfuse", group: "obs", path: "/", hint: "LLM traces · evals · judge" },
+    { port: 30080, name: "Architecture docs", group: "meta", path: "/", hint: "This site", current: true },
+  ],
+  internal: [
+    { name: "Postgres (egregore)", ns: "cxado-data", port: 5432, proto: "TCP" },
+    { name: "Redis (egregore)", ns: "cxado-data", port: 6379, proto: "TCP" },
+    { name: "Qdrant", ns: "cxado-data", port: 6333, proto: "HTTP" },
+    { name: "Neo4j Bolt", ns: "cxado-data", port: 7687, proto: "Bolt" },
+    { name: "Tempo query", ns: "cxado-obs", port: 3200, proto: "HTTP" },
+    { name: "Tempo OTLP", ns: "cxado-obs", port: 4317, proto: "gRPC" },
+    { name: "Loki", ns: "cxado-obs", port: 3100, proto: "HTTP" },
+    { name: "NATS", ns: "veil-data", port: 4222, proto: "TCP" },
+    { name: "Egregore Worker", ns: "cxado-app", note: "ClusterIP · background job consumer" },
+    { name: "Langfuse worker", ns: "cxado-langfuse", note: "ClusterIP · async processing" },
+    { name: "ClickHouse", ns: "cxado-langfuse", port: 8123, proto: "HTTP" },
+    { name: "MinIO (Langfuse)", ns: "cxado-langfuse", port: 9000, proto: "S3 API" },
+  ],
+  clusterInfra: [
+    { name: "Gitea", ns: "gitea", note: "ClusterIP · git hosting" },
+    { name: "Kubernetes Dashboard", ns: "kubernetes-dashboard", note: "ClusterIP" },
+    { name: "Tekton Dashboard", ns: "tekton-pipelines", port: 9097, note: "ClusterIP" },
+  ],
+};

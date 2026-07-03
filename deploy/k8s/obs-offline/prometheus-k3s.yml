@@ -1,0 +1,141 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: cxado-k3s
+    env: offline
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+          service: prometheus
+
+  - job_name: node-exporter
+    static_configs:
+      - targets: ["node-exporter.cxado-obs.svc.cluster.local:9100"]
+        labels:
+          service: node-exporter
+
+  - job_name: kube-state-metrics
+    static_configs:
+      - targets: ["kube-state-metrics.cxado-obs.svc.cluster.local:8080"]
+        labels:
+          service: kube-state-metrics
+
+  - job_name: tempo
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["tempo.cxado-obs.svc.cluster.local:3200"]
+        labels:
+          service: tempo
+
+  - job_name: loki
+    static_configs:
+      - targets: ["loki.cxado-obs.svc.cluster.local:3100"]
+        labels:
+          service: loki
+
+  - job_name: grafana
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["grafana.cxado-obs.svc.cluster.local:3000"]
+        labels:
+          service: grafana
+          component: observability
+
+  - job_name: egregore-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["egregore-api.cxado-app.svc.cluster.local:8080"]
+        labels:
+          service: egregore-api
+          platform: egregore
+          component: ingress
+
+  - job_name: veil-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["veil-veil-api.veil.svc.cluster.local:8090"]
+        labels:
+          service: veil-api
+          platform: veil
+          component: graph-api
+
+  - job_name: veil-mcp
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["veil-veil-mcp.veil.svc.cluster.local:8091"]
+        labels:
+          service: veil-mcp
+          platform: veil
+          component: mcp
+
+  - job_name: veil-ingest-worker
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["veil-veil-ingest-worker-metrics.veil.svc.cluster.local:9090"]
+        labels:
+          service: veil-ingest-worker
+          platform: veil
+          component: ingest-worker
+
+  - job_name: veil-pipeline-worker
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["veil-veil-pipeline-worker-metrics.veil.svc.cluster.local:9090"]
+        labels:
+          service: veil-pipeline-worker
+          platform: veil
+          component: pipeline-worker
+
+  - job_name: veil-engage-events-worker
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["veil-veil-engage-events-worker-metrics.veil.svc.cluster.local:9090"]
+        labels:
+          service: veil-engage-events-worker
+          platform: veil
+          component: engage-events
+
+  # External vLLM on phy-gpu-host01 (10.8.185.185).
+  # OpenAI API: http://10.8.185.185:11611/v1  |  metrics: /metrics on the same port.
+  # Requires network reachability from the k3s node (10.8.185.15) to 10.8.185.185:11611.
+  - job_name: vllm
+    metrics_path: /metrics
+    scrape_interval: 10s
+    scrape_timeout: 10s
+    honor_labels: true
+    static_configs:
+      - targets: ["10.8.185.185:11611"]
+        labels:
+          service: vllm
+          platform: vllm
+          component: inference-server
+          host: phy-gpu-host01
+
+  # phy-gpu-host01 — node-exporter (host CPU/RAM/disk). Install on 10.8.185.185:9100.
+  - job_name: proxmox-gpu-node
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["10.8.185.185:9100"]
+        labels:
+          service: node-exporter
+          platform: proxmox
+          component: gpu-host
+          instance: phy-gpu-host01
+
+  # phy-gpu-host01 — NVIDIA DCGM exporter (GPU util / VRAM). Install on 10.8.185.185:9400.
+  - job_name: proxmox-gpu-dcgm
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["10.8.185.185:9400"]
+        labels:
+          service: dcgm-exporter
+          platform: proxmox
+          component: gpu-telemetry
+          instance: phy-gpu-host01

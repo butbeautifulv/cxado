@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: langfuse-config
+  namespace: cxado-langfuse
+data:
+  TELEMETRY_ENABLED: "false"
+  LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: "false"
+  CLICKHOUSE_URL: "http://clickhouse.cxado-langfuse.svc.cluster.local:8123"
+  CLICKHOUSE_MIGRATION_URL: "clickhouse://clickhouse.cxado-langfuse.svc.cluster.local:9000"
+  CLICKHOUSE_USER: "clickhouse"
+  CLICKHOUSE_CLUSTER_ENABLED: "false"
+  REDIS_HOST: "redis.cxado-langfuse.svc.cluster.local"
+  REDIS_PORT: "6379"
+  REDIS_TLS_ENABLED: "false"
+  LANGFUSE_S3_EVENT_UPLOAD_BUCKET: "langfuse"
+  LANGFUSE_S3_EVENT_UPLOAD_REGION: "auto"
+  LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: "http://minio.cxado-langfuse.svc.cluster.local:9000"
+  LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_EVENT_UPLOAD_PREFIX: "events/"
+  LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: "langfuse"
+  LANGFUSE_S3_MEDIA_UPLOAD_REGION: "auto"
+  LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: "http://minio.cxado-langfuse.svc.cluster.local:9000"
+  LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: "media/"
+  LANGFUSE_S3_BATCH_EXPORT_ENABLED: "false"
+  # Headless init — mirrors projects/egregore/deploy/langfuse/.env (local dev)
+  LANGFUSE_INIT_ORG_ID: "egregore"
+  LANGFUSE_INIT_ORG_NAME: "Egregore"
+  LANGFUSE_INIT_PROJECT_ID: "egregore-dev"
+  LANGFUSE_INIT_PROJECT_NAME: "egregore-dev"
+  LANGFUSE_INIT_PROJECT_PUBLIC_KEY: "pk-lf-egregore-dev-local"
+  LANGFUSE_INIT_PROJECT_SECRET_KEY: "sk-lf-egregore-dev-local"
+  LANGFUSE_INIT_USER_EMAIL: "dev@egregore.local"
+  LANGFUSE_INIT_USER_NAME: "Dev Admin"
+  LANGFUSE_INIT_USER_PASSWORD: "egregore-dev"
+  # LLM-as-a-Judge / Playground SSRF bypass for private vLLM (self-host only)
+  LANGFUSE_LLM_CONNECTION_WHITELISTED_IPS: "10.8.185.185"
+  LANGFUSE_LLM_CONNECTION_WHITELISTED_HOST: "localhost,127.0.0.1"

@@ -1,0 +1,29 @@
+flowchart TB
+  subgraph meta [cxado meta-repo]
+    DOCS[docs ADR ecosystem]
+    DEPLOY[deploy compose k8s]
+    SHARED[shared rules skills contracts gui]
+  end
+
+  subgraph platform [Platform projects]
+    VEIL[Veil TI graph veil-mcp]
+    VENENO[Veneno pentest veneno-mcp]
+    EGG[Egregore SOC agents API UI]
+    FAB[Fabrica DevSecOps]
+    ASOC[ASOC scan aggregation]
+  end
+
+  subgraph domains [Domain products]
+    TAB[Tabula compliance]
+    FSTEC[fstec measures]
+    HEX[Hexenhammer awareness]
+  end
+
+  VENENO -->|engage.events NATS| VEIL
+  VEIL -->|veil-mcp read-only| EGG
+  EGG -.->|veneno-mcp partial HITL| VENENO
+  FAB -->|adopt.sh CI gates| EGG
+  FAB -->|adopt.sh| VEIL
+  TAB --> FSTEC
+  SHARED --> platform
+  DEPLOY --> platform

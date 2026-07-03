@@ -1,0 +1,17 @@
+---
+- name: Ensure kubeconfig directory exists for deploy user
+  ansible.builtin.file:
+    path: "/home/{{ cxado_deploy_user }}/.kube"
+    state: directory
+    owner: "{{ cxado_deploy_user }}"
+    group: "{{ cxado_deploy_user }}"
+    mode: "0700"
+
+- name: Install kubeconfig for deploy user
+  ansible.builtin.copy:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: "/home/{{ cxado_deploy_user }}/.kube/config"
+    owner: "{{ cxado_deploy_user }}"
+    group: "{{ cxado_deploy_user }}"
+    mode: "0600"
+    remote_src: true

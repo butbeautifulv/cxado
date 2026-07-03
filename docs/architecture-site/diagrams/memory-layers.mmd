@@ -1,0 +1,29 @@
+flowchart LR
+  subgraph thread [Thread short-term]
+    CP[LangGraph Postgres checkpointer]
+    Key1["worker:persona:job_id"]
+  end
+
+  subgraph job [Job metadata]
+    JS[worker_jobs Postgres]
+    Key2[job_id HITL pause]
+  end
+
+  subgraph episodic [Episodic cross-session]
+    EM[agent_memory_entries]
+    Key3["tenant_id + investigation_id"]
+  end
+
+  subgraph inv [Investigation state]
+    IS[investigation_states]
+    Key4[plan completed_personas]
+  end
+
+  subgraph knowledge [Knowledge optional]
+    RAG[Qdrant RAG tenant ACL]
+  end
+
+  AgentRT[AgentRuntime] --> CP
+  AgentRT --> EM
+  RunJob[RunWorkerJob] --> IS
+  AgentRT --> RAG

@@ -1,0 +1,13 @@
+node-ip: "{{ k3s_node_ip }}"
+write-kubeconfig-mode: "{{ k3s_write_kubeconfig_mode }}"
+tls-san:
+  - "{{ inventory_hostname }}"
+{% for san in k3s_tls_sans | default([]) %}
+  - "{{ san }}"
+{% endfor %}
+{% if k3s_disable_components | default([]) | length > 0 %}
+disable:
+{% for component in k3s_disable_components %}
+  - {{ component }}
+{% endfor %}
+{% endif %}

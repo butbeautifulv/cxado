@@ -1,0 +1,9 @@
+flowchart LR
+  External[Untrusted input] --> L1[InputSanitizer ingress]
+  L1 --> L2[ScopeMiddleware tool allowlist]
+  L2 --> L3[ToolGateway PEP sanitize audit]
+  L3 --> L4[SecurityMiddleware L1 HITL]
+  L4 --> L5[SecureAgentBus HMAC trust]
+  L5 --> L6[OutputGuardrails PII schema]
+  L6 --> L7[CriticService L2 HITL]
+  L7 --> Operator[Operator UI narratives]

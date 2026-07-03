@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cxado-arch-docs
+  namespace: cxado-edge
+  labels:
+    app: cxado-arch-docs
+spec:
+  type: ClusterIP
+  selector:
+    app: cxado-arch-docs
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

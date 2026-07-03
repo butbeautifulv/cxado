@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: cxado-obs
+spec:
+  template:
+    spec:
+      containers:
+        - name: grafana-bootstrap
+          image: docker.io/curlimages/curl:8.5.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GRAFANA_ADMIN_USER
+              value: admin
+            - name: GRAFANA_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth
+                  key: admin_password
+            - name: GRAFANA_VIEWER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth
+                  key: viewer_username
+            - name: GRAFANA_VIEWER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth
+                  key: viewer_password
+          command: ["sh", "-lc"]
+          args:
+            - |
+              set -euo pipefail
+              base="http://127.0.0.1:3000"
+              echo "[grafana-bootstrap] waiting for grafana..."
+              for i in $(seq 1 120); do
+                if curl -fsS "${base}/api/health" >/dev/null; then
+                  break
+                fi
+                sleep 1
+              done
+
+              echo "[grafana-bootstrap] ensuring viewer user exists..."
+              uid="$(curl -fsS -u "${GRAFANA_ADMIN_USER}:${GRAFANA_ADMIN_PASSWORD}" \
+                "${base}/api/users/lookup?loginOrEmail=${GRAFANA_VIEWER_USERNAME}" | \
+                sed -n 's/.*\"id\":\\([0-9][0-9]*\\).*/\\1/p' | head -n 1 || true)"
+
+              if [ -z "${uid}" ]; then
+                curl -fsS -u "${GRAFANA_ADMIN_USER}:${GRAFANA_ADMIN_PASSWORD}" \
+                  -H 'Content-Type: application/json' \
+                  -X POST "${base}/api/admin/users" \
+                  -d "{\"name\":\"${GRAFANA_VIEWER_USERNAME}\",\"email\":\"${GRAFANA_VIEWER_USERNAME}@local\",\"login\":\"${GRAFANA_VIEWER_USERNAME}\",\"password\":\"${GRAFANA_VIEWER_PASSWORD}\"}" >/dev/null
+                uid="$(curl -fsS -u "${GRAFANA_ADMIN_USER}:${GRAFANA_ADMIN_PASSWORD}" \
+                  "${base}/api/users/lookup?loginOrEmail=${GRAFANA_VIEWER_USERNAME}" | \
+                  sed -n 's/.*\"id\":\\([0-9][0-9]*\\).*/\\1/p' | head -n 1 || true)"
+              fi
+
+              if [ -n "${uid}" ]; then
+                curl -fsS -u "${GRAFANA_ADMIN_USER}:${GRAFANA_ADMIN_PASSWORD}" \
+                  -H 'Content-Type: application/json' \
+                  -X PATCH "${base}/api/org/users/${uid}" \
+                  -d '{"role":"Viewer"}' >/dev/null || true
+              fi
+
+              echo "[grafana-bootstrap] done; sleeping."
+              exec sleep infinity

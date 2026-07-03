@@ -1,0 +1,25 @@
+sequenceDiagram
+  participant Src as SIEM Manual UI
+  participant API as FastAPI EventIngress
+  participant Router as EventRouter Planner
+  participant Queue as JobQueue
+  participant Orch as WorkerOrchestrator
+  participant Job as RunWorkerJob
+  participant RT as AgentRuntime
+  participant Bus as SecureAgentBus
+  participant Critic as CriticService
+
+  Src->>API: POST /events SecurityEvent
+  API->>Router: RouteAndEnqueueEvent
+  alt manual.investigation
+    Router->>Router: PlanInvestigation LLM chain
+  else other events
+    Router->>Router: agents/plans/*.yaml rules
+  end
+  Router->>Queue: enqueue WorkerJob
+  Orch->>Queue: dequeue
+  Orch->>Job: run persona sandbox
+  Job->>RT: arun tools memory middleware
+  RT-->>Job: structured finding
+  Job->>Bus: send_message findings
+  Bus->>Critic: L2 validate trust_score HITL

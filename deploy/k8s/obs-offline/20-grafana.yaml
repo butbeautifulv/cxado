@@ -1,0 +1,187 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: cxado-obs
+spec:
+  selector:
+    app: grafana
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: cxado-obs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: grafana
+          image: docker.io/grafana/grafana:11.5.2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: admin
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth
+                  key: admin_password
+            - name: GF_USERS_DEFAULT_THEME
+              value: dark
+            - name: GF_AUTH_BASIC_ENABLED
+              value: "true"
+            - name: GF_SERVER_ROOT_URL
+              value: "%(protocol)s://%(domain)s:%(http_port)s/"
+            - name: GF_SERVER_SERVE_FROM_SUB_PATH
+              value: "false"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/grafana
+            - name: provisioning
+              mountPath: /etc/grafana/provisioning
+              readOnly: true
+            - name: dashboards
+              mountPath: /var/lib/grafana/dashboards
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+        - name: grafana-bootstrap
+          image: docker.io/curlimages/curl:8.5.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GRAFANA_ADMIN_USER
+              value: admin
+            - name: GRAFANA_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth
+                  key: admin_password
+            - name: GRAFANA_VIEWER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth
+                  key: viewer_username
+            - name: GRAFANA_VIEWER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth
+                  key: viewer_password
+          command: ["sh", "-lc"]
+          args:
+            - |
+              set -u
+              base="http://127.0.0.1:3000"
+              echo "[grafana-bootstrap] waiting for grafana..."
+              for i in $(seq 1 180); do
+                if curl -fsS "${base}/api/health" >/dev/null; then
+                  break
+                fi
+                sleep 1
+              done
+
+              # Use session auth (works even when basic auth is off).
+              cookiejar="/tmp/grafana_cookies.txt"
+              rm -f "${cookiejar}"
+              echo "[grafana-bootstrap] logging in as admin..."
+              curl -fsS -c "${cookiejar}" \
+                -H 'Content-Type: application/json' \
+                -X POST "${base}/login" \
+                -d "{\"user\":\"${GRAFANA_ADMIN_USER}\",\"password\":\"${GRAFANA_ADMIN_PASSWORD}\"}" >/dev/null || true
+
+              echo "[grafana-bootstrap] ensuring viewer user exists..."
+              lookup() {
+                curl -fsS -b "${cookiejar}" \
+                  "${base}/api/users/lookup?loginOrEmail=${GRAFANA_VIEWER_USERNAME}" 2>/dev/null || true
+              }
+
+              uid="$(lookup | sed -n 's/.*\"id\":\\([0-9][0-9]*\\).*/\\1/p' | head -n 1 || true)"
+              if [ -z "${uid}" ]; then
+                curl -fsS -b "${cookiejar}" \
+                  -H 'Content-Type: application/json' \
+                  -X POST "${base}/api/admin/users" \
+                  -d "{\"name\":\"${GRAFANA_VIEWER_USERNAME}\",\"email\":\"${GRAFANA_VIEWER_USERNAME}@local\",\"login\":\"${GRAFANA_VIEWER_USERNAME}\",\"password\":\"${GRAFANA_VIEWER_PASSWORD}\"}" >/dev/null
+                uid="$(lookup | sed -n 's/.*\"id\":\\([0-9][0-9]*\\).*/\\1/p' | head -n 1 || true)"
+              fi
+
+              if [ -n "${uid}" ]; then
+                curl -fsS -b "${cookiejar}" \
+                  -H 'Content-Type: application/json' \
+                  -X PATCH "${base}/api/org/users/${uid}" \
+                  -d '{"role":"Viewer"}' >/dev/null || true
+              fi
+
+              echo "[grafana-bootstrap] done; sleeping."
+              exec sleep infinity
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: grafana-data
+        - name: provisioning
+          configMap:
+            name: grafana-provisioning
+            optional: true
+            items:
+              - key: dashboards.yml
+                path: dashboards/dashboards.yml
+              - key: datasources.yml
+                path: datasources/datasources.yml
+        - name: dashboards
+          configMap:
+            name: grafana-dashboards
+            optional: true
+            items:
+              - key: infra-host.json
+                path: infra/infra-host.json
+              - key: infra-k3s.json
+                path: infra/infra-k3s.json
+              - key: vllm-monitoring.json
+                path: infra/vllm-monitoring.json
+              - key: cxado-overview.json
+                path: cxado/cxado-overview.json
+              - key: egregore-cys-agi.json
+                path: egregore/egregore-cys-agi.json
+              - key: egregore-observability.json
+                path: egregore/egregore-observability.json
+              - key: sgr-reasoning.json
+                path: egregore/sgr-reasoning.json
+              - key: veil-graph.json
+                path: veil/veil-graph.json
+              - key: veil-observability.json
+                path: veil/veil-observability.json
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-data
+  namespace: cxado-obs
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 2Gi
+

@@ -1,0 +1,80 @@
+image:
+  repository: "docker.io/cxado/egregore"
+  tag: "__CXADO_OFFLINE_TAG__"
+  pullPolicy: IfNotPresent
+
+ui:
+  image:
+    repository: "docker.io/cxado/egregore-ui"
+    tag: "__CXADO_OFFLINE_TAG__"
+    pullPolicy: IfNotPresent
+  replicas: 1
+
+api:
+  replicas: 1
+  port: 8080
+
+worker:
+  replicas: 8
+  idleTimeout: 0
+
+env:
+  stage: prod
+  useMemoryFallback: "false"
+  useKafka: "true"
+  kafkaBootstrapServers: "redpanda.cxado-data.svc.cluster.local:9092"
+  useQdrant: "true"
+  authEnabled: "false"
+  otelEnabled: "true"
+  logLevel: "INFO"
+  logFormat: "json"
+  litellmLocalModelCostMap: "true"
+  traceCriticEnabled: "false"
+  llmRequestTimeout: "90"
+  workerJobTimeout: "180"
+  manualInvestigationAsync: "true"
+
+obs:
+  traceBackend: "composite"
+
+prometheus:
+  multiprocHostPath: "/var/lib/cxado/prom-multiproc"
+
+postgres:
+  host: "postgres.cxado-data.svc.cluster.local"
+  port: 5432
+  user: postgres
+  # password comes from egregore chart secret values
+  password: ""
+  database: egregore
+
+redis:
+  host: "redis.cxado-data.svc.cluster.local"
+  port: 6379
+  password: ""
+
+qdrant:
+  url: "http://qdrant.cxado-data.svc.cluster.local:6333"
+
+veil:
+  mcpUrl: "http://veil-veil-mcp.veil.svc.cluster.local:8091/mcp"
+
+otel:
+  endpoint: "http://tempo.cxado-obs.svc.cluster.local:4317"
+  resourceAttributes: "deployment.environment=offline,k8s.namespace.name=cxado-app"
+  tracesSampler: "parentbased_always_on"
+  tracesSamplerArg: "1.0"
+
+langfuse:
+  enabled: true
+  host: "http://langfuse-web.cxado-langfuse.svc.cluster.local:3000"
+  publicKey: "pk-lf-egregore-dev-local"
+  secretKey: "sk-lf-egregore-dev-local"
+
+llm:
+  provider: litellm
+  model: openai/Kbenkhaled/Qwen3.5-27B-NVFP4
+  baseUrl: http://10.8.185.185:11611/v1
+  temperature: "0.1"
+  reasoningModel: ""
+  reasoningTemperature: "0.0"

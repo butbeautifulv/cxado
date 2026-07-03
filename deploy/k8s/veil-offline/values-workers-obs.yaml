@@ -1,0 +1,23 @@
+# Optional overlay: enable workers for observability E2E smoke (not for graph-only prod).
+pipeline:
+  worker:
+    replicas: 1
+    hpa:
+      enabled: false
+
+ingest:
+  worker:
+    replicas: 1
+    hpa:
+      enabled: false
+
+engage:
+  eventsWorker:
+    enabled: true
+
+scrape:
+  cronJob:
+    enabled: true
+
+observability:
+  enabled: true

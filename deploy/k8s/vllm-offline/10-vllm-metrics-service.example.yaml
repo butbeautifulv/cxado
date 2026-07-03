@@ -1,0 +1,21 @@
+# Example in-cluster Service — NOT used for the current setup.
+# Production vLLM is external on Proxmox GPU VM:
+#   API:     http://10.8.185.186:11612/v1
+#   metrics: http://10.8.185.186:11612/metrics
+# Prometheus job: deploy/k8s/obs-offline/prometheus-k3s.yml (job_name: vllm)
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-server
+  namespace: cxado-llm
+  labels:
+    app: vllm-server
+    platform: vllm
+spec:
+  selector:
+    app: vllm-server
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+      protocol: TCP

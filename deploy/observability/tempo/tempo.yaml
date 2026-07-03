@@ -17,6 +17,22 @@ compactor:
   compaction:
     block_retention: 48h
 
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+      cluster: cxado-k3s
+  storage:
+    path: /var/tempo/generator/wal
+  processor:
+    span_metrics:
+      dimensions:
+        - service.name
+        - span.name
+    service_graphs:
+      dimensions:
+        - service.name
+
 storage:
   trace:
     backend: local

@@ -1,0 +1,123 @@
+# Deprecated: plain-HTTP NodePorts replaced by TLS gateway in deploy/k8s/offline-tls/.
+# Apply via: ./scripts/k8s/offline-tls-apply.sh
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: veil-api-nodeport
+  namespace: veil
+spec:
+  type: NodePort
+  selector:
+    app: veil-api
+  ports:
+    - name: http
+      port: 8090
+      targetPort: 8090
+      nodePort: 30990
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: veil-mcp-nodeport
+  namespace: veil
+spec:
+  type: NodePort
+  selector:
+    app: veil-mcp
+  ports:
+    - name: http
+      port: 8091
+      targetPort: 8091
+      nodePort: 30991
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: egregore-api-nodeport
+  namespace: cxado-app
+spec:
+  type: NodePort
+  selector:
+    app: egregore-api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      nodePort: 30880
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: egregore-ui-nodeport
+  namespace: cxado-app
+spec:
+  type: NodePort
+  selector:
+    app: egregore-ui
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      nodePort: 30300
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-nodeport
+  namespace: cxado-obs
+spec:
+  type: NodePort
+  selector:
+    app: grafana
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      nodePort: 30002
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-nodeport
+  namespace: cxado-obs
+spec:
+  type: NodePort
+  selector:
+    app: prometheus
+  ports:
+    - name: http
+      port: 9090
+      targetPort: 9090
+      nodePort: 30091
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: neo4j-http-nodeport
+  namespace: cxado-data
+spec:
+  type: NodePort
+  selector:
+    app: neo4j
+  ports:
+    - name: http
+      port: 7474
+      targetPort: 7474
+      nodePort: 30474
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: neo4j-bolt-nodeport
+  namespace: cxado-data
+spec:
+  type: NodePort
+  selector:
+    app: neo4j
+  ports:
+    - name: bolt
+      port: 7687
+      targetPort: 7687
+      nodePort: 30687
+

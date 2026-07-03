@@ -1,0 +1,35 @@
+# Optional: use with kube-prometheus-stack / Prometheus Operator.
+# Not used by the plain Prometheus Deployment in deploy/k8s/obs-offline/.
+#
+# Requirements:
+# - Service port must be named (see 10-vllm-metrics-service.example.yaml)
+# - Prometheus Operator must select this ServiceMonitor (label `release: prometheus` below)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: vllm-metrics
+  namespace: cxado-llm
+  labels:
+    app: vllm-server
+    release: prometheus
+spec:
+  jobLabel: app
+  namespaceSelector:
+    matchNames:
+      - cxado-llm
+  selector:
+    matchLabels:
+      app: vllm-server
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 10s
+      scrapeTimeout: 10s
+      honorLabels: true
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_pod_node_name]
+          targetLabel: node
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace

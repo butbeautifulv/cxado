@@ -7,6 +7,7 @@ Default profile `cxado-default`: Veil graph + egregore infra + observability. Eg
 | 3000 | egregore Operator UI | host / k8s | Next.js | ingress :81 or egregore-ui SVC |
 | 3001 | Langfuse UI | optional | `cxado-langfuse` profile only | — |
 | 3002 | Grafana | observability | admin/admin (dev) | ingress / kube-prometheus |
+| 30080 | Architecture docs site | k3s offline | Static HTML + Mermaid; TLS via `cxado-tls-gateway`; hostPath `/home/bbv/cxado/arch-docs` | cxado-arch-docs SVC |
 | 3200 | Tempo query API | observability | |
 | 4317 | Tempo OTLP gRPC | observability | `OTEL_EXPORTER_OTLP_ENDPOINT` |
 | 5432 | egregore Postgres | egregore | DB `egregore` |

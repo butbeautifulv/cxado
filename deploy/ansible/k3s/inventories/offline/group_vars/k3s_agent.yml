@@ -1,0 +1,4 @@
+---
+# k3s_server_host and k3s_node_token are set at runtime from the first server host.
+k3s_agent_labels:
+  node-role.kubernetes.io/worker: "true"

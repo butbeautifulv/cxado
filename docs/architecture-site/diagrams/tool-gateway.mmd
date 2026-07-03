@@ -1,0 +1,27 @@
+flowchart LR
+  subgraph worker [Worker sandbox]
+    AgentRT[AgentRuntime]
+    McpReg[McpToolRegistry]
+  end
+
+  subgraph pep [Tool Gateway PEP]
+    Invoke[POST /invoke]
+    Policy[policy chain depth]
+    Sanitize[sanitize output]
+    Audit[audit Kafka]
+    Approval[HITL approval]
+  end
+
+  subgraph adapters [Adapters]
+    Veil[veil_mcp read-only TI playbooks]
+    Veneno[veneno_mcp HITL exec]
+    RagAd[rag_query ACL]
+    Siem[query_siem_readonly]
+    Web[web_search read_document]
+  end
+
+  AgentRT --> McpReg
+  McpReg --> Invoke
+  Invoke --> Policy --> adapters
+  adapters --> Sanitize --> Audit
+  Veneno --> Approval

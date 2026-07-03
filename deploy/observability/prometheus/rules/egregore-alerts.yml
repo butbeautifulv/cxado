@@ -1,0 +1,64 @@
+groups:
+  - name: egregore
+    rules:
+      - alert: EgregoreAPIDown
+        expr: up{job="egregore-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          platform: egregore
+        annotations:
+          summary: Egregore API scrape target is down
+          description: Prometheus cannot scrape egregore-api for more than 2 minutes.
+
+      - alert: EgregoreWorkerJobErrors
+        expr: sum(rate(cys_worker_job_duration_seconds_count{status="error"}[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+          platform: egregore
+        annotations:
+          summary: Egregore worker jobs are failing
+          description: Worker job error rate is above zero for 5 minutes.
+
+      - alert: EgregoreHITLBacklog
+        expr: cys_hitl_pending_total > 10
+        for: 15m
+        labels:
+          severity: warning
+          platform: egregore
+        annotations:
+          summary: HITL backlog is high
+          description: More than 10 jobs are awaiting human approval.
+
+      - alert: EgregoreWorkerLatencyHigh
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(cys_worker_job_duration_seconds_bucket[5m])) by (le)
+          ) > 120
+        for: 10m
+        labels:
+          severity: warning
+          platform: egregore
+        annotations:
+          summary: Worker p95 latency is high
+          description: Worker job p95 latency exceeded 120 seconds.
+
+      - alert: TempoDown
+        expr: up{job="tempo"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          platform: observability
+        annotations:
+          summary: Tempo is down
+
+      - alert: LokiDown
+        expr: up{job="loki"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          platform: observability
+        annotations:
+          summary: Loki is down

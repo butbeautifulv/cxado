@@ -1,0 +1,88 @@
+---
+- name: Resolve cluster join parameters from first server
+  ansible.builtin.set_fact:
+    k3s_node_token: "{{ hostvars[groups['k3s_server'][0]].k3s_node_token }}"
+    k3s_server_host: "{{ hostvars[groups['k3s_server'][0]].k3s_server_host }}"
+  when:
+    - groups['k3s_server'] | length > 0
+    - hostvars[groups['k3s_server'][0]].k3s_node_token is defined
+
+- name: Fail when cluster join token is unavailable
+  ansible.builtin.fail:
+    msg: >-
+      k3s_node_token is not available. Run the server playbook first or provide
+      k3s_node_token and k3s_server_host in inventory/group_vars.
+  when: k3s_node_token is not defined or k3s_server_host is not defined
+
+- name: Ensure k3s agent images directory exists
+  ansible.builtin.file:
+    path: /var/lib/rancher/k3s/agent/images
+    state: directory
+    mode: "0755"
+
+- name: Stage airgap images tarball for k3s agent install
+  ansible.builtin.copy:
+    src: "{{ k3s_airgap_staging_dir }}/k3s-airgap-images-{{ k3s_airgap_arch }}.tar"
+    dest: "/var/lib/rancher/k3s/agent/images/k3s-airgap-images-{{ k3s_airgap_arch }}.tar"
+    remote_src: true
+    mode: "0644"
+  when: k3s_images_tar_stat.stat.exists | default(false)
+
+- name: Stage airgap images zst tarball for k3s agent install
+  ansible.builtin.copy:
+    src: "{{ k3s_airgap_staging_dir }}/k3s-airgap-images-{{ k3s_airgap_arch }}.tar.zst"
+    dest: "/var/lib/rancher/k3s/agent/images/k3s-airgap-images-{{ k3s_airgap_arch }}.tar.zst"
+    remote_src: true
+    mode: "0644"
+  when: not (k3s_images_tar_stat.stat.exists | default(false)) and (k3s_images_zst_stat.stat.exists | default(false))
+
+- name: Check if k3s agent is already installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/k3s
+  register: k3s_agent_installed
+
+- name: Install k3s agent (offline join)
+  ansible.builtin.shell: |
+    set -euo pipefail
+    cd "{{ k3s_airgap_staging_dir }}"
+    INSTALL_K3S_SKIP_DOWNLOAD=true \
+    INSTALL_K3S_VERSION="{{ k3s_version }}" \
+    K3S_URL="https://{{ k3s_server_host }}:6443" \
+    K3S_TOKEN="{{ k3s_node_token }}" \
+    K3S_NODE_IP="{{ k3s_node_ip }}" \
+    ./install.sh
+  args:
+    executable: /bin/bash
+    creates: /usr/local/bin/k3s
+  when: not k3s_agent_installed.stat.exists
+
+- name: Enable and start k3s-agent service
+  ansible.builtin.systemd:
+    name: k3s-agent
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Wait for k3s agent service to be active
+  ansible.builtin.command: systemctl is-active k3s-agent
+  register: k3s_agent_active
+  until: k3s_agent_active.stdout == "active"
+  retries: 30
+  delay: 10
+  changed_when: false
+
+- name: Label worker node from server
+  ansible.builtin.shell: |
+    set -euo pipefail
+    k3s kubectl label node "{{ k3s_node_name | default(ansible_hostname) }}" \
+    {% for key, value in k3s_agent_labels.items() %}
+      {{ key }}="{{ value }}" \
+    {% endfor %}
+      --overwrite
+  args:
+    executable: /bin/bash
+  delegate_to: "{{ groups['k3s_server'][0] }}"
+  when:
+    - k3s_agent_labels | default({}) | length > 0
+    - groups['k3s_server'] | length > 0
+  changed_when: true

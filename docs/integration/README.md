@@ -2,6 +2,8 @@
 
 Cross-project wiring runbooks. See also [ecosystem-map.md](../ecosystem-map.md).
 
+**Visual diagrams:** [architecture-site/](../architecture-site/) — component, sequence, and deployment UML (k3s: port 30080).
+
 | Integration | Status | Doc |
 |-------------|--------|-----|
 | egregore ↔ veil-mcp | **Wired** (read-only graph + playbooks) | [egregore-veil-mcp.md](egregore-veil-mcp.md) |

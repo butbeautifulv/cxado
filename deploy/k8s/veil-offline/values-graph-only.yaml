@@ -1,0 +1,53 @@
+global:
+  # Images are imported into k3s containerd as docker.io/library/<name>:<tag>
+  imageRegistry: "docker.io/library/"
+  imageTag: "__VEIL_OFFLINE_TAG__"
+  natsUrl: "nats://nats.veil-data.svc:4222"
+  neo4jUri: "neo4j://neo4j.veil-data.svc:7687"
+
+# Graph read plane only
+graph:
+  api:
+    enabled: true
+    replicas: 1
+  mcp:
+    enabled: true
+    replicas: 1
+  ingress:
+    enabled: false
+
+# Disable engage plane for now (offline minimal)
+engage:
+  api:
+    enabled: false
+  mcp:
+    enabled: false
+  eventsWorker:
+    enabled: false
+  runner:
+    enabled: false
+
+# Keep worker deployments at 0 replicas for graph-only
+pipeline:
+  worker:
+    replicas: 0
+    hpa:
+      enabled: false
+
+ingest:
+  worker:
+    replicas: 0
+    hpa:
+      enabled: false
+
+scrape:
+  cronJob:
+    enabled: false
+
+observability:
+  enabled: true
+  otelEndpoint: "http://tempo.cxado-obs.svc.cluster.local:4317"
+  samplerRatio: 1.0
+  logFormat: json
+  logLevel: info
+

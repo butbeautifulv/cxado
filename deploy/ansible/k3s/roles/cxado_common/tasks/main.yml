@@ -1,0 +1,56 @@
+---
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - curl
+      - openssh-server
+      - ca-certificates
+      - iptables
+      - apparmor
+      - docker.io
+      - python3
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Ensure deploy user is in docker and sudo groups
+  ansible.builtin.user:
+    name: "{{ cxado_deploy_user }}"
+    groups:
+      - docker
+      - sudo
+    append: true
+
+- name: Enable and start Docker
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+
+- name: Load br_netfilter kernel module
+  ansible.builtin.command: modprobe br_netfilter
+  changed_when: false
+
+- name: Load overlay kernel module
+  ansible.builtin.command: modprobe overlay
+  changed_when: false
+
+- name: Persist kernel modules for k3s
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/k3s.conf
+    mode: "0644"
+    content: |
+      br_netfilter
+      overlay
+
+- name: Install k3s sysctl settings
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-k3s.conf
+    mode: "0644"
+    content: |
+      net.bridge.bridge-nf-call-iptables = 1
+      net.ipv4.ip_forward = 1
+  notify: Apply sysctl
+
+- name: Apply sysctl settings
+  ansible.builtin.meta: flush_handlers

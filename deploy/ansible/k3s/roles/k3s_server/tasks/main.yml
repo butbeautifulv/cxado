@@ -1,0 +1,104 @@
+---
+- name: Ensure k3s config directory exists
+  ansible.builtin.file:
+    path: "{{ k3s_config_path | dirname }}"
+    state: directory
+    mode: "0755"
+
+- name: Install k3s server config
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: "{{ k3s_config_path }}"
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Restart k3s
+
+- name: Ensure k3s agent images directory exists
+  ansible.builtin.file:
+    path: /var/lib/rancher/k3s/agent/images
+    state: directory
+    mode: "0755"
+
+- name: Stage airgap images tarball for k3s install
+  ansible.builtin.copy:
+    src: "{{ k3s_airgap_staging_dir }}/k3s-airgap-images-{{ k3s_airgap_arch }}.tar"
+    dest: "/var/lib/rancher/k3s/agent/images/k3s-airgap-images-{{ k3s_airgap_arch }}.tar"
+    remote_src: true
+    mode: "0644"
+  when: k3s_images_tar_stat.stat.exists | default(false)
+
+- name: Stage airgap images zst tarball for k3s install
+  ansible.builtin.copy:
+    src: "{{ k3s_airgap_staging_dir }}/k3s-airgap-images-{{ k3s_airgap_arch }}.tar.zst"
+    dest: "/var/lib/rancher/k3s/agent/images/k3s-airgap-images-{{ k3s_airgap_arch }}.tar.zst"
+    remote_src: true
+    mode: "0644"
+  when: not (k3s_images_tar_stat.stat.exists | default(false)) and (k3s_images_zst_stat.stat.exists | default(false))
+
+- name: Check if k3s server is already installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/k3s
+  register: k3s_installed
+
+- name: Install k3s server (offline)
+  ansible.builtin.shell: |
+    set -euo pipefail
+    cd "{{ k3s_airgap_staging_dir }}"
+    INSTALL_K3S_SKIP_DOWNLOAD=true \
+    INSTALL_K3S_VERSION="{{ k3s_version }}" \
+    K3S_NODE_IP="{{ k3s_node_ip }}" \
+    ./install.sh
+  args:
+    executable: /bin/bash
+    creates: /usr/local/bin/k3s
+  environment:
+    INSTALL_K3S_SKIP_DOWNLOAD: "true"
+  when: not k3s_installed.stat.exists
+
+- name: Enable and start k3s service
+  ansible.builtin.systemd:
+    name: k3s
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Wait for k3s API to respond
+  ansible.builtin.command: k3s kubectl get nodes
+  register: k3s_nodes_check
+  until: k3s_nodes_check.rc == 0
+  retries: 30
+  delay: 10
+  changed_when: false
+
+- name: Wait for control-plane node to be Ready
+  ansible.builtin.command: k3s kubectl get nodes -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}'
+  register: k3s_node_ready
+  until: k3s_node_ready.stdout == "True"
+  retries: 30
+  delay: 10
+  changed_when: false
+  when: k3s_cluster_init | default(false)
+
+- name: Read k3s node token from server
+  ansible.builtin.slurp:
+    src: /var/lib/rancher/k3s/server/node-token
+  register: k3s_node_token_raw
+  when: k3s_cluster_init | default(false)
+
+- name: Publish cluster join facts for agents
+  ansible.builtin.set_fact:
+    k3s_node_token: "{{ k3s_node_token_raw.content | b64decode | trim }}"
+    k3s_server_host: "{{ k3s_node_ip }}"
+  when: k3s_cluster_init | default(false)
+
+- name: Cache cluster join facts on localhost
+  ansible.builtin.set_fact:
+    k3s_node_token: "{{ hostvars[groups['k3s_server'][0]].k3s_node_token }}"
+    k3s_server_host: "{{ hostvars[groups['k3s_server'][0]].k3s_server_host }}"
+  delegate_to: localhost
+  become: false
+  run_once: true
+  when:
+    - groups['k3s_server'] | length > 0
+    - hostvars[groups['k3s_server'][0]].k3s_node_token is defined
