@@ -25,6 +25,37 @@ prometheus:
         static_configs:
           - targets:
               - veil-mcp.veil.svc.cluster.local:8091
+      - job_name: vllm
+        metrics_path: /metrics
+        scrape_interval: 10s
+        scrape_timeout: 10s
+        honor_labels: true
+        static_configs:
+          - targets:
+              - 10.8.185.186:11612
+            labels:
+              service: vllm
+              platform: vllm
+              component: inference-server
+              host: proxmox-gpu
+      - job_name: proxmox-gpu-node
+        static_configs:
+          - targets:
+              - 10.8.185.186:9100
+            labels:
+              service: node-exporter
+              platform: proxmox
+              component: gpu-host
+              instance: proxmox-gpu
+      - job_name: proxmox-gpu-dcgm
+        static_configs:
+          - targets:
+              - 10.8.185.186:9400
+            labels:
+              service: dcgm-exporter
+              platform: proxmox
+              component: gpu-telemetry
+              instance: proxmox-gpu
 
 alertmanager:
   enabled: false

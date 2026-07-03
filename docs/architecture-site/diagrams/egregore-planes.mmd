@@ -1,0 +1,31 @@
+flowchart TB
+  subgraph ingress [IngressPlane]
+    API[FastAPI app.py]
+    CLI[CLI egregore]
+    EventIngress[EventIngress router.py]
+  end
+
+  subgraph control [ControlPlane]
+    Critic[CriticService L2 HITL]
+    Coord[CoordinatorService]
+    Bus[SecureAgentBus HMAC trust]
+  end
+
+  subgraph worker [WorkerPlane]
+    Orch[WorkerOrchestrator]
+    RunJob[RunWorkerJob]
+    AgentRT[AgentRuntime]
+    Sandbox[SandboxConnector]
+  end
+
+  SIEM[SIEM NetFlow Manual] --> EventIngress
+  API --> EventIngress
+  CLI --> EventIngress
+  EventIngress --> Orch
+  Orch --> RunJob --> AgentRT
+  RunJob --> Sandbox
+  RunJob --> Bus
+  Bus --> Critic
+  Bus --> Coord
+  API --> ManageRun[ManageRun interactive]
+  ManageRun --> AgentRT

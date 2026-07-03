@@ -1,0 +1,29 @@
+flowchart TB
+  subgraph apps [Egregore workloads]
+    API[egregore-api]
+    Worker[egregore-worker]
+    GW[tool-gateway]
+  end
+
+  subgraph obs [cxado-obs namespace]
+    Prom[Prometheus scrape /metrics]
+    Tempo[Tempo OTLP traces]
+    Loki[Loki logs]
+    Promtail[Promtail DaemonSet]
+    Grafana[Grafana dashboards]
+  end
+
+  subgraph llm_obs [cxado-langfuse optional]
+    LF[Langfuse LLM traces judge]
+  end
+
+  API -->|OTEL gRPC| Tempo
+  Worker -->|OTEL gRPC| Tempo
+  API -->|structlog| Promtail
+  Worker -->|structlog| Promtail
+  Promtail --> Loki
+  API -->|CallbackHandler| LF
+  Prom --> Grafana
+  Tempo --> Grafana
+  Loki --> Grafana
+  LF --> Grafana

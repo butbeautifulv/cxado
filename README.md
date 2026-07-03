@@ -23,6 +23,17 @@ make -C projects/egregore dev
 
 Runbook: [docs/deploy/cxado-default-stack.md](docs/deploy/cxado-default-stack.md) · ports: [deploy/ports.md](deploy/ports.md).
 
+### Architecture docs site (k3s offline)
+
+Static HTML + Mermaid site for architects: [docs/architecture-site/](docs/architecture-site/).
+
+```bash
+./scripts/k8s/k3s-deploy-arch-docs-offline.sh   # bundle + apply manifests
+CXADO_ARCH_DOCS_HOST=0.0.0.0 ./scripts/k8s/smoke-test-arch-docs.sh
+```
+
+URL: `https://<k3s-node>:30080` (TLS via `cxado-tls-gateway`).
+
 Already cloned without submodules:
 
 ```bash

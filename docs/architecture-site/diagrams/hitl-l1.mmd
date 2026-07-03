@@ -1,0 +1,15 @@
+sequenceDiagram
+  participant Op as Operator UI
+  participant API as FastAPI
+  participant RT as AgentRuntime
+  participant MW as HumanInTheLoopMiddleware
+  participant Store as JobStore
+
+  RT->>MW: invoke dangerous tool run_active_scan
+  MW->>MW: interrupt pause graph
+  MW->>Store: AWAITING_APPROVAL pending action
+  Op->>API: GET /approvals/pending
+  Op->>API: POST /jobs/id/resume approval_id params_hash
+  API->>Store: verify hash no bypass
+  API->>RT: resume approved params
+  RT->>RT: continue execution

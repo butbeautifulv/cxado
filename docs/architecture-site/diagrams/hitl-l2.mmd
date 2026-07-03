@@ -1,0 +1,17 @@
+sequenceDiagram
+  participant Job as RunWorkerJob
+  participant Bus as SecureAgentBus
+  participant Critic as CriticService
+  participant Mem as EpisodicMemory
+  participant Op as Operator
+
+  Job->>Bus: pending_finding trust=0.3
+  Bus->>Critic: channel=critic
+  Critic->>Critic: trust_score requires_hitl
+  alt auto approve
+    Critic->>Mem: promote finding trust=1.0
+  else requires HITL
+    Critic->>Bus: security.events.awaiting_approval
+    Op->>Op: review in UI
+    Critic->>Mem: promote or revision enqueue
+  end

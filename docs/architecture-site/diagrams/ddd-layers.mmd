@@ -1,0 +1,48 @@
+flowchart TB
+  subgraph product [Product layer agents/]
+    Personas[personas agent.yaml AGENT.md]
+    Plans[plans routing rules]
+    Skills[skills SKILL.md]
+  end
+
+  subgraph delivery [Delivery interfaces/]
+    API[api/ FastAPI]
+    Worker[worker/ orchestrator]
+    Control[control_plane/ critic coordinator]
+    Gateway[gateways/tool PEP]
+    RAG[rag/ ingest retrieve]
+  end
+
+  subgraph application [Application cys_core/application/]
+    UseCases[use_cases RunWorkerJob ManageRun]
+    Policy[ProfilePolicyResolver]
+    Ports[ports 30+ interfaces]
+  end
+
+  subgraph domain [Domain cys_core/domain/]
+    Catalog[catalog personas tools policy]
+    Memory[memory investigation state]
+    Security[security guardrails sanitizer]
+    Events[events workers runs]
+  end
+
+  subgraph infra [Infrastructure]
+    Queue[queue Redis Kafka]
+    Stores[memory stores job_store]
+    SandboxInfra[sandbox k8s local]
+  end
+
+  subgraph runtime [Runtime]
+    AgentRT[AgentRuntime middleware stack]
+    Registry[AgentRegistry tools]
+  end
+
+  Personas --> AgentRT
+  API --> UseCases
+  Worker --> UseCases
+  UseCases --> AgentRT
+  UseCases --> Ports
+  Ports --> infra
+  AgentRT --> Registry
+  Policy --> Catalog
+  UseCases --> domain

@@ -52,6 +52,7 @@ Domain vision: [docs/domains/](domains/README.md) · Awareness: [awareness.md](d
 | `shared/python/cxado_auth_client/` | Python HTTP client for auth-broker |
 | `deploy/` | Unified Docker Compose for cxado default stack (`make cxado-up`) |
 | `docs/` | ADR, ecosystem map, agent MCP tooling, integration runbooks |
+| `docs/architecture-site/` | Visual architecture landing (RU, Mermaid UML) — k3s port **30080** |
 
 ```mermaid
 flowchart TB

@@ -19,6 +19,17 @@ projects/fstec/
 # Local env
 .env
 .env.*
+/deploy/.secrets/
+docs/architecture-site/js/credentials.js
+
+# Offline k3s deploy (local-only)
+deploy_logs/
+deploy/ansible/k3s/inventories/**/hosts.yml
+deploy/ansible/k3s/files/airgap/*
+!deploy/ansible/k3s/files/airgap/.gitkeep
+# Real secret manifests (keep *.example.yaml templates)
+deploy/k8s/**/*-secret.yaml
+!deploy/k8s/**/*-secret.example.yaml
 
 # Python / Node artifacts inside submodules (belt-and-suspenders)
 **/.venv/
