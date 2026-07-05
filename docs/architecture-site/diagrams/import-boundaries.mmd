@@ -1,0 +1,22 @@
+flowchart TB
+  subgraph allowed [Allowed dependencies]
+    IF[interfaces/] --> APP[application/]
+    APP --> DOM[domain/]
+    INF[infrastructure/] --> APP
+    INF --> DOM
+    BOOT[bootstrap/container.py] --> IF
+    BOOT --> INF
+    BOOT --> APP
+    RT[runtime/ registry/] --> DOM
+    INF --> RT
+  end
+
+  subgraph forbidden [Forbidden - gated by verify-architecture]
+    APP -.-x INF2[infrastructure direct in application]
+    APP -.-x OBS[cys_core.observability in application]
+    APP -.-x BOOT2[bootstrap in application]
+    DOM -.-x INF3[infrastructure in domain]
+  end
+
+  Gate[make verify-architecture] --> allowed
+  Gate --> forbidden

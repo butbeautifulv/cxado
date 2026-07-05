@@ -36,7 +36,9 @@ services:
       GF_DATABASE_CACHE_CONNECTION_MAX_LIFETIME: 300
     volumes:
       - cxado_grafana_data:/var/lib/grafana
-      - ../observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../observability/grafana/provisioning/dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ../observability/grafana/provisioning/datasources/datasources.compose-lite.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ../observability/grafana/provisioning/alerting:/etc/grafana/provisioning/alerting:ro
       - ../observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus

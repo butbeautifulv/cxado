@@ -1,17 +1,22 @@
 .PHONY: bootstrap skills-install skills-link refs-link rules-link gui-link auth-broker-test test-contracts \
-	cxado-up cxado-up-lite cxado-up-obs cxado-up-langfuse cxado-down cxado-status cxado-obs-reload \
+	cxado-up cxado-up-lite cxado-up-minimal cxado-up-veil cxado-down cxado-status cxado-obs-reload cxado-validate-grafana \
+	cxado-local-e2e \
 	cxado-kind-up cxado-kind-down cxado-k8s-build-images cxado-tf-init cxado-tf-apply cxado-tf-destroy \
-	cxado-k8s-up cxado-k8s-status cxado-k8s-smoke cxado-graph-bootstrap cxado-tf-validate agent-skills-install help
+	cxado-k8s-up cxado-k8s-status cxado-k8s-smoke cxado-graph-bootstrap cxado-tf-validate agent-skills-install \
+	wshobson-skills-install help
 
 help:
 	@echo "Targets:"
 	@echo "  bootstrap       Initialize and update git submodules"
 	@echo "  cxado-up        Full stack: veil + egregore infra + obs (Tempo, Qdrant)"
 	@echo "  cxado-up-lite   Lite profile: no Tempo, 1 worker; includes Qdrant + Langfuse"
+	@echo "  cxado-up-minimal  Agents-only: postgres+redis+langfuse+grafana (no veil/kafka)"
+	@echo "  cxado-up-veil     Veil graph-only (neo4j+api+mcp) on cxado-net"
 	@echo "  cxado-up-langfuse  cxado-up + Langfuse (:3001)"
 	@echo "  cxado-down      Stop obs + egregore infra (keeps veil by default)"
 	@echo "  cxado-status    Health checks for cxado-default"
-	@echo "  cxado-obs-reload  Reload Prometheus config"
+	@echo "  cxado-validate-grafana  Prometheus datasource + egregore-api target health"
+	@echo "  cxado-local-e2e     POST investigation smoke against localhost:8080"
 	@echo "  cxado-kind-up     Create kind cluster + ingress (cxado profile)"
 	@echo "  cxado-k8s-up      kind-up + build images + terraform apply"
 	@echo "  cxado-k8s-status  kubectl + curl health checks"
@@ -24,6 +29,7 @@ help:
 	@echo "  rules-link      Symlink shared/agent-rules core into project rules/"
 	@echo "  gui-link        Symlink shared/gui into project node_modules/@cxado/gui"
 	@echo "  agent-skills-install  Fetch docker-expert + grafana-dashboards into .agents/skills/"
+	@echo "  wshobson-skills-install  Curated wshobson/agents skills (Python, LLM, k8s, UI, DevSecOps)"
 	@echo "  auth-broker-test  Run shared/go/auth-broker unit tests"
 	@echo "  test-contracts  Cross-repo engage.events wire contract smoke"
 
@@ -49,6 +55,10 @@ agent-skills-install:
 	@chmod +x scripts/install-agent-skills.sh
 	@./scripts/install-agent-skills.sh
 
+wshobson-skills-install:
+	@chmod +x scripts/install-wshobson-skills.sh
+	@./scripts/install-wshobson-skills.sh
+
 auth-broker-test:
 	@cd shared/go/auth-broker && go test ./...
 
@@ -63,6 +73,24 @@ cxado-up:
 cxado-up-lite:
 	@chmod +x scripts/cxado-up.sh scripts/cxado-down.sh scripts/cxado-status.sh
 	@CXADO_PROFILE=lite ./scripts/cxado-up.sh
+
+cxado-up-minimal:
+	@chmod +x scripts/cxado-up-minimal.sh scripts/cxado-down.sh
+	@./scripts/cxado-up-minimal.sh
+
+cxado-up-veil:
+	@chmod +x scripts/cxado-up-veil.sh
+	@./scripts/cxado-up-veil.sh
+
+.PHONY: cxado-up-veil
+
+cxado-validate-grafana:
+	@chmod +x scripts/validate-local-grafana.sh
+	@./scripts/validate-local-grafana.sh
+
+cxado-local-e2e:
+	@chmod +x scripts/local-e2e-smoke.sh
+	@./scripts/local-e2e-smoke.sh
 
 cxado-up-langfuse:
 	@chmod +x scripts/cxado-up.sh

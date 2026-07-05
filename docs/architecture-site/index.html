@@ -16,6 +16,7 @@
         <li><a href="#ecosystem">1. Обзор cxado</a></li>
         <li><a href="#egregore-planes">2. Egregore — плоскости</a></li>
         <li><a href="#ddd-layers">3. DDD-слои</a></li>
+        <li><a href="#arch-gates">3b. Import boundaries</a></li>
         <li><a href="#personas">4. Personas &amp; plans</a></li>
         <li><a href="#data-flow">5. Data flow</a></li>
         <li><a href="#memory">6. Memory</a></li>
@@ -24,9 +25,10 @@
         <li><a href="#hitl">9. HITL L1 / L2</a></li>
         <li><a href="#evals">10. Evals</a></li>
         <li><a href="#observability">11. Observability</a></li>
-        <li><a href="#integrations">12. Интеграции</a></li>
-        <li><a href="#k3s-topology">13. k3s offline</a></li>
-        <li><a href="#references">14. Markdown-канон</a></li>
+        <li><a href="#local-dev">12. Local-first dev</a></li>
+        <li><a href="#integrations">13. Интеграции</a></li>
+        <li><a href="#k3s-topology">14. k3s offline</a></li>
+        <li><a href="#references">15. Markdown-канон</a></li>
       </ol>
     </nav>
 
@@ -106,17 +108,27 @@
         <p>
           Egregore — <strong>event-driven</strong> multi-agent SOC platform. Единый
           <code>AgentRuntime</code> + <code>AgentRegistry</code>; все сценарии через <code>EventIngress</code>.
+          Логика orchestration (enqueue) — в <strong>application</strong> (<code>EnqueueWorkerJobs</code>, <code>StartEngagement</code>),
+          не в <code>interfaces/worker/orchestrator.py</code> (только dequeue + execution).
         </p>
         <table>
           <thead><tr><th>Плоскость</th><th>Путь</th><th>Ответственность</th></tr></thead>
           <tbody>
-            <tr><td>Ingress</td><td><code>interfaces/ingress/</code>, <code>interfaces/api/</code></td><td>Приём событий: CLI, FastAPI, webhooks, SIEM</td></tr>
+            <tr><td>Ingress</td><td><code>interfaces/ingress/</code>, <code>interfaces/api/</code></td><td>Приём событий: CLI, FastAPI, webhooks, SIEM; <code>RouteAndEnqueueEvent</code> из container</td></tr>
             <tr><td>Control plane</td><td><code>interfaces/control_plane/</code></td><td>Critic (L2 HITL), Coordinator (narratives), bus subscribers</td></tr>
-            <tr><td>Worker plane</td><td><code>interfaces/worker/</code></td><td>Ephemeral sandbox jobs per event/persona</td></tr>
+            <tr><td>Worker plane</td><td><code>interfaces/worker/</code></td><td><code>WorkerOrchestrator</code> — dequeue only; ephemeral sandbox jobs per event/persona</td></tr>
           </tbody>
         </table>
-        <p class="muted">Интерактивный путь (Operator UI): <code>ManageRun</code> → <code>RunStep</code> → тот же <code>AgentRuntime</code>.</p>
+        <p class="muted">Интерактивный путь: <code>POST /v1/engagements</code> (mode=interactive) → <code>RunStep</code> → <code>AgentRunKernel</code> → <code>AgentRuntime</code>.
+          Worker path: <code>RunWorkerJob</code> → тот же <code>AgentRunKernel</code> (единый <code>RunKernelPort</code>).</p>
         <div class="diagram" data-diagram="D02"><p class="diagram-loading">Загрузка диаграммы…</p></div>
+        <h3 id="engagement">Engagement lifecycle</h3>
+        <p><code>StartEngagement</code> → <code>MetaPlanner</code> (meta_llm) или declarative plan из YAML → domain <code>EngagementPlan</code> →
+          <code>Engagement.begin_planning</code> / <code>mark_enqueued</code> / <code>record_persona_completed</code>.</p>
+        <div class="diagram" data-diagram="D14"><p class="diagram-loading">Загрузка диаграммы…</p></div>
+        <h3>Target: пять ролей (Phases 2–3)</h3>
+        <p class="muted">Текущая реализация — три плоскости (D02). Целевая декомпозиция: Ingress → Orchestration → Execution → Control → Egress.</p>
+        <div class="diagram" data-diagram="D15"><p class="diagram-loading">Загрузка диаграммы…</p></div>
       </section>
 
       <section id="ddd-layers">
@@ -124,13 +136,13 @@
         <table>
           <thead><tr><th>Слой</th><th>Путь</th><th>Содержание</th></tr></thead>
           <tbody>
-            <tr><td>Domain</td><td><code>cys_core/domain/</code></td><td>catalog, memory, security, eval, runs, events — без I/O</td></tr>
-            <tr><td>Application</td><td><code>cys_core/application/</code></td><td>use cases, <code>ProfilePolicyResolver</code>, ports</td></tr>
-            <tr><td>Infrastructure</td><td><code>cys_core/infrastructure/</code></td><td>queue, sandbox, Postgres catalog, memory stores</td></tr>
+            <tr><td>Domain</td><td><code>cys_core/domain/</code></td><td>catalog, memory, security, eval, runs, engagement; <code>policy/pure.py</code>, lifecycle (<code>Engagement</code>, <code>WorkerJob.transition_to</code>); Pydantic pragmatic</td></tr>
+            <tr><td>Application</td><td><code>cys_core/application/</code></td><td><code>RouteAndEnqueueEvent</code>, <code>EnqueueWorkerJobs</code>, <code>StartEngagement</code>; worker pipeline (context_builder, agent_executor, result_validator, finding_publisher, job_finalizer); <code>plans/plan_loader.py</code>; ports</td></tr>
+            <tr><td>Infrastructure</td><td><code>cys_core/infrastructure/</code></td><td>queue, sandbox, stores; <code>observability/*_adapter</code>; <code>policy/*_adapter</code>; <code>bootstrap/*_adapter</code></td></tr>
             <tr><td>Runtime</td><td><code>cys_core/runtime/agent.py</code></td><td><code>AgentRuntime</code> + middleware stack</td></tr>
-            <tr><td>Delivery</td><td><code>interfaces/</code></td><td>API, worker, control, gateways, RAG</td></tr>
+            <tr><td>Delivery</td><td><code>interfaces/</code></td><td>API, worker (execution), control, gateways, RAG, ingress</td></tr>
             <tr><td>Product</td><td><code>agents/</code></td><td>YAML personas, plans, skills (не Python-модули)</td></tr>
-            <tr><td>DI</td><td><code>bootstrap/container.py</code></td><td>Composition root всех портов</td></tr>
+            <tr><td>DI</td><td><code>bootstrap/container.py</code></td><td>Composition root: <code>get_orchestration_port</code>, <code>get_route_and_enqueue</code>, <code>get_metrics_port</code>, catalog ports</td></tr>
           </tbody>
         </table>
         <div class="diagram" data-diagram="D03"><p class="diagram-loading">Загрузка диаграммы…</p></div>
@@ -147,21 +159,41 @@
         </ol>
       </section>
 
+      <section id="arch-gates">
+        <h2>3b. Import boundaries &amp; arch gates</h2>
+        <p>Автоматическая проверка границ hexagonal-архитектуры (Phases 7–8):</p>
+        <pre class="compact"><code>make -C projects/egregore verify-architecture</code></pre>
+        <table>
+          <thead><tr><th>Gate</th><th>Правило</th></tr></thead>
+          <tbody>
+            <tr><td>Application purity</td><td>0 imports из <code>cys_core/infrastructure</code>, <code>bootstrap</code>, <code>cys_core/observability</code></td></tr>
+            <tr><td>Domain purity</td><td>0 imports из <code>cys_core/infrastructure</code>; plan YAML I/O только в <code>application/plans/plan_loader.py</code></td></tr>
+            <tr><td>Contracts</td><td><code>lint-imports</code> + allowlists в <code>scripts/verify_import_boundaries.py</code></td></tr>
+          </tbody>
+        </table>
+        <p class="muted">Resolved phases: <code>projects/egregore/docs/ARCHITECTURE_DEBT.md</code></p>
+        <div class="diagram" data-diagram="D16"><p class="diagram-loading">Загрузка диаграммы…</p></div>
+      </section>
+
       <section id="personas">
         <h2>4. Personas, plans, skills</h2>
         <h3>Роли</h3>
         <table>
           <thead><tr><th>Role</th><th>Примеры</th><th>Где</th></tr></thead>
           <tbody>
-            <tr><td><span class="tag">worker</span></td><td>soc, network, redteam, compliance, dfir, cloud, …</td><td>Ephemeral sandbox via <code>WorkerOrchestrator</code></td></tr>
+            <tr><td><span class="tag">worker</span></td><td>soc, network, redteam, compliance, dfir, cloud, …</td><td>Ephemeral sandbox via <code>RunWorkerJob</code> pipeline (orchestrator dequeue only)</td></tr>
             <tr><td><span class="tag">control</span></td><td>critic, coordinator</td><td>Async bus subscribers</td></tr>
           </tbody>
         </table>
         <p>Продуктовые определения: <code>agents/personas/&lt;name&gt;/agent.yaml</code> + <code>AGENT.md</code>.
-          Индекс: <code>agents/manifest.yaml</code>. Загрузка: <code>bootstrap/product_loader.py</code> → <code>AgentDefinition</code>.</p>
+          Индекс: <code>agents/manifest.yaml</code>.</p>
+        <p><strong>Prod catalog:</strong> <code>USE_DYNAMIC_CATALOG=true</code>, <code>USE_MEMORY_FALLBACK=false</code> —
+          runtime читает только Postgres; seed через <code>POST /catalog/seed</code> или bootstrap script.
+          FS merge в <code>hybrid_registry.py</code> — только dev/test fallback.</p>
         <h3>Plans (routing)</h3>
         <p><code>agents/plans/*.yaml</code> — правила <code>event_types → personas</code>.
-          Для <code>manual.investigation</code>: LLM <code>PlanInvestigation</code> с цепочкой <code>depends_on_persona</code>.</p>
+          Parse: domain <code>parse_plan_routing_from_dict</code>; I/O: <code>application/plans/plan_loader.py</code>.
+          Для <code>manual.investigation</code>: <code>MetaPlanner</code> + domain <code>EngagementPlan</code> с цепочкой <code>depends_on_persona</code>.</p>
         <table>
           <thead><tr><th>Plan</th><th>Назначение</th></tr></thead>
           <tbody>
@@ -179,7 +211,18 @@
       <section id="data-flow">
         <h2>5. Data flow: event → investigation → worker</h2>
         <div class="diagram" data-diagram="D04"><p class="diagram-loading">Загрузка диаграммы…</p></div>
-        <p><code>correlation_id</code> на events/jobs = <code>investigation_id</code> для сквозной трассировки.</p>
+        <p><strong>Enqueue</strong> = application orchestration (<code>RouteAndEnqueueEvent</code> → <code>EnqueueWorkerJobs</code>).
+          <strong>Worker</strong> = execution adapter (<code>WorkerOrchestrator</code> dequeue → <code>RunWorkerJob</code>).</p>
+        <ul class="compact">
+          <li><code>context_builder</code> — собирает контекст job</li>
+          <li><code>agent_executor</code> — вызывает <code>AgentRunKernel</code></li>
+          <li><code>result_validator</code> — валидация structured output</li>
+          <li><code>finding_publisher</code> — публикация findings в bus</li>
+          <li><code>job_finalizer</code> — <code>WorkerJob.transition_to</code>, budget, metrics</li>
+        </ul>
+        <p><code>correlation_id</code> на events/jobs = <code>investigation_id</code> для сквозной трассировки (через <code>CorrelationIdPort</code> на ingress).</p>
+        <p>Очередь: единый Kafka topic <code>worker.jobs</code> (consumer group <code>egregore-workers</code>);
+          <code>persona</code> в payload; чужие jobs re-enqueue. Legacy <code>worker.jobs.{persona}</code> deprecated.</p>
       </section>
 
       <section id="memory">
@@ -193,28 +236,32 @@
             <tr><td>Episodic</td><td><code>agent_memory_entries</code></td><td><code>tenant_id + investigation_id</code></td><td>finding / pending_finding</td></tr>
             <tr><td>Investigation</td><td><code>investigation_states</code></td><td>same</td><td>plan, completed personas, summaries</td></tr>
             <tr><td>Knowledge (opt)</td><td>Qdrant RAG</td><td>tenant ACL</td><td>Playbooks, runbooks</td></tr>
+            <tr><td>Eval-native</td><td><code>MemoryRecord</code> / <code>RetrievalContext</code></td><td>provenance</td><td>RAG eval export, trace citations</td></tr>
           </tbody>
         </table>
         <p class="muted">Services: <code>MemoryReadService</code>, <code>MemoryWriteService</code> в domain;
-          stores в <code>cys_core/infrastructure/memory/</code>.</p>
+          eval models: <code>domain/memory/records.py</code>; stores в <code>cys_core/infrastructure/memory/</code>.</p>
       </section>
 
       <section id="tooling">
         <h2>7. Tooling &amp; datasources</h2>
-        <p><em>Отдельной domain-сущности «datasource» нет.</em> Источники данных для агентов:</p>
+        <p>Domain-модель datasources: <code>cys_core/domain/datasources/</code> — capabilities, authz, staging, write-gate.
+          Runbook: <code>DATASOURCES_RBAC.md</code>. Attach-time filter + exec-time gateway check.</p>
         <ul class="compact">
-          <li><strong>RAG</strong> — <code>interfaces/rag/</code>, Qdrant, ACL pre-filter, ingest scan</li>
+          <li><strong>RAG</strong> — <code>interfaces/rag/</code>, Qdrant, ACL pre-filter</li>
           <li><strong>Veil graph</strong> — read-only MCP (<code>ti_*</code>, <code>playbook_*</code>)</li>
           <li><strong>SIEM</strong> — <code>query_siem_readonly</code> tool</li>
           <li><strong>Web/docs</strong> — gateway adapters</li>
+          <li><strong>Local dev</strong> — <code>USE_TOOL_GATEWAY=false</code> → direct MCP client; prod PEP optional</li>
         </ul>
         <div class="diagram" data-diagram="D06"><p class="diagram-loading">Загрузка диаграммы…</p></div>
         <table>
           <thead><tr><th>Интеграция</th><th>Риск</th><th>Gate</th></tr></thead>
           <tbody>
-            <tr><td>Veil MCP</td><td>Read-only</td><td>Allowlist, <code>VEIL_MCP_ENABLED</code></td></tr>
+            <tr><td>Veil MCP</td><td>Read-only</td><td>Allowlist, <code>VEIL_MCP_ENABLED</code>, authz matrix</td></tr>
             <tr><td>Veneno MCP</td><td>Exec / scan</td><td><span class="tag partial">partial</span> HITL on <code>run_active_scan</code></td></tr>
-            <tr><td>Tool Gateway PEP</td><td>All MCP</td><td>Sandbox required, sanitize, audit, chain depth</td></tr>
+            <tr><td>Tool Gateway PEP</td><td>All MCP</td><td>Sandbox, sanitize, audit, <code>AuthorizationDecision</code></td></tr>
+            <tr><td>Write gate (E2)</td><td>Catalog mutations</td><td><code>WriteGateRequest</code> actor + reason</td></tr>
           </tbody>
         </table>
       </section>
@@ -228,8 +275,10 @@
             <tr><td>InputSanitizer</td><td><code>domain/security/sanitizer.py</code></td><td>Injection, Unicode smuggling, length limits (RU priority patterns)</td></tr>
             <tr><td>OutputGuardrails</td><td><code>domain/security/guardrails.py</code></td><td>PII, schema, prompt leakage, exfiltration</td></tr>
             <tr><td>ProfilePolicyResolver</td><td><code>application/policy_resolver.py</code></td><td>catalog → env → defaults; trust floor, spawn depth, SGR</td></tr>
+            <tr><td>Policy adapters</td><td><code>infrastructure/policy/profile_policy_adapter.py</code></td><td>Impure profile lookups; domain — <code>policy/pure.py</code> only</td></tr>
             <tr><td>SecureAgentBus</td><td><code>domain/security/agent_bus.py</code></td><td>HMAC, trust levels, escalation-only paths</td></tr>
             <tr><td>ScopeMiddleware</td><td><code>middleware/scope_middleware.py</code></td><td>Per-agent tool allowlist</td></tr>
+            <tr><td>PolicyGate</td><td><code>application/guardrails/policy_gate.py</code></td><td>Fail-closed when policy missing; aligned with datasource E2</td></tr>
           </tbody>
         </table>
       </section>
@@ -249,24 +298,33 @@
         <h3>L2 sequence</h3>
         <div class="diagram" data-diagram="D09"><p class="diagram-loading">Загрузка диаграммы…</p></div>
         <h3>WorkerJob state</h3>
+        <p class="muted">Переходы статусов enforced in domain (<code>WorkerJob.transition_to</code>).</p>
         <div class="diagram" data-diagram="D10"><p class="diagram-loading">Загрузка диаграммы…</p></div>
         <p>UI: Operator UI <code>/approvals</code>, SSE status stream.</p>
       </section>
 
       <section id="evals">
         <h2>10. Evals &amp; quality</h2>
+        <h3>Eval plane (models + runner)</h3>
+        <ul class="compact">
+          <li><code>domain/eval/models.py</code> — <code>EvalCase</code>, <code>EvalDataset</code>, <code>EvalRun</code></li>
+          <li><code>application/eval/runner.py</code> — <code>DryRunEvalRunner</code> + <code>EvalRunnerPort</code></li>
+          <li>CLI: <code>scripts/evals/egregore_eval.py --suite tiny --limit 1 --dry-run</code></li>
+          <li>UI: <code>/eval</code>, <code>/compare</code> · Grafana dashboard <code>egregore-eval</code></li>
+          <li>Quality routing: <code>application/routing/quality_router.py</code></li>
+        </ul>
         <h3>Runtime (production-ready)</h3>
         <ul class="compact">
           <li><strong>Trace critic</strong> — <code>evaluate_trace_critic.py</code>, threshold from <code>ProfilePolicyResolver</code></li>
           <li><strong>Langfuse LLM judge</strong> — Helpfulness / Hallucination evaluators</li>
           <li><strong>Critic trust_score</strong> — L2 gate on findings</li>
         </ul>
-        <h3>Batch eval adapters <span class="tag stub">stub</span></h3>
-        <p class="muted">Skeleton implementations in <code>application/evals/</code> — not wired to CI yet:</p>
+        <h3>Batch eval adapters <span class="tag stub">skeleton wired</span></h3>
+        <p class="muted">Skeleton in <code>application/eval/adapters.py</code> — not full CI suites yet:</p>
         <ul class="compact">
-          <li><code>RagasAdapter</code>, <code>FaithEvalAdapter</code>, <code>FActScoreAdapter</code></li>
-          <li><code>Tau2Adapter</code>, <code>BfclAdapter</code>, <code>AgentBenchAdapter</code></li>
-          <li>CLI: <code>scripts/evals/egregore_eval.py</code> (dry-run)</li>
+          <li><code>RagasAdapterSkeleton</code>, FaithEval, FActScore runbooks</li>
+          <li><code>BfclAdapterSkeleton</code>, <code>AgentBenchAdapterSkeleton</code>, <code>Tau2AdapterSkeleton</code></li>
+          <li>Runbooks: <code>docs/runbooks/RAGAS.md</code>, <code>BFCL.md</code>, <code>AGENTBENCH_TAU2.md</code></li>
         </ul>
       </section>
 
@@ -276,17 +334,40 @@
         <table>
           <thead><tr><th>Сигнал</th><th>Backend</th><th>Корреляция</th></tr></thead>
           <tbody>
-            <tr><td>LLM traces</td><td>Langfuse CallbackHandler</td><td>persona, job_id, correlation_id</td></tr>
-            <tr><td>HTTP/worker spans</td><td>OTEL → Tempo</td><td>trace_id, span_id</td></tr>
-            <tr><td>Metrics</td><td>Prometheus <code>GET /metrics</code></td><td>platform gauges</td></tr>
-            <tr><td>Logs</td><td>structlog JSON → Loki (Promtail)</td><td>correlation_id</td></tr>
+            <tr><td>LLM traces</td><td>Langfuse CallbackHandler</td><td>persona, job_id, correlation_id, TOOL spans</td></tr>
+            <tr><td>HTTP/worker spans</td><td>OTEL → Tempo (full/k3s)</td><td>trace_id, span_id</td></tr>
+            <tr><td>Metrics</td><td>Prometheus <code>GET /metrics</code></td><td><code>cys_*</code> gauges, RAG retrievals</td></tr>
+            <tr><td>Logs</td><td>structlog JSON → Loki (k3s)</td><td>correlation_id</td></tr>
           </tbody>
         </table>
+        <h3>Local compose (minimal/lite)</h3>
+        <ul class="compact">
+          <li>Grafana :3002 — datasources <code>prometheus:9090</code> (не k8s DNS)</li>
+          <li>Langfuse :3001 · Prometheus :9091/targets</li>
+          <li><code>make cxado-validate-grafana</code> · <code>make cxado-local-e2e</code></li>
+          <li>Forensic: <code>LANGFUSE_BASE_URL=http://localhost:3001 ./scripts/k8s/langfuse-benchmark-report.sh</code></li>
+          <li>Loki/Tempo panels empty in minimal — expected</li>
+        </ul>
         <p>Runbook: <code>projects/egregore/docs/OBSERVABILITY.md</code></p>
       </section>
 
+      <section id="local-dev">
+        <h2>12. Local-first development</h2>
+        <div class="diagram" data-diagram="D13"><p class="diagram-loading">Загрузка диаграммы…</p></div>
+        <table>
+          <thead><tr><th>Команда</th><th>Что поднимает</th></tr></thead>
+          <tbody>
+            <tr><td><code>make cxado-up-minimal</code></td><td>postgres, redis, langfuse, prometheus, grafana</td></tr>
+            <tr><td><code>make cxado-up-veil</code></td><td>neo4j, veil-api, veil-mcp (optional)</td></tr>
+            <tr><td><code>make -C projects/egregore dev-api</code></td><td>API :8080 on host (Prometheus scrape)</td></tr>
+            <tr><td>UI <code>.env.local</code></td><td><code>EGREGORE_API_UPSTREAM=http://127.0.0.1:8080</code></td></tr>
+          </tbody>
+        </table>
+        <p class="muted">Deploy profiles: <code>deploy/README.md</code> · k3s gates deferred: <code>docs/K3S_DEPLOY_BACKLOG.md</code></p>
+      </section>
+
       <section id="integrations">
-        <h2>12. Интеграции</h2>
+        <h2>13. Интеграции</h2>
         <table>
           <thead><tr><th>Flow</th><th>Status</th><th>Doc</th></tr></thead>
           <tbody>
@@ -300,7 +381,7 @@
       </section>
 
       <section id="k3s-topology">
-        <h2>13. k3s offline deploy topology</h2>
+        <h2>14. k3s offline deploy topology</h2>
         <p>TLS gateway <code>cxado-tls-gateway</code> в namespace <code>cxado-edge</code> проксирует сервисы по NodePort-подобным портам.</p>
         <div class="diagram" data-diagram="D12"><p class="diagram-loading">Загрузка диаграммы…</p></div>
         <table>
@@ -319,20 +400,25 @@
       </section>
 
       <section id="references">
-        <h2>14. Markdown-канон (SSOT)</h2>
+        <h2>15. Markdown-канон (SSOT)</h2>
         <div class="references">
           <ul>
             <li><a href="https://github.com/butbeautifulv/cxado/blob/main/docs/ecosystem-map.md">docs/ecosystem-map.md</a></li>
             <li><a href="https://github.com/butbeautifulv/cxado/blob/main/docs/adr/cxado-architecture.md">docs/adr/cxado-architecture.md</a></li>
+            <li><a href="https://github.com/butbeautifulv/cxado/blob/main/docs/egregore_unified_masterplan.md">docs/egregore_unified_masterplan.md</a></li>
+            <li><a href="https://github.com/butbeautifulv/cxado/blob/main/docs/K3S_DEPLOY_BACKLOG.md">docs/K3S_DEPLOY_BACKLOG.md</a></li>
+            <li><a href="https://github.com/butbeautifulv/cxado/blob/main/deploy/README.md">deploy/README.md</a></li>
             <li><a href="https://github.com/butbeautifulv/egregore/blob/main/docs/ARCHITECTURE.md">egregore/docs/ARCHITECTURE.md</a></li>
+            <li><a href="https://github.com/butbeautifulv/egregore/blob/main/docs/ARCHITECTURE_DEBT.md">egregore/docs/ARCHITECTURE_DEBT.md</a></li>
             <li><a href="https://github.com/butbeautifulv/egregore/blob/main/docs/OBSERVABILITY.md">egregore/docs/OBSERVABILITY.md</a></li>
+            <li><a href="https://github.com/butbeautifulv/egregore/blob/main/docs/DATASOURCES_RBAC.md">egregore/docs/DATASOURCES_RBAC.md</a></li>
+            <li><a href="https://github.com/butbeautifulv/egregore/blob/main/docs/integration/sgr-reasoning.md">egregore/docs/integration/sgr-reasoning.md</a></li>
             <li><a href="https://github.com/butbeautifulv/egregore/blob/main/docs/SECURE_DEPLOYMENT.md">egregore/docs/SECURE_DEPLOYMENT.md</a></li>
-            <li><a href="https://github.com/butbeautifulv/egregore/blob/main/docs/PLATFORM_TRUTH_MAP.md">egregore/docs/PLATFORM_TRUTH_MAP.md</a></li>
             <li><a href="https://github.com/butbeautifulv/cxado/blob/main/docs/integration/README.md">docs/integration/README.md</a></li>
             <li><a href="https://github.com/butbeautifulv/cxado/blob/main/docs/deploy/k3s-offline-baseline.md">docs/deploy/k3s-offline-baseline.md</a></li>
           </ul>
         </div>
-        <p class="muted" style="margin-top:1rem">Gap analysis: <code>docs/architecture-site/GAPS.md</code></p>
+        <p class="muted" style="margin-top:1rem">Site hub: <code>docs/architecture-site/README.md</code> · Gap analysis: <code>docs/architecture-site/GAPS.md</code> · Arch gate: <code>projects/egregore/scripts/verify_import_boundaries.py</code></p>
       </section>
     </main>
   </div>

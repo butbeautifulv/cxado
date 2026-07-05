@@ -1,0 +1,12 @@
+flowchart TB
+  ingress[IngressPlane] --> orch[OrchestrationPlane]
+  orch --> queue[worker.jobs]
+  queue --> exec[ExecutionPlane]
+  exec --> bus[SecureAgentBus]
+  bus --> router[BusIngressRouter]
+  router --> ctrl[ControlPlane]
+  router --> queue
+  orch --> egress[EgressPlane]
+  exec --> egress
+  ctrl --> egress
+  egress --> ui[UI_SSE_poll]

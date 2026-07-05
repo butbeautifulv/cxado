@@ -1,0 +1,33 @@
+flowchart TB
+  subgraph host [Host dev]
+    API[egregore-api :8080]
+    Worker[egregore-worker]
+    UI[egregore-ui :3000]
+    UI -->|EGREGORE_API_UPSTREAM| API
+  end
+
+  subgraph compose [docker cxado-net minimal]
+    PG[postgres]
+    Redis[redis]
+    LF[langfuse :3001]
+    Prom[prometheus :9091]
+    Graf[grafana :3002]
+  end
+
+  subgraph veil_opt [optional cxado-up-veil]
+    Neo4j[neo4j]
+    VAPI[veil-api]
+    VMCP[veil-mcp :8091]
+  end
+
+  API --> PG
+  API --> Redis
+  API --> LF
+  Worker --> PG
+  Worker --> Redis
+  Worker --> LF
+  Prom -->|scrape host.docker.internal:8080| API
+  Graf --> Prom
+  API --> VMCP
+  VMCP --> VAPI
+  VAPI --> Neo4j

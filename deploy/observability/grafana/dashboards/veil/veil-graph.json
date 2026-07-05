@@ -89,7 +89,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Scrape target health for veil-api.",
+      "description": "Scrape target health for Veil API.",
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -143,7 +143,7 @@
         },
         "textMode": "auto"
       },
-      "title": "veil-api",
+      "title": "Veil API",
       "type": "stat",
       "targets": [
         {
@@ -162,7 +162,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Scrape target health for veil-mcp.",
+      "description": "Scrape target health for Veil MCP.",
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -216,7 +216,7 @@
         },
         "textMode": "auto"
       },
-      "title": "veil-mcp",
+      "title": "Veil MCP",
       "type": "stat",
       "targets": [
         {
@@ -257,7 +257,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
+        "w": 8,
         "x": 8,
         "y": 1
       },
@@ -276,7 +276,7 @@
         },
         "textMode": "auto"
       },
-      "title": "Total RPS",
+      "title": "Total Request Rate",
       "type": "stat",
       "targets": [
         {
@@ -497,7 +497,7 @@
           "sort": "desc"
         }
       },
-      "title": "p95 Latency by Service",
+      "title": "Latency P95 / P99",
       "type": "timeseries",
       "targets": [
         {
@@ -540,8 +540,7 @@
             "showPoints": "never",
             "spanNulls": false
           },
-          "unit": "ops",
-          "noValue": "0"
+          "unit": "ops"
         },
         "overrides": [
           {
@@ -583,7 +582,7 @@
           "sort": "desc"
         }
       },
-      "title": "5xx Responses / sec",
+      "title": "5xx Error Rate",
       "type": "timeseries",
       "targets": [
         {

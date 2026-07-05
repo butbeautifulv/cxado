@@ -10,26 +10,31 @@ SSOT for section IDs, diagram registry, and markdown cross-links.
 | Language | RU (technical) |
 | Base path | `/docs/architecture-site/` |
 | k3s URL | `https://<host>:30080` |
+| Local preview | `http://127.0.0.1:8765` |
 | Offline | Mermaid bundled in `js/mermaid.min.js`, no CDN |
 
 ## Navigation (section anchors)
 
 | # | Anchor | Title | Source docs |
 |---|--------|-------|-------------|
+| 0 | `#services` | Сервисы k3s | `js/services.js`, deploy ports |
 | 1 | `#ecosystem` | Обзор cxado | `docs/ecosystem-map.md`, `docs/adr/cxado-architecture.md` |
-| 2 | `#egregore-planes` | Egregore — три плоскости | `projects/egregore/docs/ARCHITECTURE.md` |
-| 3 | `#ddd-layers` | DDD-слои Egregore | `projects/egregore/docs/PLATFORM_TRUTH_MAP.md` |
-| 4 | `#personas` | Personas, plans, skills | `projects/egregore/agents/manifest.yaml` |
-| 5 | `#data-flow` | Data flow: event → worker | `interfaces/ingress/router.py`, `run_worker_job.py` |
-| 6 | `#memory` | Memory (4 слоя) | `cys_core/domain/memory/` |
-| 7 | `#tooling` | Tooling & datasources | `interfaces/gateways/tool/`, RAG, Veil MCP |
-| 8 | `#guardrails` | Guardrails & policy | `domain/security/`, `policy_resolver.py` |
+| 2 | `#egregore-planes` | Egregore — три плоскости (+ target 5 ролей) | `projects/egregore/docs/ARCHITECTURE.md` |
+| 3 | `#ddd-layers` | DDD-слои Egregore | `ARCHITECTURE.md`, `ARCHITECTURE_DEBT.md`, `application/ports/` |
+| 3b | `#arch-gates` | Import boundaries & arch gates | `scripts/verify_import_boundaries.py`, `ARCHITECTURE_DEBT.md` |
+| 4 | `#personas` | Personas, plans, skills | `agents/manifest.yaml`, `CATALOG_SEED.md` |
+| 4b | `#engagement` | Engagement lifecycle | `domain/engagement/models.py`, `StartEngagement` |
+| 5 | `#data-flow` | Data flow: event → worker | `ARCHITECTURE.md` (worker.jobs), `run_worker_job.py` |
+| 6 | `#memory` | Memory (4+ слоя) | `domain/memory/`, `domain/memory/records.py` |
+| 7 | `#tooling` | Tooling & datasources | `DATASOURCES_RBAC.md`, gateways, Veil MCP |
+| 8 | `#guardrails` | Guardrails & policy | `policy_resolver.py`, `guardrails/policy_gate.py` |
 | 9 | `#hitl` | HITL L1 / L2 | middleware, `critic_service.py`, UI `/approvals` |
-| 10 | `#evals` | Evals | `domain/eval/`, Langfuse judge, trajectory adapters |
-| 11 | `#observability` | Observability | `docs/OBSERVABILITY.md` |
-| 12 | `#integrations` | Интеграции | `docs/integration/` |
-| 13 | `#k3s-topology` | k3s offline topology | `deploy/k8s/*-offline/` |
-| 14 | `#references` | Markdown-канон | links to repo docs |
+| 10 | `#evals` | Evals | `application/eval/`, runbooks, UI `/eval` `/compare` |
+| 11 | `#observability` | Observability | `OBSERVABILITY.md`, Grafana `egregore-eval` |
+| 12 | `#local-dev` | Local-first dev | `deploy/README.md`, `make cxado-up-minimal` |
+| 13 | `#integrations` | Интеграции | `docs/integration/` |
+| 14 | `#k3s-topology` | k3s offline topology | `deploy/k8s/*-offline/` |
+| 15 | `#references` | Markdown-канон | links to repo docs |
 
 ## Diagram registry
 
@@ -47,12 +52,22 @@ SSOT for section IDs, diagram registry, and markdown cross-links.
 | `D10` | `diagrams/job-state.mmd` | State | `#hitl` |
 | `D11` | `diagrams/obs-stack.mmd` | Component | `#observability` |
 | `D12` | `diagrams/k3s-topology.mmd` | Deployment | `#k3s-topology` |
+| `D13` | `diagrams/local-dev-topology.mmd` | Deployment | `#local-dev` |
+| `D14` | `diagrams/engagement-flow.mmd` | Sequence | `#engagement`, `#egregore-planes` |
+| `D15` | `diagrams/planes-target.mmd` | Component | `#egregore-planes` |
+| `D16` | `diagrams/import-boundaries.mmd` | Package | `#arch-gates` |
 
 ## Markdown SSOT links (footer)
 
 - [ecosystem-map.md](../../ecosystem-map.md)
 - [cxado-architecture ADR](../../adr/cxado-architecture.md)
+- [egregore_unified_masterplan.md](../../egregore_unified_masterplan.md)
+- [K3S_DEPLOY_BACKLOG.md](../../K3S_DEPLOY_BACKLOG.md)
+- [deploy/README.md](../../deploy/README.md)
 - [egregore ARCHITECTURE.md](../../projects/egregore/docs/ARCHITECTURE.md)
+- [egregore ARCHITECTURE_DEBT.md](../../projects/egregore/docs/ARCHITECTURE_DEBT.md)
 - [egregore OBSERVABILITY.md](../../projects/egregore/docs/OBSERVABILITY.md)
+- [DATASOURCES_RBAC.md](../../projects/egregore/docs/DATASOURCES_RBAC.md)
+- [SGR reasoning](../../projects/egregore/docs/integration/sgr-reasoning.md)
 - [egregore SECURE_DEPLOYMENT.md](../../projects/egregore/docs/SECURE_DEPLOYMENT.md)
 - [integration index](../../integration/README.md)

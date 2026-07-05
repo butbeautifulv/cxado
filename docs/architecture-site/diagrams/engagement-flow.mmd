@@ -1,0 +1,17 @@
+sequenceDiagram
+  participant Client
+  participant Ingress
+  participant Orch as Orchestration
+  participant Queue as worker.jobs
+  participant Worker as Execution
+  participant Bus as SecureAgentBus
+  participant Egress
+
+  Client->>Ingress: POST /v1/engagements
+  Ingress->>Orch: StartEngagement
+  Orch->>Egress: status created
+  Orch->>Queue: enqueue personas
+  Queue->>Worker: RunWorkerJob
+  Worker->>Bus: finding envelopes
+  Worker->>Egress: job_finished
+  Egress-->>Client: SSE stream

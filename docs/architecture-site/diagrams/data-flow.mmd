@@ -1,25 +1,35 @@
 sequenceDiagram
   participant Src as SIEM Manual UI
   participant API as FastAPI EventIngress
-  participant Router as EventRouter Planner
-  participant Queue as JobQueue
-  participant Orch as WorkerOrchestrator
+  participant Container as bootstrap/container
+  participant Route as RouteAndEnqueueEvent
+  participant Orch as EnqueueWorkerJobs
+  participant Queue as Kafka worker.jobs
+  participant Worker as WorkerOrchestrator
   participant Job as RunWorkerJob
+  participant Pipeline as worker pipeline
+  participant Kernel as AgentRunKernel
   participant RT as AgentRuntime
   participant Bus as SecureAgentBus
   participant Critic as CriticService
 
-  Src->>API: POST /events SecurityEvent
-  API->>Router: RouteAndEnqueueEvent
-  alt manual.investigation
-    Router->>Router: PlanInvestigation LLM chain
-  else other events
-    Router->>Router: agents/plans/*.yaml rules
+  Src->>API: POST /events or /v1/engagements
+  API->>Container: get_route_and_enqueue / get_start_engagement
+  Container->>Route: CorrelationIdPort injected
+  alt engagement.start meta_llm
+    Route->>Route: MetaPlanner EngagementPlan
+  else engagement.start declarative
+    Route->>Route: plan_loader + EventRouter rules
   end
-  Router->>Queue: enqueue WorkerJob
-  Orch->>Queue: dequeue
-  Orch->>Job: run persona sandbox
-  Job->>RT: arun tools memory middleware
-  RT-->>Job: structured finding
+  Route->>Orch: enqueue_from_routing
+  Orch->>Queue: WorkerJob persona in payload
+  Worker->>Queue: dequeue consumer group egregore-workers
+  Note over Worker,Queue: foreign persona re-enqueued to worker.jobs
+  Worker->>Job: run_job execution only
+  Job->>Pipeline: context agent validate publish finalize
+  Pipeline->>Kernel: execute RunKernelRequest
+  Kernel->>RT: arun tools memory middleware
+  RT-->>Kernel: structured finding
+  Kernel-->>Job: RunKernelResult
   Job->>Bus: send_message findings
   Bus->>Critic: L2 validate trust_score HITL

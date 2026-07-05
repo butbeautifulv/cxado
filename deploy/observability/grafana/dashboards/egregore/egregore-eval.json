@@ -1,0 +1,88 @@
+{
+  "uid": "egregore-eval",
+  "title": "Egregore — Eval & Quality",
+  "description": "RAG retrievals, persona quality routing, and eval plane smoke metrics (local compose Prometheus).",
+  "tags": ["egregore", "eval", "quality", "rag"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "graphTooltip": 1,
+  "style": "dark",
+  "editable": true,
+  "time": { "from": "now-6h", "to": "now" },
+  "annotations": { "list": [] },
+  "links": [
+    {
+      "title": "cys-agi SOC",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/egregore-cys-agi",
+      "keepTime": true
+    },
+    {
+      "title": "SGR Reasoning",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/egregore-sgr",
+      "keepTime": true
+    }
+  ],
+  "templating": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Egregore API UP",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "up{job=\"egregore-api\"}", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "RAG retrievals (rate)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(cys_rag_retrievals_total[5m])) by (denied)",
+          "legendFormat": "denied={{denied}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Policy fallback (rate)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(cys_policy_fallback_total[5m]))",
+          "legendFormat": "fallbacks",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "text",
+      "title": "Local eval CLI",
+      "gridPos": { "h": 4, "w": 18, "x": 6, "y": 0 },
+      "options": {
+        "mode": "markdown",
+        "content": "**Dry-run:** `uv run python scripts/evals/egregore_eval.py --suite tiny --limit 1 --dry-run`\n\n**Langfuse:** http://localhost:3001 | **UI eval:** http://localhost:3000/eval"
+      }
+    }
+  ]
+}
