@@ -3,29 +3,51 @@ flowchart TB
     API[FastAPI app.py]
     CLI[CLI egregore]
     EventIngress[EventIngress router.py]
+    EngAPI[Engagements API /v1/engagements]
+    BusIngress[BusIngressRouter]
+  end
+
+  subgraph app_orch [Application orchestration]
+    Route[RouteAndEnqueueEvent]
+    Start[StartEngagement]
+    Enqueue[EnqueueWorkerJobs]
+    Container[bootstrap/container.py]
   end
 
   subgraph control [ControlPlane]
-    Critic[CriticService L2 HITL]
-    Coord[CoordinatorService]
+    Critic[CriticHandler]
+    Coord[CoordinatorHandler]
     Bus[SecureAgentBus HMAC trust]
+    Egress[EngagementEgress SSE]
   end
 
-  subgraph worker [WorkerPlane]
-    Orch[WorkerOrchestrator]
+  subgraph worker [WorkerPlane execution]
+    Orch[WorkerOrchestrator dequeue only]
     RunJob[RunWorkerJob]
+    Pipeline[context agent validator publisher finalizer]
+    Kernel[AgentRunKernel]
     AgentRT[AgentRuntime]
     Sandbox[SandboxConnector]
   end
 
   SIEM[SIEM NetFlow Manual] --> EventIngress
   API --> EventIngress
+  API --> EngAPI
   CLI --> EventIngress
-  EventIngress --> Orch
-  Orch --> RunJob --> AgentRT
+  EventIngress --> Container
+  EngAPI --> Container
+  Container --> Route
+  Container --> Start
+  Route --> Enqueue
+  Start --> Enqueue
+  Enqueue --> Queue[(worker.jobs)]
+  Bus --> BusIngress
+  BusIngress --> Critic
+  BusIngress --> Coord
+  BusIngress --> Orch
+  Queue --> Orch
+  Orch --> RunJob --> Pipeline --> Kernel --> AgentRT
   RunJob --> Sandbox
   RunJob --> Bus
-  Bus --> Critic
-  Bus --> Coord
-  API --> ManageRun[ManageRun interactive]
-  ManageRun --> AgentRT
+  RunJob --> Egress
+  EngAPI --> Egress

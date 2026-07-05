@@ -30,6 +30,7 @@ spec:
                 echo "waiting for redpanda..."
                 sleep 3
               done
+              # Single-partition platform topics
               TOPICS=(
                 security.events.raw
                 bus.findings
@@ -41,16 +42,12 @@ spec:
                 interfaces.rag.ingest.staging
                 security.events.awaiting_approval
                 security.events.escalation
-                worker.jobs.consultant
-                worker.jobs.soc
-                worker.jobs.critic
-                worker.jobs.coordinator
-                worker.jobs.planner
-                worker.jobs.research
-                worker.jobs.conductor
               )
               for topic in "${TOPICS[@]}"; do
-                echo "create ${topic}"
+                echo "create ${topic} (p=1)"
                 rpk topic create "${topic}" -p 1 -r 1 --brokers "${BROKER}" || true
               done
+              # Stream B (ADR-1): unified worker queue — persona is a job field, not a topic suffix
+              echo "create worker.jobs (p=8)"
+              rpk topic create worker.jobs -p 8 -r 1 --brokers "${BROKER}" || true
               rpk topic list --brokers "${BROKER}"

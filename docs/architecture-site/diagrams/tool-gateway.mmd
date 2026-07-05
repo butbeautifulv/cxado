@@ -6,6 +6,7 @@ flowchart LR
 
   subgraph pep [Tool Gateway PEP]
     Invoke[POST /invoke]
+    Authz[attach-time AuthzDecision]
     Policy[policy chain depth]
     Sanitize[sanitize output]
     Audit[audit Kafka]

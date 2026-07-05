@@ -27,8 +27,12 @@ make cxado-status       # health checks
 |---------|---------|-----------------|----------|
 | **default** | `make cxado-up` | veil + postgres + redis + **qdrant** + prometheus + grafana + **tempo** | `make -C projects/egregore dev` (4 workers) |
 | **lite** | `make cxado-up-lite` | veil (capped Neo4j) + postgres + redis + **qdrant** + prometheus + grafana + **langfuse** | `WORKER_REPLICAS=1 make -C projects/egregore dev` |
+| **minimal** | `make cxado-up-minimal` | postgres + redis + prometheus + grafana + **langfuse** (no veil/kafka/qdrant) | `uv run egregore serve` + `make -C projects/egregore dev-console` (:5173, no Node) or full UI `:3000` |
 
 Lite vs default: no **Tempo**, 1 worker, capped Neo4j, no Neo4j browser port (:7474).
+
+**Minimal / lite Grafana:** datasources use docker-compose service names (`prometheus:9090`), not k8s DNS.
+Panels that require **Loki** or **Tempo** show no data in minimal/lite — expected. Run `./scripts/validate-local-grafana.sh` after `make cxado-up-minimal`.
 
 Stop everything:
 

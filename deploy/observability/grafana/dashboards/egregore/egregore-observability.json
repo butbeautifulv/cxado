@@ -1,7 +1,7 @@
 {
   "uid": "egregore-observability",
   "title": "Egregore \u2014 Logs & Traces",
-  "description": "Egregore application logs, distributed traces, and span metrics. RED metrics live on cys-agi SOC Platform.",
+  "description": "Egregore application logs and distributed traces. Metrics on cys-agi SOC; executive KPIs on CXado Overview.",
   "tags": [
     "egregore",
     "loki",
@@ -48,6 +48,15 @@
       "type": "link",
       "icon": "dashboard",
       "url": "/d/egregore-sgr",
+      "keepTime": true,
+      "asDropdown": false,
+      "targetBlank": false
+    },
+    {
+      "title": "Eval & Quality",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/egregore-eval",
       "keepTime": true,
       "asDropdown": false,
       "targetBlank": false
@@ -134,7 +143,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Scrape target health for API.",
+      "description": "Full scrape health on cys-agi SOC dashboard.",
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -188,7 +197,7 @@
         },
         "textMode": "auto"
       },
-      "title": "API",
+      "title": "Egregore API",
       "type": "stat",
       "targets": [
         {
@@ -203,225 +212,6 @@
       ]
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "Scrape target health for Tempo.",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "type": "value",
-              "options": {
-                "0": {
-                  "text": "DOWN",
-                  "color": "#F2495C"
-                },
-                "1": {
-                  "text": "UP",
-                  "color": "#73BF69"
-                }
-              }
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#F2495C",
-                "value": null
-              },
-              {
-                "color": "#73BF69",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 6,
-        "y": 1
-      },
-      "id": 3,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "title": "Tempo",
-      "type": "stat",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "up{job=\"tempo\"}",
-          "refId": "A",
-          "range": true
-        }
-      ]
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "Scrape target health for Loki.",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "type": "value",
-              "options": {
-                "0": {
-                  "text": "DOWN",
-                  "color": "#F2495C"
-                },
-                "1": {
-                  "text": "UP",
-                  "color": "#73BF69"
-                }
-              }
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#F2495C",
-                "value": null
-              },
-              {
-                "color": "#73BF69",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 1
-      },
-      "id": 4,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "title": "Loki",
-      "type": "stat",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "up{job=\"loki\"}",
-          "refId": "A",
-          "range": true
-        }
-      ]
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "Scrape target health for Prometheus.",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "type": "value",
-              "options": {
-                "0": {
-                  "text": "DOWN",
-                  "color": "#F2495C"
-                },
-                "1": {
-                  "text": "UP",
-                  "color": "#73BF69"
-                }
-              }
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#F2495C",
-                "value": null
-              },
-              {
-                "color": "#73BF69",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 1
-      },
-      "id": 5,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "title": "Prometheus",
-      "type": "stat",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "up{job=\"prometheus\"}",
-          "refId": "A",
-          "range": true
-        }
-      ]
-    },
-    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
@@ -430,7 +220,7 @@
         "y": 5
       },
       "id": 110,
-      "title": "Logs (Loki)",
+      "title": "Logs",
       "type": "row"
     },
     {
@@ -456,7 +246,7 @@
         "dedupStrategy": "none",
         "sortOrder": "Descending"
       },
-      "title": "Egregore Application Logs",
+      "title": "Application Logs",
       "type": "logs",
       "targets": [
         {
@@ -511,7 +301,7 @@
         "y": 26
       },
       "id": 120,
-      "title": "Traces (Tempo)",
+      "title": "Traces",
       "type": "row"
     },
     {
@@ -519,7 +309,7 @@
         "type": "tempo",
         "uid": "tempo"
       },
-      "description": "Recent Egregore distributed traces.",
+      "description": "Recent Egregore distributed traces. TraceQL examples: `{span.name=\"ingress.route_and_enqueue\"}`, `{span.name=\"worker.process_job\"}`, `{span.name=\"engagement.plan\"}`.",
       "gridPos": {
         "h": 12,
         "w": 24,
@@ -528,7 +318,7 @@
       },
       "id": 31,
       "options": {},
-      "title": "Recent Egregore Traces",
+      "title": "Egregore Traces",
       "type": "traces",
       "targets": [
         {
@@ -548,7 +338,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Spans received by Tempo distributor (proxy for trace volume).",
+      "description": "Tempo distributor span ingress \u2014 indicates trace pipeline health, not Egregore-only rate.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -587,7 +377,7 @@
           "sort": "desc"
         }
       },
-      "title": "Trace Ingress Rate",
+      "title": "Tempo Span Ingress Rate",
       "type": "timeseries",
       "targets": [
         {
@@ -598,7 +388,7 @@
           "expr": "sum(rate(tempo_distributor_spans_received_total[$__rate_interval]))",
           "refId": "A",
           "range": true,
-          "legendFormat": "{{service}}"
+          "legendFormat": "spans/s"
         }
       ]
     }

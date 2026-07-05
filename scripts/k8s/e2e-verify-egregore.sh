@@ -112,16 +112,16 @@ else
 fi
 
 # Gate: POST AD investigation
-EVENT_BODY="$(python3 -c "import json; print(json.dumps({'event_type':'manual.investigation','payload':{'goal':'${AD_GOAL}'},'severity':'low','source':'e2e'}))")"
+EVENT_BODY="$(python3 -c "import json; print(json.dumps({'event_type':'engagement.start','payload':{'goal':'${AD_GOAL}','plan_strategy':'declarative'},'severity':'low','source':'e2e'}))")"
 post_raw="$(api_exec_post "/events" "${EVENT_BODY}" || true)"
 parse_curl_meta "${post_raw}"
 INV_ID="$(echo "${BODY}" | python3 -c "import json,sys; d=json.load(sys.stdin); e=d.get('event',d); print(e.get('correlation_id') or e.get('id',''))" 2>/dev/null || echo "")"
 JOB_IDS="$(echo "${BODY}" | python3 -c "import json,sys; d=json.load(sys.stdin); print(','.join(d.get('job_ids',[])))" 2>/dev/null || echo "")"
 
 if [[ "${HTTP_CODE}" == "200" ]]; then
-  pass "POST manual.investigation http=200"
+  pass "POST engagement.start http=200"
 else
-  fail "POST manual.investigation expected 200 got ${HTTP_CODE:-none} body=${BODY:0:200}"
+  fail "POST engagement.start expected 200 got ${HTTP_CODE:-none} body=${BODY:0:200}"
 fi
 
 if [[ -n "${JOB_IDS}" ]]; then

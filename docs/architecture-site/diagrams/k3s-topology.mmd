@@ -21,6 +21,10 @@ flowchart TB
     Prom[Prometheus :30091]
   end
 
+  subgraph langfuse_ns [cxado-langfuse]
+    LF[Langfuse :30001]
+  end
+
   subgraph veil_ns [veil]
     VAPI[veil-api :30990]
     VMCP[veil-mcp :30991]
@@ -31,6 +35,7 @@ flowchart TB
   TLS --> Arch
   TLS --> Graf
   TLS --> Prom
+  TLS --> LF
   TLS --> VAPI
   TLS --> VMCP
   EAPI --> PG

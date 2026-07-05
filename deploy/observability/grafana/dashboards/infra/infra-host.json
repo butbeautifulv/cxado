@@ -203,7 +203,7 @@
       "id": 2,
       "options": {
         "colorMode": "value",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -280,7 +280,7 @@
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
-      "title": "CPU Usage",
+      "title": "CPU Utilization",
       "type": "gauge",
       "targets": [
         {
@@ -345,7 +345,7 @@
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
-      "title": "Load (1m)",
+      "title": "Load Average (1m)",
       "type": "gauge",
       "targets": [
         {
@@ -395,7 +395,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 24,
         "x": 0,
         "y": 6
       },
@@ -415,7 +415,7 @@
           "sort": "desc"
         }
       },
-      "title": "CPU Usage (%)",
+      "title": "CPU Utilization",
       "type": "timeseries",
       "targets": [
         {
@@ -427,65 +427,6 @@
           "refId": "A",
           "range": true,
           "legendFormat": "cpu"
-        }
-      ]
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "Available memory over time.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 1,
-            "showPoints": "never",
-            "spanNulls": false
-          },
-          "unit": "bytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 6
-      },
-      "id": 6,
-      "options": {
-        "legend": {
-          "calcs": [
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "title": "Memory Available",
-      "type": "timeseries",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "min(node_memory_MemAvailable_bytes{instance=~\"$instance\"})",
-          "refId": "A",
-          "range": true,
-          "legendFormat": "mem_avail"
         }
       ]
     },
@@ -545,7 +486,7 @@
           "sort": "desc"
         }
       },
-      "title": "Disk Usage by Mountpoint (%)",
+      "title": "Disk Usage by Mountpoint",
       "type": "timeseries",
       "targets": [
         {

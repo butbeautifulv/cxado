@@ -12,4 +12,8 @@ window.ARCH_DIAGRAMS = {
   D10: { file: "diagrams/job-state.mmd", title: "WorkerJob state" },
   D11: { file: "diagrams/obs-stack.mmd", title: "Observability stack" },
   D12: { file: "diagrams/k3s-topology.mmd", title: "k3s offline topology" },
+  D13: { file: "diagrams/local-dev-topology.mmd", title: "Local-first minimal topology" },
+  D14: { file: "diagrams/engagement-flow.mmd", title: "Engagement flow (target)" },
+  D15: { file: "diagrams/planes-target.mmd", title: "Five roles + bus fabric" },
+  D16: { file: "diagrams/import-boundaries.mmd", title: "Import boundaries & arch gates" },
 };

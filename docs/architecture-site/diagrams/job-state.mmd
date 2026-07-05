@@ -1,10 +1,15 @@
 stateDiagram-v2
   [*] --> Queued
-  Queued --> Running: orchestrator dequeue
+  Queued --> Running: worker consumer dequeue
   Running --> AwaitingApproval: L1 HITL interrupt
   AwaitingApproval --> Running: POST resume verified
-  Running --> Completed: success
+  Running --> Completed: success via transition_to
   Running --> Failed: error budget exceeded
   AwaitingApproval --> Failed: timeout reject
   Completed --> [*]
   Failed --> [*]
+
+  note right of Running
+    WorkerJob.transition_to()
+    domain Phase 8
+  end note

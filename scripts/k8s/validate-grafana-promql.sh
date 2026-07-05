@@ -3,7 +3,7 @@
 #
 # Usage:
 #   ./scripts/k8s/validate-grafana-promql.sh
-#   PROMETHEUS_URL=http://192.168.0.133:30091 ./scripts/k8s/validate-grafana-promql.sh
+#   GRAFANA_VALIDATE_OFFLINE=1 ./scripts/k8s/validate-grafana-promql.sh  # skip Prometheus (no k3s)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -31,16 +31,22 @@ substitute_vars() {
   expr="${expr//\$instance/.+}"
   expr="${expr//\$model_name/.+}"
   expr="${expr//\$job/.+}"
+  expr="${expr//\$trace_id/.+}"
+  expr="${expr//\$correlation_id/.+}"
   printf '%s' "$expr"
 }
 
 errors=0
 checked=0
+offline="${GRAFANA_VALIDATE_OFFLINE:-0}"
 
 while IFS= read -r expr; do
   [[ -z "${expr}" ]] && continue
   prepared="$(substitute_vars "${expr}")"
   checked=$((checked + 1))
+  if [[ "${offline}" == "1" ]]; then
+    continue
+  fi
   response="$(curl "${CURL_OPTS[@]}" -G "${QUERY_ENDPOINT}" --data-urlencode "query=${prepared}" 2>&1)" || {
     log "FAIL curl: ${prepared}"
     errors=$((errors + 1))
@@ -76,6 +82,10 @@ PY
 )
 
 log "checked ${checked} prometheus expressions"
+if [[ "${offline}" == "1" ]]; then
+  log "offline mode — skipped live Prometheus queries (set GRAFANA_VALIDATE_OFFLINE=0 to validate against k3s)"
+  exit 0
+fi
 if [[ "${errors}" -gt 0 ]]; then
   log "${errors} error(s)"
   exit 1

@@ -330,7 +330,7 @@
         },
         "textMode": "auto"
       },
-      "title": "Restarts / sec",
+      "title": "Container Restarts / sec",
       "type": "stat",
       "targets": [
         {
@@ -459,7 +459,7 @@
           "sort": "desc"
         }
       },
-      "title": "Container Restarts / sec",
+      "title": "Container Restart Rate",
       "type": "timeseries",
       "targets": [
         {

@@ -7,42 +7,59 @@ flowchart TB
 
   subgraph delivery [Delivery interfaces/]
     API[api/ FastAPI]
-    Worker[worker/ orchestrator]
+    Worker[worker/ orchestrator execution]
     Control[control_plane/ critic coordinator]
     Gateway[gateways/tool PEP]
-    RAG[rag/ ingest retrieve]
+    Ingress[ingress/ EventIngress]
+  end
+
+  subgraph bootstrap [Composition root]
+    Container[bootstrap/container.py]
   end
 
   subgraph application [Application cys_core/application/]
-    UseCases[use_cases RunWorkerJob ManageRun]
+    UseCases[use_cases RouteAndEnqueue StartEngagement RunWorkerJob]
+    Pipeline[workers pipeline services]
     Policy[ProfilePolicyResolver]
-    Ports[ports 30+ interfaces]
+    Ports[ports catalog orchestration observability metrics tracing]
+    PlanLoader[plans/plan_loader.py]
   end
 
   subgraph domain [Domain cys_core/domain/]
     Catalog[catalog personas tools policy]
     Memory[memory investigation state]
     Security[security guardrails sanitizer]
-    Events[events workers runs]
+    Events[events workers runs engagement]
+    Pure[policy/pure lifecycle methods]
   end
 
-  subgraph infra [Infrastructure]
+  subgraph infra [Infrastructure adapters]
     Queue[queue Redis Kafka]
-    Stores[memory stores job_store]
+    Stores[memory stores job_store catalog]
+    ObsAdapters[observability adapters]
+    PolicyAdapters[policy adapters]
     SandboxInfra[sandbox k8s local]
   end
 
-  subgraph runtime [Runtime]
+  subgraph runtime [Runtime Registry]
     AgentRT[AgentRuntime middleware stack]
     Registry[AgentRegistry tools]
   end
 
   Personas --> AgentRT
+  Container --> delivery
+  Container --> application
+  Container --> infra
+  Container --> runtime
   API --> UseCases
-  Worker --> UseCases
-  UseCases --> AgentRT
+  Ingress --> UseCases
+  Worker --> Pipeline
   UseCases --> Ports
   Ports --> infra
+  Pipeline --> Ports
+  UseCases --> domain
+  Pipeline --> domain
+  infra --> domain
   AgentRT --> Registry
   Policy --> Catalog
-  UseCases --> domain
+  PlanLoader --> Events

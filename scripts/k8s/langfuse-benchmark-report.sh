@@ -7,6 +7,7 @@
 #
 # Env:
 #   LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY (default: pk-lf-egregore-dev-local)
+#   LANGFUSE_BASE_URL — direct HTTP (e.g. http://localhost:3001) skips kubectl pod curl
 #   SEARCH — substring filter on trace input/output (default: Active Directory)
 #   TRACE_LIMIT — max traces to fetch (default: 50)
 set -euo pipefail
@@ -16,6 +17,7 @@ SSH_HOST="${CXADO_OFFLINE_SSH_HOST:-}"
 SSH_PORT="${CXADO_OFFLINE_SSH_PORT:-22}"
 NS_LF="${CXADO_LANGFUSE_NS:-cxado-langfuse}"
 SMOKE_IMAGE="${CXADO_SMOKE_IMAGE:-curlimages/curl:8.5.0}"
+LANGFUSE_BASE_URL="${LANGFUSE_BASE_URL:-}"
 
 LANGFUSE_PUBLIC_KEY="${LANGFUSE_PUBLIC_KEY:-pk-lf-egregore-dev-local}"
 LANGFUSE_SECRET_KEY="${LANGFUSE_SECRET_KEY:-sk-lf-egregore-dev-local}"
@@ -36,6 +38,11 @@ kubectl_cmd() {
 
 lf_curl() {
   local path="$1"
+  if [[ -n "${LANGFUSE_BASE_URL}" ]]; then
+    curl -fsS -m 120 -u "${LANGFUSE_PUBLIC_KEY}:${LANGFUSE_SECRET_KEY}" \
+      "${LANGFUSE_BASE_URL%/}${path}"
+    return
+  fi
   local name="lf-report-$(date +%s)-$RANDOM"
   kubectl_cmd run "${name}" --rm -i --restart=Never -n "${NS_LF}" --image="${SMOKE_IMAGE}" -- \
     curl -fsS -m 120 -u "${LANGFUSE_PUBLIC_KEY}:${LANGFUSE_SECRET_KEY}" \

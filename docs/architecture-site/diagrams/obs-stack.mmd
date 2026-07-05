@@ -2,28 +2,37 @@ flowchart TB
   subgraph apps [Egregore workloads]
     API[egregore-api]
     Worker[egregore-worker]
-    GW[tool-gateway]
+    GW[tool-gateway optional]
   end
 
-  subgraph obs [cxado-obs namespace]
-    Prom[Prometheus scrape /metrics]
+  subgraph obs_k8s [k3s cxado-obs namespace]
+    PromK[Prometheus scrape /metrics]
     Tempo[Tempo OTLP traces]
     Loki[Loki logs]
     Promtail[Promtail DaemonSet]
-    Grafana[Grafana dashboards]
+    GrafanaK[Grafana k8s DNS datasources]
   end
 
-  subgraph llm_obs [cxado-langfuse optional]
-    LF[Langfuse LLM traces judge]
+  subgraph obs_local [local compose minimal/lite]
+    PromL[Prometheus host.docker.internal:8080]
+    GrafL[Grafana datasources.compose prometheus:9090]
+    LFL[Langfuse :3001]
+    NoteL[Loki Tempo panels empty in minimal]
   end
 
-  API -->|OTEL gRPC| Tempo
-  Worker -->|OTEL gRPC| Tempo
-  API -->|structlog| Promtail
-  Worker -->|structlog| Promtail
+  subgraph llm_obs [Langfuse LLM traces]
+    LF[CallbackHandler judge TOOL spans]
+  end
+
+  API -->|OTEL gRPC full profile| Tempo
+  Worker -->|OTEL gRPC full profile| Tempo
+  API -->|structlog k8s| Promtail
+  Worker -->|structlog k8s| Promtail
   Promtail --> Loki
   API -->|CallbackHandler| LF
-  Prom --> Grafana
-  Tempo --> Grafana
-  Loki --> Grafana
-  LF --> Grafana
+  PromK --> GrafanaK
+  Tempo --> GrafanaK
+  Loki --> GrafanaK
+  PromL --> GrafL
+  LF --> GrafL
+  LF --> GrafanaK

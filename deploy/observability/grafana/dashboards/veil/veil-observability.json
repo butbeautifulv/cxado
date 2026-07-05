@@ -64,17 +64,28 @@
         ]
       },
       {
-        "name": "service",
-        "type": "custom",
-        "label": "Service",
-        "query": "veil-api,veil-mcp,veil-ingest-worker,veil-pipeline-worker",
-        "includeAll": true,
-        "allValue": "veil-.*",
-        "multi": true,
         "current": {
+          "selected": true,
           "text": "All",
           "value": "$__all"
-        }
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values(veil_http_requests_total, service)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Service",
+        "multi": true,
+        "name": "service",
+        "query": {
+          "query": "label_values(veil_http_requests_total, service)",
+          "refId": "Prometheus-service"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
       },
       {
         "name": "trace_id",
@@ -105,7 +116,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Scrape target health for veil-api.",
+      "description": "Scrape target health for Veil API.",
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -159,7 +170,7 @@
         },
         "textMode": "auto"
       },
-      "title": "veil-api",
+      "title": "Veil API",
       "type": "stat",
       "targets": [
         {
@@ -178,7 +189,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Scrape target health for veil-mcp.",
+      "description": "Scrape target health for Veil MCP.",
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -232,7 +243,7 @@
         },
         "textMode": "auto"
       },
-      "title": "veil-mcp",
+      "title": "Veil MCP",
       "type": "stat",
       "targets": [
         {
@@ -251,7 +262,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "NATS pod running (kube-state-metrics). Prometheus /varz scrape is not exposition format.",
+      "description": "NATS pod running (requires kube-state-metrics).",
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -388,7 +399,7 @@
       },
       "id": 51,
       "options": {},
-      "title": "Tempo \u2014 veil-mcp",
+      "title": "Veil MCP Traces",
       "type": "traces",
       "targets": [
         {

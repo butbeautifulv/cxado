@@ -1,11 +1,28 @@
 {
   "uid": "egregore-cys-agi",
+  "title": "cys-agi \u2014 SOC Platform",
+  "description": "cys-agi SOC deep dive: workers, tools, security, RAG, cost, and trust. Executive KPIs on CXado Overview.",
+  "tags": [
+    "cys-agi",
+    "soc",
+    "security",
+    "egregore"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "graphTooltip": 1,
+  "style": "dark",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
   "annotations": {
     "list": []
   },
-  "editable": true,
-  "fiscalYearStartMonth": 0,
-  "graphTooltip": 1,
   "links": [
     {
       "title": "CXado Overview",
@@ -35,6 +52,34 @@
       "targetBlank": false
     }
   ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values(cys_worker_job_duration_seconds_count, persona)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Persona",
+        "multi": true,
+        "name": "persona",
+        "query": {
+          "query": "label_values(cys_worker_job_duration_seconds_count, persona)",
+          "refId": "Prometheus-persona"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
   "panels": [
     {
       "collapsed": false,
@@ -45,7 +90,7 @@
         "y": 0
       },
       "id": 100,
-      "title": "Scrape Targets",
+      "title": "Scrape Health",
       "type": "row"
     },
     {
@@ -348,171 +393,8 @@
         "x": 0,
         "y": 5
       },
-      "id": 110,
-      "title": "Platform overview",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "decimals": 2
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 0,
-        "y": 6
-      },
-      "id": 111,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "textMode": "auto"
-      },
-      "title": "Events / sec",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "sum(rate(cys_events_ingested_total[$__rate_interval]))",
-          "legendFormat": "events/s",
-          "refId": "A",
-          "range": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
-        }
-      ]
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#73BF69",
-                "value": null
-              },
-              {
-                "color": "#FFB357",
-                "value": 1
-              },
-              {
-                "color": "#F2495C",
-                "value": 5
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 6,
-        "y": 6
-      },
-      "id": 112,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "textMode": "auto"
-      },
-      "title": "HITL pending",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "cys_hitl_pending_total",
-          "refId": "A",
-          "range": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
-        }
-      ]
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 12,
-        "y": 6
-      },
-      "id": 113,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "textMode": "auto"
-      },
-      "title": "Active investigations",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "cys_investigations_active",
-          "refId": "A",
-          "range": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
-        }
-      ]
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 11
-      },
       "id": 120,
-      "title": "Ingress & workers",
+      "title": "Ingress & Workers",
       "type": "row"
     },
     {
@@ -520,9 +402,12 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "description": "Event ingestion rate by type.",
       "fieldConfig": {
         "defaults": {
-          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "drawStyle": "line",
             "fillOpacity": 10,
@@ -530,9 +415,7 @@
             "showPoints": "never",
             "spanNulls": false
           },
-          "color": {
-            "mode": "palette-classic"
-          }
+          "unit": "ops"
         },
         "overrides": []
       },
@@ -540,23 +423,9 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 12
+        "y": 6
       },
       "id": 1,
-      "title": "Events ingested by type",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(cys_events_ingested_total[$__rate_interval])) by (event_type)",
-          "legendFormat": "{{event_type}}",
-          "refId": "A",
-          "range": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
-        }
-      ],
       "options": {
         "legend": {
           "calcs": [
@@ -571,16 +440,33 @@
           "mode": "multi",
           "sort": "desc"
         }
-      }
+      },
+      "title": "Event Ingestion Rate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(cys_events_ingested_total[$__rate_interval])) by (event_type)",
+          "refId": "A",
+          "range": true,
+          "legendFormat": "{{event_type}}"
+        }
+      ]
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "description": "Worker job latency p95 by persona.",
       "fieldConfig": {
         "defaults": {
-          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "drawStyle": "line",
             "fillOpacity": 10,
@@ -588,9 +474,7 @@
             "showPoints": "never",
             "spanNulls": false
           },
-          "color": {
-            "mode": "palette-classic"
-          }
+          "unit": "s"
         },
         "overrides": []
       },
@@ -598,23 +482,9 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 12
+        "y": 6
       },
       "id": 2,
-      "title": "Worker job duration p95",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(cys_worker_job_duration_seconds_bucket{persona=~\"$persona\"}[$__rate_interval])) by (le, persona))",
-          "legendFormat": "{{persona}}",
-          "refId": "A",
-          "range": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
-        }
-      ],
       "options": {
         "legend": {
           "calcs": [
@@ -629,16 +499,33 @@
           "mode": "multi",
           "sort": "desc"
         }
-      }
+      },
+      "title": "Worker Job Duration P95",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum(rate(cys_worker_job_duration_seconds_bucket{persona=~\"$persona\"}[$__rate_interval])) by (le, persona))",
+          "refId": "A",
+          "range": true,
+          "legendFormat": "{{persona}}"
+        }
+      ]
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "description": "Worker job throughput by persona and status.",
       "fieldConfig": {
         "defaults": {
-          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "drawStyle": "bars",
             "fillOpacity": 80,
@@ -646,9 +533,7 @@
             "showPoints": "never",
             "spanNulls": false
           },
-          "color": {
-            "mode": "palette-classic"
-          }
+          "unit": "ops"
         },
         "overrides": []
       },
@@ -656,23 +541,9 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 14
       },
       "id": 121,
-      "title": "Worker jobs by persona & status",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(cys_worker_job_duration_seconds_count{persona=~\"$persona\"}[$__rate_interval])) by (persona, status)",
-          "legendFormat": "{{persona}} {{status}}",
-          "refId": "A",
-          "range": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
-        }
-      ],
       "options": {
         "legend": {
           "calcs": [
@@ -687,7 +558,21 @@
           "mode": "multi",
           "sort": "desc"
         }
-      }
+      },
+      "title": "Worker Job Rate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(cys_worker_job_duration_seconds_count{persona=~\"$persona\"}[$__rate_interval])) by (persona, status)",
+          "refId": "A",
+          "range": true,
+          "legendFormat": "{{persona}} {{status}}"
+        }
+      ]
     },
     {
       "collapsed": false,
@@ -695,7 +580,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 28
+        "y": 22
       },
       "id": 130,
       "title": "Security",
@@ -706,9 +591,9 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "description": "Input sanitizer blocks by source and verdict.",
       "fieldConfig": {
         "defaults": {
-          "unit": "ops",
           "color": {
             "mode": "palette-classic"
           },
@@ -718,31 +603,18 @@
             "lineWidth": 1,
             "showPoints": "never",
             "spanNulls": false
-          }
+          },
+          "unit": "ops"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 29
+        "x": 0,
+        "y": 23
       },
       "id": 4,
-      "title": "Sanitizer blocks",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(cys_sanitizer_blocks_total[$__rate_interval])) by (source, verdict)",
-          "legendFormat": "{{source}} {{verdict}}",
-          "refId": "A",
-          "range": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
-        }
-      ],
       "options": {
         "legend": {
           "calcs": [
@@ -757,7 +629,96 @@
           "mode": "multi",
           "sort": "desc"
         }
-      }
+      },
+      "title": "Sanitizer Block Rate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(cys_sanitizer_blocks_total[$__rate_interval])) by (source, verdict)",
+          "refId": "A",
+          "range": true,
+          "legendFormat": "{{source}} {{verdict}}"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Rejected HITL resume attempts.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "ops"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F2495C",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 23
+      },
+      "id": 131,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Approval Bypass Attempts",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(cys_approval_bypass_attempts_total[$__rate_interval])) by (reason)",
+          "refId": "A",
+          "range": true,
+          "legendFormat": "{{reason}}"
+        }
+      ]
     },
     {
       "collapsed": false,
@@ -765,10 +726,10 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 52
+        "y": 31
       },
-      "id": 150,
-      "title": "Denial of wallet (tokens & cost)",
+      "id": 140,
+      "title": "RAG & Tools",
       "type": "row"
     },
     {
@@ -776,9 +737,9 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "description": "RAG retrieval attempts by tenant.",
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
           "color": {
             "mode": "palette-classic"
           },
@@ -788,7 +749,8 @@
             "lineWidth": 1,
             "showPoints": "never",
             "spanNulls": false
-          }
+          },
+          "unit": "ops"
         },
         "overrides": []
       },
@@ -796,23 +758,9 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 53
+        "y": 32
       },
-      "id": 151,
-      "title": "Job tokens / sec by persona",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(cys_job_tokens_total{persona=~\"$persona\"}[$__rate_interval])) by (persona)",
-          "legendFormat": "{{persona}}",
-          "refId": "A",
-          "range": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
-        }
-      ],
+      "id": 141,
       "options": {
         "legend": {
           "calcs": [
@@ -827,16 +775,30 @@
           "mode": "multi",
           "sort": "desc"
         }
-      }
+      },
+      "title": "RAG Retrieval Rate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(cys_rag_retrievals_total[$__rate_interval])) by (tenant, denied)",
+          "refId": "A",
+          "range": true,
+          "legendFormat": "{{tenant}} denied={{denied}}"
+        }
+      ]
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "description": "MCP tool invocations by tool and result.",
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyUSD",
           "color": {
             "mode": "palette-classic"
           },
@@ -846,7 +808,8 @@
             "lineWidth": 1,
             "showPoints": "never",
             "spanNulls": false
-          }
+          },
+          "unit": "ops"
         },
         "overrides": []
       },
@@ -854,23 +817,9 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 53
+        "y": 32
       },
-      "id": 152,
-      "title": "Job cost USD / sec by persona",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(cys_job_cost_usd_total{persona=~\"$persona\"}[$__rate_interval])) by (persona)",
-          "legendFormat": "{{persona}}",
-          "refId": "A",
-          "range": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
-        }
-      ],
+      "id": 142,
       "options": {
         "legend": {
           "calcs": [
@@ -885,7 +834,21 @@
           "mode": "multi",
           "sort": "desc"
         }
-      }
+      },
+      "title": "Tool Invocation Rate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(cys_tool_invocations_total[$__rate_interval])) by (tool, result)",
+          "refId": "A",
+          "range": true,
+          "legendFormat": "{{tool}} {{result}}"
+        }
+      ]
     },
     {
       "collapsed": false,
@@ -893,10 +856,10 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 70
+        "y": 40
       },
-      "id": 170,
-      "title": "Policy drift",
+      "id": 150,
+      "title": "Cost & Trust",
       "type": "row"
     },
     {
@@ -904,17 +867,9 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "description": "Estimated tokens consumed per second by persona.",
       "fieldConfig": {
         "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#73BF69",
-                "value": null
-              }
-            ]
-          },
           "color": {
             "mode": "palette-classic"
           },
@@ -924,86 +879,236 @@
             "lineWidth": 1,
             "showPoints": "never",
             "spanNulls": false
-          }
+          },
+          "unit": "short"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 8,
         "w": 12,
         "x": 0,
-        "y": 71
+        "y": 41
+      },
+      "id": 151,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Token Throughput",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(cys_job_tokens_total{persona=~\"$persona\"}[$__rate_interval])) by (persona)",
+          "refId": "A",
+          "range": true,
+          "legendFormat": "{{persona}}"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Estimated USD cost per second by persona.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 41
+      },
+      "id": 152,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Cost Rate (USD / sec)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(cys_job_cost_usd_total{persona=~\"$persona\"}[$__rate_interval])) by (persona)",
+          "refId": "A",
+          "range": true,
+          "legendFormat": "{{persona}}"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Configured trust score per persona.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 49
+      },
+      "id": 153,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Agent Trust Score",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "cys_agent_trust_score{persona=~\"$persona\"}",
+          "refId": "A",
+          "range": true,
+          "legendFormat": "{{persona}}"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 57
+      },
+      "id": 170,
+      "title": "Policy",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Policy catalog version by profile.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 58
       },
       "id": 171,
       "options": {
         "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
       },
-      "title": "Catalog version by profile",
+      "title": "Catalog Version",
       "type": "timeseries",
       "targets": [
         {
-          "expr": "cys_catalog_version",
-          "legendFormat": "{{profile_id}}",
-          "refId": "A",
-          "range": true,
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
-          }
+          },
+          "expr": "cys_catalog_version",
+          "refId": "A",
+          "range": true,
+          "legendFormat": "{{profile_id}}"
         }
       ]
     }
-  ],
-  "refresh": "30s",
-  "schemaVersion": 39,
-  "tags": [
-    "cys-agi",
-    "soc",
-    "security",
-    "egregore"
-  ],
-  "templating": {
-    "list": [
-      {
-        "current": {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
-        },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "prometheus"
-        },
-        "definition": "label_values(cys_worker_job_duration_seconds_count, persona)",
-        "hide": 0,
-        "includeAll": true,
-        "label": "Persona",
-        "multi": true,
-        "name": "persona",
-        "query": {
-          "query": "label_values(cys_worker_job_duration_seconds_count, persona)",
-          "refId": "Prometheus-persona"
-        },
-        "refresh": 2,
-        "sort": 1,
-        "type": "query"
-      }
-    ]
-  },
-  "time": {
-    "from": "now-6h",
-    "to": "now"
-  },
-  "timezone": "browser",
-  "title": "cys-agi \u2014 SOC Platform",
-  "version": 2,
-  "description": "cys-agi SOC platform metrics: workers, tools, security, RAG, cost, and trust.",
-  "style": "dark"
+  ]
 }
