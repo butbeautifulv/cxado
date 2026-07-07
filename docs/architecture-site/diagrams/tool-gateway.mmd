@@ -14,10 +14,11 @@ flowchart LR
   end
 
   subgraph adapters [Adapters]
-    Veil[veil_mcp read-only TI playbooks]
+    Veil[veil_mcp ti_* playbook_*]
+    SiemMcp[siem_mcp investigate_incident search_events ...]
     Veneno[veneno_mcp HITL exec]
     RagAd[rag_query ACL]
-    Siem[query_siem_readonly]
+    SiemLegacy[query_siem_readonly delegates to search_events]
     Web[web_search read_document]
   end
 

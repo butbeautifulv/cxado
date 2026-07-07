@@ -2,7 +2,7 @@
 window.CXADO_SERVICES = {
   defaultHost: "0.0.0.0",
   external: [
-    { port: 30300, name: "Egregore UI", group: "app", path: "/", hint: "Operator UI · Next.js" },
+    { port: 30300, name: "Egregore minimal console", group: "app", path: "/", hint: "Static ui-minimal · same-origin /v1/ /catalog/" },
     { port: 30880, name: "Egregore API", group: "app", path: "/health", hint: "FastAPI · /status · /metrics" },
     { port: 30990, name: "Veil API", group: "app", path: "/health", hint: "Graph HTTP API" },
     { port: 30991, name: "Veil MCP", group: "app", path: "/health", hint: "MCP Streamable HTTP" },
@@ -21,6 +21,7 @@ window.CXADO_SERVICES = {
     { name: "Tempo OTLP", ns: "cxado-obs", port: 4317, proto: "gRPC" },
     { name: "Loki", ns: "cxado-obs", port: 3100, proto: "HTTP" },
     { name: "NATS", ns: "veil-data", port: 4222, proto: "TCP" },
+    { name: "siem-mcp", ns: "cxado-app", port: 8094, proto: "HTTP", note: "ClusterIP · MaxPatrol SIEM MCP" },
     { name: "Egregore Worker", ns: "cxado-app", note: "ClusterIP · background job consumer" },
     { name: "Langfuse worker", ns: "cxado-langfuse", note: "ClusterIP · async processing" },
     { name: "ClickHouse", ns: "cxado-langfuse", port: 8123, proto: "HTTP" },

@@ -1,0 +1,21 @@
+image:
+  repository: docker.io/cxado/tenable-mcp
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicas: 1
+
+secretName: tenable-mcp-credentials
+
+service:
+  port: 8095
+  type: ClusterIP
+
+persistence:
+  enabled: true
+  size: 1Gi
+  storageClassName: ""
+  mountPath: /data
+  dbPath: /data/inventory.db
+
+resources: {}
