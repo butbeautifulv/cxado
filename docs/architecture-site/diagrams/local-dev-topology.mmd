@@ -2,7 +2,7 @@ flowchart TB
   subgraph host [Host dev]
     API[egregore-api :8080]
     Worker[egregore-worker]
-    UI[egregore-ui :3000]
+    UI[egregore-ui :3000 Next.js]
     UI -->|EGREGORE_API_UPSTREAM| API
   end
 
@@ -20,6 +20,10 @@ flowchart TB
     VMCP[veil-mcp :8091]
   end
 
+  subgraph siem_opt [optional cxado-up-siem-mcp]
+    SMCP[siem-mcp :8094]
+  end
+
   API --> PG
   API --> Redis
   API --> LF
@@ -29,5 +33,7 @@ flowchart TB
   Prom -->|scrape host.docker.internal:8080| API
   Graf --> Prom
   API --> VMCP
+  Worker --> VMCP
+  Worker --> SMCP
   VMCP --> VAPI
   VAPI --> Neo4j

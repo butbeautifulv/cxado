@@ -1,5 +1,5 @@
 .PHONY: bootstrap skills-install skills-link refs-link rules-link gui-link auth-broker-test test-contracts \
-	cxado-up cxado-up-lite cxado-up-minimal cxado-up-veil cxado-down cxado-status cxado-obs-reload cxado-validate-grafana \
+	cxado-up cxado-up-lite cxado-up-minimal cxado-up-veil cxado-up-siem-mcp cxado-up-tenable-mcp cxado-up-defectdojo-mcp siem-mcp-scrape-docs cxado-down cxado-status cxado-obs-reload cxado-validate-grafana \
 	cxado-local-e2e \
 	cxado-kind-up cxado-kind-down cxado-k8s-build-images cxado-tf-init cxado-tf-apply cxado-tf-destroy \
 	cxado-k8s-up cxado-k8s-status cxado-k8s-smoke cxado-graph-bootstrap cxado-tf-validate agent-skills-install \
@@ -12,6 +12,13 @@ help:
 	@echo "  cxado-up-lite   Lite profile: no Tempo, 1 worker; includes Qdrant + Langfuse"
 	@echo "  cxado-up-minimal  Agents-only: postgres+redis+langfuse+grafana (no veil/kafka)"
 	@echo "  cxado-up-veil     Veil graph-only (neo4j+api+mcp) on cxado-net"
+	@echo "  cxado-up-siem-mcp MaxPatrol SIEM MCP HTTP on :8094 (host process)"
+	@echo "  cxado-up-tenable-mcp Nessus MCP HTTP on :8095 (host process)"
+	@echo "  cxado-up-defectdojo-mcp DefectDojo MCP HTTP on :8096 (host process)"
+	@echo "  cxado-smoke-tenable-mcp  Nessus MCP health + tools/list smoke (:8095)"
+	@echo "  cxado-smoke-defectdojo-mcp  DefectDojo MCP health + tools/list smoke (:8096)"
+	@echo "  siem-mcp-scrape-docs  Refresh maxpatrol-siem-mcp/docs/API.md from PT help 27.2"
+	@echo "  cxado-smoke-veil-mcp  Veil MCP health + tools/list smoke (:8091)"
 	@echo "  cxado-up-langfuse  cxado-up + Langfuse (:3001)"
 	@echo "  cxado-down      Stop obs + egregore infra (keeps veil by default)"
 	@echo "  cxado-status    Health checks for cxado-default"
@@ -82,7 +89,34 @@ cxado-up-veil:
 	@chmod +x scripts/cxado-up-veil.sh
 	@./scripts/cxado-up-veil.sh
 
-.PHONY: cxado-up-veil
+cxado-up-siem-mcp:
+	@chmod +x scripts/cxado-up-siem-mcp.sh projects/maxpatrol-siem-mcp/scripts/smoke_mcp.sh
+	@./scripts/cxado-up-siem-mcp.sh
+
+cxado-up-tenable-mcp:
+	@chmod +x scripts/cxado-up-tenable-mcp.sh projects/tenable-mcp/scripts/smoke_mcp.sh
+	@./scripts/cxado-up-tenable-mcp.sh
+
+cxado-smoke-tenable-mcp:
+	@chmod +x projects/tenable-mcp/scripts/smoke_mcp.sh
+	@./projects/tenable-mcp/scripts/smoke_mcp.sh
+
+cxado-up-defectdojo-mcp:
+	@chmod +x scripts/cxado-up-defectdojo-mcp.sh projects/defectdojo-mcp/scripts/smoke_mcp.sh
+	@./scripts/cxado-up-defectdojo-mcp.sh
+
+cxado-smoke-defectdojo-mcp:
+	@chmod +x projects/defectdojo-mcp/scripts/smoke_mcp.sh
+	@./projects/defectdojo-mcp/scripts/smoke_mcp.sh
+
+siem-mcp-scrape-docs:
+	@cd projects/maxpatrol-siem-mcp && uv sync --all-groups && uv run python scripts/scrape_api_docs.py
+
+cxado-smoke-veil-mcp:
+	@chmod +x projects/egregore/scripts/smoke_veil_mcp.sh
+	@./projects/egregore/scripts/smoke_veil_mcp.sh
+
+.PHONY: cxado-up-veil cxado-up-siem-mcp cxado-up-tenable-mcp cxado-up-defectdojo-mcp cxado-smoke-veil-mcp cxado-smoke-tenable-mcp cxado-smoke-defectdojo-mcp
 
 cxado-validate-grafana:
 	@chmod +x scripts/validate-local-grafana.sh

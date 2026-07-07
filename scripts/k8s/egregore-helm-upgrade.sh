@@ -35,6 +35,11 @@ if [[ -z "${POSTGRES_PASSWORD:-}" || -z "${REDIS_PASSWORD:-}" ]]; then
   exit 2
 fi
 
+if [[ -z "${BUS_SIGNING_KEY:-}" ]]; then
+  BUS_SIGNING_KEY="$(openssl rand -base64 32 | tr -d '\n' | tr '+/' '-_' | tr -d '=')"
+  log "generated ephemeral BUS_SIGNING_KEY (set in ${SECRETS_ENV_FILE} to persist)"
+fi
+
 log "tag=${TAG} ssh=${SSH_HOST}:${SSH_PORT}"
 
 ssh -p "${SSH_PORT}" "${SSH_HOST}" "cat >/tmp/values-egregore-offline.yaml" \
@@ -55,13 +60,26 @@ ssh -p "${SSH_PORT}" "${SSH_HOST}" \
   --set ui.image.tag='${TAG}' \
   --set postgres.password='${POSTGRES_PASSWORD}' \
   --set redis.password='${REDIS_PASSWORD}' \
-  --wait --timeout 10m"
+  --set busSigningKey='${BUS_SIGNING_KEY}' \
+  --force-conflicts \
+  --wait --timeout 15m"
 
-for deploy in egregore-api egregore-worker egregore-ui; do
+UI_REPLICAS="$(ssh -p "${SSH_PORT}" "${SSH_HOST}" \
+  "awk '/^ui:/{u=1} u && /^  replicas:/{print \$2; exit}' /tmp/values-egregore-offline.yaml" || echo "0")"
+
+for deploy in egregore-api egregore-worker; do
   log "rollout ${deploy}"
   ssh -p "${SSH_PORT}" "${SSH_HOST}" \
     "${KCTL} -n ${NS_APP} rollout status deploy/${deploy} --timeout=300s"
 done
+
+if [[ "${UI_REPLICAS}" != "0" ]]; then
+  log "rollout egregore-ui"
+  ssh -p "${SSH_PORT}" "${SSH_HOST}" \
+    "${KCTL} -n ${NS_APP} rollout status deploy/egregore-ui --timeout=300s"
+else
+  log "skip egregore-ui rollout (replicas=0)"
+fi
 
 if [[ -x "${ROOT}/scripts/k8s/smoke-test-egregore-obs.sh" ]]; then
   log "observability smoke"

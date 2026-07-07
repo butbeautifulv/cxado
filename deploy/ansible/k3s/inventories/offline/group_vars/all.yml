@@ -20,12 +20,26 @@ k3s_write_kubeconfig_mode: "0644"
 k3s_airgap_staging_dir: /tmp/k3s-airgap
 k3s_config_path: /etc/rancher/k3s/config.yaml
 
+# Reserve ~10% CPU/RAM for OS + kubelet; evict workloads when free RAM drops below ~1Gi.
+# Tuned for P30 (8 CPU / 14Gi). Re-apply via scripts/k8s/k3s-apply-resource-guardrails.sh.
+k3s_kubelet_args:
+  - "system-reserved=cpu=400m,memory=1536Mi,ephemeral-storage=2Gi"
+  - "kube-reserved=cpu=400m,memory=1024Mi,ephemeral-storage=1Gi"
+  - "eviction-hard=memory.available<1Gi,nodefs.available<10%,imagefs.available<10%"
+  - "eviction-soft=memory.available<1536Mi"
+  - "eviction-soft-grace-period=memory.available=2m"
+  - "eviction-max-pod-grace-period=60"
+
 k3s_hostpaths:
   - path: /var/lib/veil/playbooks/docs/skills-index
     owner: root
     group: root
     mode: "0755"
   - path: /home/bbv/cxado/arch-docs
+    owner: bbv
+    group: bbv
+    mode: "0755"
+  - path: /home/bbv/cxado/ui-minimal
     owner: bbv
     group: bbv
     mode: "0755"

@@ -8,15 +8,21 @@ ui:
     repository: "docker.io/cxado/egregore-ui"
     tag: "__CXADO_OFFLINE_TAG__"
     pullPolicy: IfNotPresent
-  replicas: 1
+  replicas: 0
 
 api:
   replicas: 1
   port: 8080
 
 worker:
-  replicas: 8
+  # P30: 8 CPU / 14Gi — cap burst load so the host stays below ~90% utilization.
+  replicas: 4
   idleTimeout: 0
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilization: 65
 
 env:
   stage: prod
@@ -30,9 +36,18 @@ env:
   logFormat: "json"
   litellmLocalModelCostMap: "true"
   traceCriticEnabled: "false"
-  llmRequestTimeout: "90"
-  workerJobTimeout: "180"
+  llmRequestTimeout: "120"
+  workerJobTimeout: "360"
+  defaultJobRecursionLimit: "35"
+  triageRecursionLimit: "22"
+  maxPlannerPersonas: "2"
+  jsonToolCallFallback: "true"
   manualInvestigationAsync: "true"
+  uiCorsOrigins: "https://192.168.0.133:30300,https://10.8.185.15:30300,https://localhost:30300,http://localhost:5173"
+  streamAgentOutput: "true"
+  streamAgentTools: "true"
+  streamAgentTokenStreaming: "true"
+  controlMode: "inprocess"
 
 obs:
   traceBackend: "composite"
@@ -58,6 +73,18 @@ qdrant:
 
 veil:
   mcpUrl: "http://veil-veil-mcp.veil.svc.cluster.local:8091/mcp"
+  mcpEnabled: "true"
+
+siem:
+  # In-cluster SIEM MCP (helm release siem-mcp in cxado-app)
+  mcpUrl: "http://siem-mcp.cxado-app.svc.cluster.local:8094/mcp"
+  mcpEnabled: "true"
+  mcpTimeout: "180"
+
+nessus:
+  mcpUrl: "http://tenable-mcp.cxado-app.svc.cluster.local:8095/mcp"
+  mcpEnabled: "true"
+  mcpTimeout: "180"
 
 otel:
   endpoint: "http://tempo.cxado-obs.svc.cluster.local:4317"
@@ -71,6 +98,8 @@ langfuse:
   publicKey: "pk-lf-egregore-dev-local"
   secretKey: "sk-lf-egregore-dev-local"
 
+busSigningKey: ""
+
 llm:
   provider: litellm
   model: openai/Kbenkhaled/Qwen3.5-27B-NVFP4
@@ -78,3 +107,27 @@ llm:
   temperature: "0.1"
   reasoningModel: ""
   reasoningTemperature: "0.0"
+
+# Per-pod caps; HPA max 4 workers × limits ≈ 4.8 CPU / 6Gi for egregore alone.
+resources:
+  api:
+    requests:
+      cpu: 150m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  worker:
+    requests:
+      cpu: 300m
+      memory: 640Mi
+    limits:
+      cpu: 1200m
+      memory: 1536Mi
+  ui:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi

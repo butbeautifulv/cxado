@@ -4,7 +4,8 @@ Default profile `cxado-default`: Veil graph + egregore infra + observability. Eg
 
 | Port | Service | Stack | Notes | k8s (kind) |
 |------|---------|-------|-------|------------|
-| 3000 | egregore Operator UI | host / k8s | Next.js | ingress :81 or egregore-ui SVC |
+| 3000 | egregore Operator UI (Next.js) | host only | Next.js — **not deployed on k3s** (use :30300 ui-minimal) | ingress :81 or egregore-ui SVC |
+| 30300 | egregore minimal console | k3s offline | Static ui-minimal via TLS gateway | egregore-ui-minimal SVC |
 | 3001 | Langfuse UI | optional | `cxado-langfuse` profile only | — |
 | 3002 | Grafana | observability | admin/admin (dev) | ingress / kube-prometheus |
 | 30080 | Architecture docs site | k3s offline | Static HTML + Mermaid; TLS via `cxado-tls-gateway`; hostPath `/home/bbv/cxado/arch-docs` | cxado-arch-docs SVC |
@@ -19,6 +20,9 @@ Default profile `cxado-default`: Veil graph + egregore infra + observability. Eg
 | 8090 | veil-api | veil | Graph HTTP API |
 | 8091 | veil-mcp | veil | MCP Streamable HTTP (`--profile mcp`) |
 | 8092 | egregore tool gateway | host | optional, `USE_TOOL_GATEWAY=true` |
+| 8094 | maxpatrol-siem-mcp | host | optional, `make cxado-up-siem-mcp` |
+| 8095 | tenable-mcp (Nessus) | host | optional, local Nessus REST MCP |
+| 8096 | defectdojo-mcp | host | optional, DefectDojo API v2 MCP |
 | 9091 | Prometheus | observability | UI + `/-/reload` |
 | 15432 | Langfuse Postgres | optional | localhost only |
 | 16379 | Langfuse Redis | optional | localhost only |

@@ -62,3 +62,5 @@ Full routing + pitfalls: [docs/agents/cursor-mcp-tooling.md](docs/agents/cursor-
 - [docs/adr/cxado-architecture.md](docs/adr/cxado-architecture.md) — architecture ADR (also in codebase-memory-mcp)
 - [docs/agents/cursor-mcp-tooling.md](docs/agents/cursor-mcp-tooling.md) — agent MCP stack: **codebase-memory-mcp**, **Serena**, **Context7 (ctx7)**
 - [docs/integration/egregore-veil-mcp.md](docs/integration/egregore-veil-mcp.md) — egregore ↔ veil-mcp (wired, read-only graph tools)
+- [docs/integration/egregore-siem-mcp.md](docs/integration/egregore-siem-mcp.md) — egregore ↔ maxpatrol-siem-mcp (SOC SIEM tools)
+- [docs/integration/egregore-tenable-mcp.md](docs/integration/egregore-tenable-mcp.md) — egregore ↔ tenable-mcp (Nessus vulnerability inventory)

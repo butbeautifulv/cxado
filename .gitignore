@@ -19,7 +19,9 @@ projects/fstec/
 # Local env
 .env
 .env.*
-/deploy/.secrets/
+/deploy/.secrets/*
+!/deploy/.secrets/README.md
+!/deploy/.secrets/*.example
 docs/architecture-site/js/credentials.js
 
 # Offline k3s deploy (local-only)

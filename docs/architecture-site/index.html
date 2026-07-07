@@ -93,7 +93,8 @@
           <tbody>
             <tr><td>Veil</td><td>TI graph, ingest, veil-api, veil-mcp</td><td>Go, Neo4j, NATS</td></tr>
             <tr><td>Veneno</td><td>Pentest execution, veneno-mcp</td><td>Go</td></tr>
-            <tr><td><strong>Egregore</strong></td><td>SOC multi-agent, API, Operator UI</td><td>Python, FastAPI, Next.js</td></tr>
+            <tr><td><strong>Egregore</strong></td><td>SOC multi-agent, API; UI: Next.js host :3000 / ui-minimal k3s :30300</td><td>Python, FastAPI, Next.js</td></tr>
+            <tr><td>maxpatrol-siem-mcp</td><td>MaxPatrol SIEM read-only MCP (incidents, events, assets)</td><td>Python, FastAPI</td></tr>
             <tr><td>Fabrica</td><td>DevSecOps reference, CI gates</td><td>YAML, scripts</td></tr>
             <tr><td>ASOC API</td><td>Scan aggregation → NATS</td><td>Go</td></tr>
             <tr><td>Tabula / fstec</td><td>Compliance domain</td><td>Next.js, Prisma</td></tr>
@@ -249,8 +250,12 @@
           Runbook: <code>DATASOURCES_RBAC.md</code>. Attach-time filter + exec-time gateway check.</p>
         <ul class="compact">
           <li><strong>RAG</strong> — <code>interfaces/rag/</code>, Qdrant, ACL pre-filter</li>
-          <li><strong>Veil graph</strong> — read-only MCP (<code>ti_*</code>, <code>playbook_*</code>)</li>
-          <li><strong>SIEM</strong> — <code>query_siem_readonly</code> tool</li>
+          <li><strong>Veil graph</strong> — read-only MCP (14 curated tools: <code>ti_*</code>, <code>playbook_*</code>);
+            <code>enrich_ioc</code> delegates to <code>ti_search_in_category</code> when <code>VEIL_MCP_ENABLED=true</code>;
+            skill <code>veil-knowledge</code> on 11 personas</li>
+          <li><strong>SIEM MCP</strong> — <code>maxpatrol-siem-mcp</code> via <code>siem_mcp_client</code>
+            (<code>investigate_incident</code>, <code>list_incidents</code>, <code>search_events</code>, …);
+            skill <code>siem-investigation</code> on SOC; legacy <code>query_siem_readonly</code> delegates to <code>search_events</code></li>
           <li><strong>Web/docs</strong> — gateway adapters</li>
           <li><strong>Local dev</strong> — <code>USE_TOOL_GATEWAY=false</code> → direct MCP client; prod PEP optional</li>
         </ul>
@@ -259,6 +264,7 @@
           <thead><tr><th>Интеграция</th><th>Риск</th><th>Gate</th></tr></thead>
           <tbody>
             <tr><td>Veil MCP</td><td>Read-only</td><td>Allowlist, <code>VEIL_MCP_ENABLED</code>, authz matrix</td></tr>
+            <tr><td>SIEM MCP</td><td>Read-only</td><td>Allowlist, <code>SIEM_MCP_ENABLED</code>, <code>SIEM_READONLY=true</code></td></tr>
             <tr><td>Veneno MCP</td><td>Exec / scan</td><td><span class="tag partial">partial</span> HITL on <code>run_active_scan</code></td></tr>
             <tr><td>Tool Gateway PEP</td><td>All MCP</td><td>Sandbox, sanitize, audit, <code>AuthorizationDecision</code></td></tr>
             <tr><td>Write gate (E2)</td><td>Catalog mutations</td><td><code>WriteGateRequest</code> actor + reason</td></tr>
@@ -300,7 +306,8 @@
         <h3>WorkerJob state</h3>
         <p class="muted">Переходы статусов enforced in domain (<code>WorkerJob.transition_to</code>).</p>
         <div class="diagram" data-diagram="D10"><p class="diagram-loading">Загрузка диаграммы…</p></div>
-        <p>UI: Operator UI <code>/approvals</code>, SSE status stream.</p>
+        <p>UI: Operator UI (Next.js host) <code>/approvals</code>, SSE status stream.
+          k3s offline — <code>ui-minimal</code> console (engagements/jobs), без полного Next.js UI.</p>
       </section>
 
       <section id="evals">
@@ -359,6 +366,7 @@
           <tbody>
             <tr><td><code>make cxado-up-minimal</code></td><td>postgres, redis, langfuse, prometheus, grafana</td></tr>
             <tr><td><code>make cxado-up-veil</code></td><td>neo4j, veil-api, veil-mcp (optional)</td></tr>
+            <tr><td><code>make cxado-up-siem-mcp</code></td><td>maxpatrol-siem-mcp :8094 on host (optional)</td></tr>
             <tr><td><code>make -C projects/egregore dev-api</code></td><td>API :8080 on host (Prometheus scrape)</td></tr>
             <tr><td>UI <code>.env.local</code></td><td><code>EGREGORE_API_UPSTREAM=http://127.0.0.1:8080</code></td></tr>
           </tbody>
@@ -373,6 +381,7 @@
           <tbody>
             <tr><td>Veneno → Veil (engage.events)</td><td><span class="tag">wired</span></td><td>shared/contracts</td></tr>
             <tr><td>Egregore ↔ Veil MCP</td><td><span class="tag">wired</span> read-only</td><td>docs/integration/egregore-veil-mcp.md</td></tr>
+            <tr><td>Egregore ↔ SIEM MCP</td><td><span class="tag">wired</span> read-only</td><td>docs/integration/egregore-siem-mcp.md</td></tr>
             <tr><td>Egregore ↔ Veneno MCP</td><td><span class="tag partial">partial</span> HITL</td><td>docs/integration/egregore-veneno-mcp.md</td></tr>
             <tr><td>ASOC → Egregore</td><td><span class="tag stub">planned</span></td><td>—</td></tr>
             <tr><td>Fabrica adopt.sh → projects</td><td><span class="tag">wired</span></td><td>CI security gates</td></tr>
@@ -382,21 +391,26 @@
 
       <section id="k3s-topology">
         <h2>14. k3s offline deploy topology</h2>
-        <p>TLS gateway <code>cxado-tls-gateway</code> в namespace <code>cxado-edge</code> проксирует сервисы по NodePort-подобным портам.</p>
+        <p>TLS gateway <code>cxado-tls-gateway</code> в namespace <code>cxado-edge</code> проксирует сервисы по NodePort-подобным портам.
+          Порт <strong>30300</strong> — same-origin reverse proxy: static <code>egregore-ui-minimal</code> + API paths (<code>/v1/</code>, <code>/catalog/</code>).</p>
         <div class="diagram" data-diagram="D12"><p class="diagram-loading">Загрузка диаграммы…</p></div>
         <table>
           <thead><tr><th>Port (TLS)</th><th>Service</th></tr></thead>
           <tbody>
-            <tr><td>30300</td><td>egregore-ui</td></tr>
-            <tr><td>30880</td><td>egregore-api</td></tr>
+            <tr><td>30300</td><td>egregore-ui-minimal + egregore-api (same-origin)</td></tr>
+            <tr><td>30880</td><td>egregore-api (direct)</td></tr>
             <tr><td><strong>30080</strong></td><td><strong>architecture docs (this site)</strong></td></tr>
             <tr><td>30002</td><td>Grafana</td></tr>
             <tr><td>30091</td><td>Prometheus</td></tr>
             <tr><td>30001</td><td>Langfuse</td></tr>
+            <tr><td>30474</td><td>Neo4j Browser</td></tr>
             <tr><td>30990 / 30991</td><td>veil-api / veil-mcp</td></tr>
+            <tr><td>8094</td><td>siem-mcp (ClusterIP, cxado-app — worker in-cluster only)</td></tr>
           </tbody>
         </table>
-        <p class="muted">Deploy: <code>scripts/k8s/k3s-deploy-arch-docs-offline.sh</code></p>
+        <p class="muted">Deploy: <code>scripts/k8s/k3s-deploy-arch-docs-offline.sh</code> ·
+          <code>scripts/k8s/k3s-deploy-ui-minimal-offline.sh</code> ·
+          <code>scripts/k8s/k3s-deploy-siem-mcp.sh</code></p>
       </section>
 
       <section id="references">
@@ -415,6 +429,7 @@
             <li><a href="https://github.com/butbeautifulv/egregore/blob/main/docs/integration/sgr-reasoning.md">egregore/docs/integration/sgr-reasoning.md</a></li>
             <li><a href="https://github.com/butbeautifulv/egregore/blob/main/docs/SECURE_DEPLOYMENT.md">egregore/docs/SECURE_DEPLOYMENT.md</a></li>
             <li><a href="https://github.com/butbeautifulv/cxado/blob/main/docs/integration/README.md">docs/integration/README.md</a></li>
+            <li><a href="https://github.com/butbeautifulv/cxado/blob/main/docs/integration/egregore-siem-mcp.md">docs/integration/egregore-siem-mcp.md</a></li>
             <li><a href="https://github.com/butbeautifulv/cxado/blob/main/docs/deploy/k3s-offline-baseline.md">docs/deploy/k3s-offline-baseline.md</a></li>
           </ul>
         </div>

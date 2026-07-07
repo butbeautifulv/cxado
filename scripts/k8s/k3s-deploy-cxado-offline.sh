@@ -178,10 +178,13 @@ main() {
   run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"sed -i 's/__CXADO_OFFLINE_TAG__/${TAG}/g' /tmp/values-egregore-offline.yaml\""
   run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} create ns cxado-app 2>/dev/null || true\""
   run "rsync -a -e \"ssh -p ${SSH_PORT}\" \"${ROOT}/projects/egregore/deploy/helm/egregore\" \"${SSH_HOST}:/tmp/egregore-helm\""
-  run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${HELM} upgrade --install egregore /tmp/egregore-helm/egregore -n cxado-app -f /tmp/values-egregore-offline.yaml --set image.tag='${TAG}' --set ui.image.tag='${TAG}' --set postgres.password='${POSTGRES_PASSWORD}' --set redis.password='${REDIS_PASSWORD}' --wait --timeout 10m\""
+  run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${HELM} upgrade --install egregore /tmp/egregore-helm/egregore -n cxado-app -f /tmp/values-egregore-offline.yaml --set image.tag='${TAG}' --set ui.image.tag='${TAG}' --set postgres.password='${POSTGRES_PASSWORD}' --set redis.password='${REDIS_PASSWORD}' --set busSigningKey='${BUS_SIGNING_KEY:-}' --wait --timeout 10m\""
   run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} -n cxado-app rollout status deploy/egregore-api --timeout=300s\""
   run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} -n cxado-app rollout status deploy/egregore-worker --timeout=300s\""
-  run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} -n cxado-app rollout status deploy/egregore-ui --timeout=300s\""
+
+  log "deploy ui-minimal static console (Next.js UI disabled)"
+  run "CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' '${ROOT}/scripts/k8s/k3s-offline-bundle-ui-minimal.sh' --remote"
+  run "'${ROOT}/scripts/k8s/k3s-deploy-ui-minimal-offline.sh' --skip-bundle"
 
   log "apply tls gateway (https nodeports) and show status"
   run "'${ROOT}/scripts/k8s/offline-tls-apply.sh'"

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Build egregore images and import into k3s containerd on the target.
+# Build egregore backend image and import into k3s containerd on the target.
+# Next.js UI (egregore-ui) is not built — use ui-minimal static console instead.
 #
 # Usage:
 #   CXADO_OFFLINE_TAG=offline-YYYYMMDD ./scripts/k8s/k3s-offline-bundle-egregore.sh
@@ -8,15 +9,13 @@
 # - CXADO_OFFLINE_SSH_HOST (default: bbv@10.8.184.22)
 # - CXADO_OFFLINE_SSH_PORT (default: 22012)
 # - CXADO_OFFLINE_SUDO_PW  (optional; if omitted expects passwordless sudo)
-# - NEXT_PUBLIC_LANGFUSE_HOST (default: https://localhost:3001 for SSH tunnel)
-#   LAN direct access: NEXT_PUBLIC_LANGFUSE_HOST=https://10.8.185.15:30001
+# - NEXT_PUBLIC_LANGFUSE_HOST — unused (Next.js UI not bundled)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=scripts/k8s/cxado-offline-env.sh
 source "${ROOT}/scripts/k8s/cxado-offline-env.sh"
 TAG="${CXADO_OFFLINE_TAG:-offline-$(date +%Y%m%d)}"
-LANGFUSE_HOST="${NEXT_PUBLIC_LANGFUSE_HOST:-https://localhost:3001}"
 
 SSH_HOST="${CXADO_OFFLINE_SSH_HOST}"
 SSH_PORT="${CXADO_OFFLINE_SSH_PORT}"
@@ -37,17 +36,8 @@ docker build \
   -f "${ROOT}/projects/egregore/Dockerfile" \
   "${ROOT}/projects/egregore"
 
-log "build cxado/egregore-ui:${TAG} (LANGFUSE_HOST=${LANGFUSE_HOST})"
-docker build \
-  --build-arg "NEXT_PUBLIC_LANGFUSE_HOST=${LANGFUSE_HOST}" \
-  --cache-from "cxado/egregore-ui:${CACHE_TAG}" \
-  -t "cxado/egregore-ui:${TAG}" \
-  -t "cxado/egregore-ui:${CACHE_TAG}" \
-  -f "${ROOT}/projects/egregore/ui/Dockerfile" \
-  "${ROOT}/projects/egregore/ui"
-
 log "save -> ${OUT_TAR}"
-docker save -o "${OUT_TAR}" "cxado/egregore:${TAG}" "cxado/egregore-ui:${TAG}"
+docker save -o "${OUT_TAR}" "cxado/egregore:${TAG}"
 ls -lh "${OUT_TAR}"
 
 log "transfer bundle to target"
@@ -61,10 +51,10 @@ remote_tar="/tmp/$(basename "${OUT_TAR}")"
 log "import into k3s containerd: ${remote_tar}"
 if [[ -n "${SUDO_PW}" ]]; then
   ssh -p "${SSH_PORT}" "${SSH_HOST}" "printf '%s\n' '${SUDO_PW}' | sudo -S -p '' k3s ctr images import '${remote_tar}'"
-  ssh -p "${SSH_PORT}" "${SSH_HOST}" "printf '%s\n' '${SUDO_PW}' | sudo -S -p '' k3s ctr images ls | grep -E 'cxado/egregore|cxado/egregore-ui' || true"
+  ssh -p "${SSH_PORT}" "${SSH_HOST}" "printf '%s\n' '${SUDO_PW}' | sudo -S -p '' k3s ctr images ls | grep -E 'cxado/egregore' || true"
 else
   ssh -p "${SSH_PORT}" "${SSH_HOST}" "sudo k3s ctr images import '${remote_tar}'"
-  ssh -p "${SSH_PORT}" "${SSH_HOST}" "sudo k3s ctr images ls | grep -E 'cxado/egregore|cxado/egregore-ui' || true"
+  ssh -p "${SSH_PORT}" "${SSH_HOST}" "sudo k3s ctr images ls | grep -E 'cxado/egregore' || true"
 fi
 
 log "done"

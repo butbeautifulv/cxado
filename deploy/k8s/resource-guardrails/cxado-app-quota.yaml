@@ -1,0 +1,32 @@
+# Namespace-level caps for cxado-app (egregore + siem-mcp + tenable-mcp).
+# Sum of limits should stay below ~80% of P30 allocatable after kubelet reservations.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: cxado-app-cap
+  namespace: cxado-app
+spec:
+  hard:
+    pods: "25"
+    requests.cpu: "3500m"
+    requests.memory: 7Gi
+    limits.cpu: "5500m"
+    limits.memory: 9Gi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: cxado-app-defaults
+  namespace: cxado-app
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 100m
+        memory: 256Mi
+      default:
+        cpu: 500m
+        memory: 768Mi
+      max:
+        cpu: "2"
+        memory: 2Gi

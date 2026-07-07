@@ -45,12 +45,14 @@ python3 -m http.server 8765
 ```bash
 make cxado-up-minimal          # postgres, redis, langfuse, prometheus, grafana
 make cxado-up-veil             # опционально: neo4j, veil-api, veil-mcp
+make cxado-up-siem-mcp         # опционально: maxpatrol-siem-mcp :8094
 WORKER_REPLICAS=1 make -C projects/egregore dev-api   # + dev-worker отдельно
 make cxado-validate-grafana
 make cxado-local-e2e
 ```
 
-- UI host-dev: `EGREGORE_API_UPSTREAM=http://127.0.0.1:8080` в `projects/egregore/ui/.env.local`
+- UI host-dev: `EGREGORE_API_UPSTREAM=http://127.0.0.1:8080` в `projects/egregore/ui/.env.local` (Next.js Operator UI :3000)
+- k3s offline UI: static `ui-minimal` на :30300 (не Next.js)
 - Grafana compose datasources → `prometheus:9090` (не k8s DNS)
 - Runbook: [deploy/README.md](../../deploy/README.md), [OBSERVABILITY.md](../../projects/egregore/docs/OBSERVABILITY.md)
 
@@ -59,6 +61,13 @@ make cxado-local-e2e
 ```bash
 ./scripts/k8s/k3s-sync-arch-docs-credentials.sh   # secrets → js/credentials.js
 ./scripts/k8s/k3s-offline-bundle-arch-docs.sh --remote
+```
+
+Смежные k3s deploy (контекст топологии, не обязательны для arch-docs):
+
+```bash
+./scripts/k8s/k3s-deploy-ui-minimal-offline.sh   # egregore-ui-minimal :30300
+./scripts/k8s/k3s-deploy-siem-mcp.sh             # siem-mcp ClusterIP :8094
 ```
 
 URL: `https://<k3s-node>:30080` (TLS gateway, NodePort 30080)

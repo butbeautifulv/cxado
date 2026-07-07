@@ -9,6 +9,7 @@ flowchart TB
     VEIL[Veil TI graph veil-mcp]
     VENENO[Veneno pentest veneno-mcp]
     EGG[Egregore SOC agents API UI]
+    SIEM_MCP[maxpatrol-siem-mcp]
     FAB[Fabrica DevSecOps]
     ASOC[ASOC scan aggregation]
   end
@@ -19,8 +20,14 @@ flowchart TB
     HEX[Hexenhammer awareness]
   end
 
+  subgraph external [External systems]
+    MP[MaxPatrol SIEM]
+  end
+
   VENENO -->|engage.events NATS| VEIL
   VEIL -->|veil-mcp read-only| EGG
+  EGG -->|siem-mcp read-only| SIEM_MCP
+  SIEM_MCP --> MP
   EGG -.->|veneno-mcp partial HITL| VENENO
   FAB -->|adopt.sh CI gates| EGG
   FAB -->|adopt.sh| VEIL

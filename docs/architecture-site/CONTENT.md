@@ -32,8 +32,8 @@ SSOT for section IDs, diagram registry, and markdown cross-links.
 | 10 | `#evals` | Evals | `application/eval/`, runbooks, UI `/eval` `/compare` |
 | 11 | `#observability` | Observability | `OBSERVABILITY.md`, Grafana `egregore-eval` |
 | 12 | `#local-dev` | Local-first dev | `deploy/README.md`, `make cxado-up-minimal` |
-| 13 | `#integrations` | Интеграции | `docs/integration/` |
-| 14 | `#k3s-topology` | k3s offline topology | `deploy/k8s/*-offline/` |
+| 13 | `#integrations` | Интеграции | `docs/integration/`, `egregore-siem-mcp.md`, `egregore-veil-mcp.md` |
+| 14 | `#k3s-topology` | k3s offline topology | `deploy/k8s/*-offline/`, `ui-minimal-offline/`, `siem-mcp` helm |
 | 15 | `#references` | Markdown-канон | links to repo docs |
 
 ## Diagram registry
@@ -71,3 +71,4 @@ SSOT for section IDs, diagram registry, and markdown cross-links.
 - [SGR reasoning](../../projects/egregore/docs/integration/sgr-reasoning.md)
 - [egregore SECURE_DEPLOYMENT.md](../../projects/egregore/docs/SECURE_DEPLOYMENT.md)
 - [integration index](../../integration/README.md)
+- [egregore-siem-mcp](../../integration/egregore-siem-mcp.md)

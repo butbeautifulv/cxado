@@ -18,4 +18,6 @@ export CXADO_OFFLINE_SSH_HOST="${CXADO_OFFLINE_SSH_HOST:-bbv-p30-wifi}"
 export CXADO_OFFLINE_SSH_PORT="${CXADO_OFFLINE_SSH_PORT:-22}"
 export CXADO_NODE_IP="${CXADO_NODE_IP:-192.168.0.133}"
 export CXADO_NODE_HOSTNAME="${CXADO_NODE_HOSTNAME:-bbv-p30-k44}"
+# Corp NAT IP — include in TLS SAN when LAN IP is WiFi (both URLs must work in browser).
+export CXADO_TLS_SAN_IP_EXTRA="${CXADO_TLS_SAN_IP_EXTRA:-10.8.185.15}"
 export CXADO_OBS_NS="${CXADO_OBS_NS:-cxado-obs}"

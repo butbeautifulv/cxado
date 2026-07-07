@@ -4,8 +4,10 @@ flowchart TB
   end
 
   subgraph app [cxado-app]
-    EUI[egregore-ui :30300]
+    UIM[egregore-ui-minimal :30300]
     EAPI[egregore-api :30880]
+    Worker[egregore-worker]
+    SIEM[siem-mcp :8094 ClusterIP]
     Arch[arch-docs :30080]
   end
 
@@ -30,8 +32,8 @@ flowchart TB
     VMCP[veil-mcp :30991]
   end
 
-  TLS --> EUI
-  TLS --> EAPI
+  TLS -->|30300 UI+API same-origin| UIM
+  TLS -->|30300| EAPI
   TLS --> Arch
   TLS --> Graf
   TLS --> Prom
@@ -41,4 +43,6 @@ flowchart TB
   EAPI --> PG
   EAPI --> Redis
   EAPI --> Qdrant
+  Worker -.->|MCP HTTP in-cluster| SIEM
+  Worker -.->|MCP HTTP in-cluster| VMCP
   VAPI --> Neo4j
