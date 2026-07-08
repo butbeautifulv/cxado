@@ -10,7 +10,9 @@ variables:
     - pip install -q --index-url "${PIP_INDEX_URL}" --trusted-host "${PIP_TRUSTED_HOST}" pyyaml
 
 .aspm_upload_static:
-  extends: .cxado_pip
+  extends:
+    - .cxado_pip
+    - .security_job_defaults
   image: ${OSS_PYTHON_IMAGE}
   variables:
     DEFECTDOJO_PRODUCT_NAME: "egregore"
@@ -19,7 +21,9 @@ variables:
     - !reference [.cxado_aspm_pip, before_script]
 
 .aspm_upload_image:
-  extends: .cxado_pip
+  extends:
+    - .cxado_pip
+    - .security_job_defaults
   image: ${OSS_PYTHON_IMAGE}
   variables:
     DEFECTDOJO_PRODUCT_NAME: "egregore"
