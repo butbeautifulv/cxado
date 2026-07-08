@@ -14,6 +14,7 @@ images:
   trivy: "aquasec/trivy:0.63.0"
   gitleaks: "ghcr.io/gitleaks/gitleaks:v8.22.1"
   hadolint: "hadolint/hadolint:v2.12.0-alpine"
+  checkov: "bridgecrew/checkov:3.2.449"
   conftest: "ghcr.io/openpolicyagent/conftest:v0.56.0"
   zaproxy: "ghcr.io/zaproxy/zaproxy:2.16.0"
   schemathesis: "ghcr.io/schemathesis/schemathesis:4.21.7"
