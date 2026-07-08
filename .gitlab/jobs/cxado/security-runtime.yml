@@ -1,9 +1,30 @@
-# Offline corp runtime — no apk/apt in job pods; gate-check when python3 is present.
+# Offline corp runtime — explicit images (object-form image is dropped on job merge).
 
 checkov-iac:
+  image:
+    name: ${OSS_CHECKOV_IMAGE}
+    entrypoint: [""]
   before_script: []
+  script:
+    - mkdir -p reports
+    - |
+      checkov -d . --framework terraform,kubernetes,helm,dockerfile,docker_compose --soft-fail \
+        --output sarif --output-file-path reports \
+        --output json --output-file-path reports || true
+      REPORT=reports/results_sarif.sarif
+      [ -f "$REPORT" ] || REPORT=reports/checkov.sarif
+      [ -f "$REPORT" ] || echo '{"runs":[{"results":[]}]}' > reports/checkov.sarif
+      [ -f reports/checkov.sarif ] || cp "$REPORT" reports/checkov.sarif
+      JSON=reports/results_json.json
+      [ -f "$JSON" ] || JSON=reports/checkov-report.json
+      [ -f "$JSON" ] || echo '[]' > reports/checkov-report.json
+      [ -f reports/checkov-report.json ] || cp "$JSON" reports/checkov-report.json
+    - python3 scripts/gate-check.py --control iac --report reports/checkov.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
 
 gitleaks-scan:
+  image:
+    name: ${OSS_GITLEAKS_IMAGE}
+    entrypoint: [""]
   before_script: []
   script:
     - |
@@ -12,13 +33,15 @@ gitleaks-scan:
       [ -f gitleaks.sarif ] || echo '{"runs":[{"results":[]}]}' > gitleaks.sarif
     - |
       if command -v python3 >/dev/null 2>&1; then
-        python3 scripts/gate-check.py --control secrets --report gitleaks.sarif \
-          --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+        python3 scripts/gate-check.py --control secrets --report gitleaks.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
       else
         echo "WARN: skip gate-check (no python3 in gitleaks image)"
       fi
 
 .trivy_job:
+  image:
+    name: ${OSS_TRIVY_IMAGE}
+    entrypoint: [""]
   before_script: []
 
 trivy-osa:
@@ -28,21 +51,23 @@ trivy-osa:
       [ -f osa.sarif ] || echo '{"runs":[{"results":[]}]}' > osa.sarif
     - |
       if command -v python3 >/dev/null 2>&1; then
-        python3 scripts/gate-check.py --control osa --report osa.sarif \
-          --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+        python3 scripts/gate-check.py --control osa --report osa.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
       else
         echo "WARN: skip gate-check (no python3 in trivy image)"
       fi
 
 semgrep-sast:
+  image: ${OSS_SEMGREP_IMAGE}
   script:
     - semgrep scan --config p/ci --sarif -o semgrep.sarif . || true
     - |
       [ -f semgrep.sarif ] || echo '{"runs":[{"results":[]}]}' > semgrep.sarif
-    - python3 scripts/gate-check.py --control sast --report semgrep.sarif \
-        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+    - python3 scripts/gate-check.py --control sast --report semgrep.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
 
 dockerfile-lint:
+  image:
+    name: ${OSS_HADOLINT_IMAGE}
+    entrypoint: [""]
   before_script: []
   script:
     - |
@@ -60,8 +85,7 @@ dockerfile-lint:
     - |
       if command -v python3 >/dev/null 2>&1; then
         python3 scripts/normalize-sarif.py hadolint.sarif hadolint || true
-        python3 scripts/gate-check.py --control dockerfile --report hadolint.sarif \
-          --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+        python3 scripts/gate-check.py --control dockerfile --report hadolint.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
       else
         echo "WARN: skip sarif normalize/gate (no python3 in hadolint image)"
       fi
@@ -91,11 +115,11 @@ forbidden-files:
         echo '{"runs":[{"results":[{"level":"medium","message":{"text":"forbidden or suspicious files detected"}}]}]}' > forbidden-files.sarif
       fi
       python3 scripts/normalize-sarif.py forbidden-files.sarif forbidden-files
-    - python3 scripts/gate-check.py --control linters --report forbidden-files.sarif \
-        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+    - python3 scripts/gate-check.py --control linters --report forbidden-files.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
 
 .aspm_upload_static:
   extends: .cxado_pip
+  image: ${OSS_PYTHON_IMAGE}
   before_script:
     - !reference [.cxado_pip, before_script]
     - pip install -q --index-url "${PIP_INDEX_URL}" --trusted-host "${PIP_TRUSTED_HOST}" pyyaml
