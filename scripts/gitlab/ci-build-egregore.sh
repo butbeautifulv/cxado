@@ -14,7 +14,7 @@ if [[ ! -f "${DOCKERFILE}" ]]; then
   exit 2
 fi
 
-export DOCKER_BUILDKIT=1
+export DOCKER_BUILDKIT=0
 log "build cxado/egregore:${TAG}"
 docker build \
   -t "cxado/egregore:${TAG}" \
