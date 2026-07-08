@@ -173,7 +173,6 @@ forbidden-files:
 linter-security:
   extends:
     - .egregore_prepare
-    - .cxado_pip
     - .egregore_warn
     - .egregore_workflow
   stage: security
@@ -199,7 +198,6 @@ linter-security:
 skill-scanner:
   extends:
     - .egregore_prepare
-    - .cxado_pip
     - .egregore_warn
     - .egregore_workflow
   stage: security
@@ -220,7 +218,6 @@ skill-scanner:
 lint:
   extends:
     - .egregore_prepare
-    - .cxado_pip
     - .egregore_workflow
   stage: validate
   image: ${OSS_PYTHON_IMAGE}

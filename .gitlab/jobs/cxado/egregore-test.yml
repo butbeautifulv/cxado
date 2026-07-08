@@ -3,7 +3,6 @@
 unit-test:
   extends:
     - .egregore_prepare
-    - .cxado_pip
     - .egregore_blocker
     - .egregore_workflow
   stage: test
