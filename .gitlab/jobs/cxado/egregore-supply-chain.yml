@@ -1,0 +1,66 @@
+# Egregore supply-chain — SBOM + image SCA after Kaniko build.
+
+sbom-generate:
+  extends:
+    - .egregore_blocker
+    - .egregore_workflow
+  stage: supply-chain
+  image:
+    name: ${OSS_SYFT_IMAGE}
+    entrypoint: [""]
+  needs:
+    - job: build:egregore
+      artifacts: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+    - |
+      TAG="${IMAGE_TAG:-${CXADO_IMAGE_TAG}}"
+      syft "${CXADO_IMAGE_REPO}:${TAG}" -o cyclonedx-json > sbom.cdx.json
+    - test -s sbom.cdx.json
+    - |
+      if command -v python3 >/dev/null 2>&1; then
+        python3 scripts/gate-check.py --control sbom --report sbom.cdx.json --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+      else
+        echo "WARN: skip sbom gate (no python3 in syft image)"
+      fi
+  artifacts:
+    paths:
+      - sbom.cdx.json
+    expire_in: 90 days
+
+trivy-sca:
+  extends:
+    - .egregore_blocker
+    - .egregore_workflow
+    - .registry_auth_env
+  stage: supply-chain
+  image:
+    name: ${OSS_TRIVY_IMAGE}
+    entrypoint: [""]
+  needs:
+    - job: build:egregore
+      artifacts: true
+    - job: sbom-generate
+      optional: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+    - |
+      TAG="${IMAGE_TAG:-${CXADO_IMAGE_TAG}}"
+      trivy image --scanners vuln --severity CRITICAL,HIGH --format sarif \
+        --output sca.sarif "${CXADO_IMAGE_REPO}:${TAG}" || true
+    - |
+      [ -f sca.sarif ] || echo '{"runs":[{"results":[]}]}' > sca.sarif
+    - |
+      if command -v python3 >/dev/null 2>&1; then
+        python3 scripts/gate-check.py --control sca --report sca.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+      else
+        echo "WARN: skip gate-check (no python3 in trivy image)"
+      fi
+  artifacts:
+    paths:
+      - sca.sarif
+    expire_in: 30 days

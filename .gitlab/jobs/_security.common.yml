@@ -18,6 +18,9 @@
       when: never
     - if: '$DEFECTDOJO_API_TOKEN == null || $DEFECTDOJO_API_TOKEN == ""'
       when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - when: on_success
 
 .workflow_rules_security:
   rules:

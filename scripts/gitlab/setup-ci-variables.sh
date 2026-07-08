@@ -75,7 +75,7 @@ value_for() {
     GITLAB_RUNNER_TOKEN) echo "${GITLAB_RUNNER_TOKEN:-}" ;;
     DEFECTDOJO_URL) echo "${DEFECTDOJO_URL:-http://${VM_01_IP:-10.20.16.195}:8080}" ;;
     DEFECTDOJO_API_TOKEN) echo "${DEFECTDOJO_API_TOKEN:-${VM_01_DEFECTDOJO_API_TOKEN:-}}" ;;
-    DEFECTDOJO_PRODUCT_NAME) echo "${DEFECTDOJO_PRODUCT_NAME:-cxado}" ;;
+    DEFECTDOJO_PRODUCT_NAME) echo "${DEFECTDOJO_PRODUCT_NAME:-egregore}" ;;
     DEFECTDOJO_ENGAGEMENT) echo "${DEFECTDOJO_ENGAGEMENT:-CI/CD}" ;;
     *) return 1 ;;
   esac
@@ -112,6 +112,44 @@ http_code() { echo "$1" | tail -1 | sed 's/HTTP://'; }
 
 is_maskable() {
   [[ "$1" =~ ^[A-Za-z0-9+/=]+$ ]]
+}
+
+fetch_defectdojo_token() {
+  [[ -n "${VM_01_DEFECTDOJO_SU_PWD:-}" ]] || return 1
+  USER="${VM_01_DEFECTDOJO_SU_NAME:-admin}" \
+  PASS="${VM_01_DEFECTDOJO_SU_PWD}" \
+  URL="${DEFECTDOJO_URL:-http://${VM_01_IP:-10.20.16.195}:8080}" \
+  SSH_HOST="${SSH_HOST}" \
+  python3 <<'PY'
+import json
+import os
+import subprocess
+
+body = json.dumps({"username": os.environ["USER"], "password": os.environ["PASS"]})
+url = os.environ["URL"].rstrip("/") + "/api/v2/api-token-auth/"
+proc = subprocess.run(
+    ["ssh", os.environ["SSH_HOST"], f"curl -sk -X POST '{url}' -H 'Content-Type: application/json' -d @-"],
+    input=body,
+    capture_output=True,
+    text=True,
+    check=False,
+)
+if proc.returncode != 0 or not proc.stdout.strip():
+    raise SystemExit(1)
+print(json.loads(proc.stdout).get("token", ""))
+PY
+}
+
+resolve_defectdojo_token() {
+  if [[ -n "${DEFECTDOJO_API_TOKEN:-}" ]]; then
+    echo "${DEFECTDOJO_API_TOKEN}"
+    return 0
+  fi
+  if [[ -n "${VM_01_DEFECTDOJO_API_TOKEN:-}" ]]; then
+    echo "${VM_01_DEFECTDOJO_API_TOKEN}"
+    return 0
+  fi
+  fetch_defectdojo_token
 }
 
 upsert_var() {
@@ -162,6 +200,15 @@ upsert_var_best_effort() {
 
 main() {
   log "project ${GITLAB_URL}/av.popov/cxado (id ${PROJECT_ID})"
+  local token
+  token="$(resolve_defectdojo_token || true)"
+  if [[ -n "${token}" ]]; then
+    DEFECTDOJO_API_TOKEN="${token}"
+    VM_01_DEFECTDOJO_API_TOKEN="${token}"
+    log "DefectDojo API token resolved"
+  else
+    die "missing DEFECTDOJO_API_TOKEN — set in ${SECRETS} or VM_01_DEFECTDOJO_SU_* for auto-fetch"
+  fi
   local spec key masked protected vtype val
   for spec in "${VARS[@]}"; do
     IFS='|' read -r key masked protected vtype <<<"${spec}"
