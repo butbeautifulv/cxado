@@ -1,0 +1,22 @@
+# Nexus PyPI auth for offline pip installs in CI jobs
+
+.cxado_pip:
+  before_script:
+    - |
+      if [ -n "${NEXUS_USER:-}" ] && [ -n "${NEXUS_PASSWORD:-}" ]; then
+        printf 'machine %s\nlogin %s\npassword %s\n' \
+          "${NEXUS_PYPI_HOST}" "${NEXUS_USER}" "${NEXUS_PASSWORD}" > ~/.netrc
+        chmod 600 ~/.netrc
+      fi
+
+.aspm_upload_static:
+  extends: .cxado_pip
+
+.aspm_upload_image:
+  extends: .cxado_pip
+
+lint:
+  extends: .cxado_pip
+
+linter-security:
+  extends: .cxado_pip

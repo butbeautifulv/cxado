@@ -1,0 +1,23 @@
+---
+# Pre-pull Fabrica CI images into k3s containerd on all nodes.
+# Astra agents: if podman OVAL blocks pull, pre-seed tars via:
+#   ./scripts/k8s/distribute-ci-image-tars.sh
+- name: Export CI image tars on control plane
+  hosts: "{{ k3s_ci_control_plane | default('p30-k44') }}"
+  gather_facts: true
+  vars_files:
+    - ../roles/k3s_ci_images/defaults/main.yml
+  roles:
+    - role: k3s_ci_images
+      tasks_from: export-tars.yml
+
+- name: CI image cache on k3s nodes
+  hosts: k3s_server:k3s_agent
+  gather_facts: true
+  vars_files:
+    - ../roles/k3s_ci_images/defaults/main.yml
+  vars:
+    k3s_ci_tar_dir: /var/lib/cxado/ci-image-tars
+  roles:
+    - k3s_registry
+    - k3s_ci_images

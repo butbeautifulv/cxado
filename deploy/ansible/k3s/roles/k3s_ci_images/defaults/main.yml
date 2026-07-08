@@ -1,0 +1,25 @@
+---
+nexus_docker_registry: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}"
+nexus_docker_group_registry: "{{ lookup('env', 'NEXUS_DOCKER_GROUP_REGISTRY') | default('nexus.svo.aero:8374', true) }}"
+nexus_docker_repo: "{{ lookup('env', 'NEXUS_CXADO_DOCKER_REPO') | default('cxado-docker', true) }}"
+k3s_ci_image_map:
+  - { dest: "kaniko-executor:{{ lookup('env', 'KANIKO_EXECUTOR_VERSION') | default('v1.23.2', true) }}", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_GROUP_REGISTRY') | default('nexus.svo.aero:8374', true) }}/kaniko-project/executor:{{ lookup('env', 'KANIKO_EXECUTOR_VERSION') | default('v1.23.2', true) }}" }
+  - { dest: "semgrep:1.117.0", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/returntocorp/semgrep:1.117.0" }
+  - { dest: "syft:v1.20.0", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/anchore/syft:v1.20.0" }
+  - { dest: "trivy:0.63.0", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/aquasec/trivy:0.63.0" }
+  - { dest: "gitleaks:v8.22.1", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_GROUP_REGISTRY') | default('nexus.svo.aero:8374', true) }}/gitleaks/gitleaks:v8.22.1" }
+  - { dest: "hadolint:v2.12.0-alpine", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/hadolint/hadolint:v2.12.0-alpine" }
+  - { dest: "checkov:3.2.449", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/bridgecrew/checkov:3.2.449" }
+  - { dest: "conftest:v0.56.0", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_GROUP_REGISTRY') | default('nexus.svo.aero:8374', true) }}/openpolicyagent/conftest:v0.56.0" }
+  - { dest: "helm:3.17.2", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/alpine/helm:3.17.2" }
+  - { dest: "python:3.11.11-slim-bookworm", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/python:3.11.11-slim-bookworm" }
+  - { dest: "alpine:3.20.3", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/alpine:3.20.3" }
+  - { dest: "kubectl:1.32.2", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/rancher/kubectl:v1.32.2" }
+  - { dest: "cosign:v2.4.0", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_GROUP_REGISTRY') | default('nexus.svo.aero:8374', true) }}/projectsigstore/cosign:v2.4.0" }
+
+k3s_ci_optional_verify:
+  - "gitlab-runner-helper:{{ lookup('env', 'GITLAB_RUNNER_HELPER_VERSION') | default('x86_64-v19.1.1', true) }}"
+
+k3s_ci_tar_dir: /var/lib/cxado/ci-image-tars
+k3s_ci_control_plane: p30-k44
+k3s_ci_export_tags: "{{ k3s_ci_image_map | map(attribute='dest') | list + k3s_ci_optional_verify }}"

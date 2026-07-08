@@ -1,0 +1,166 @@
+---
+- name: Detect container CLI (podman on RED OS / Astra VMs, docker on P30)
+  ansible.builtin.shell: |
+    set -euo pipefail
+    if command -v podman >/dev/null 2>&1 && { ! command -v docker >/dev/null 2>&1 || [ ! -d /etc/docker ]; }; then
+      echo podman
+    elif command -v docker >/dev/null 2>&1; then
+      echo docker
+    elif command -v podman >/dev/null 2>&1; then
+      echo podman
+    else
+      echo missing
+    fi
+  register: k3s_ci_cli_detect
+  changed_when: false
+
+- name: Set container CLI fact
+  ansible.builtin.set_fact:
+    k3s_ci_image_cli: "{{ k3s_ci_cli_detect.stdout | trim }}"
+
+- name: Fail when no container CLI found
+  ansible.builtin.fail:
+    msg: "neither podman nor docker available on {{ inventory_hostname }}"
+  when: k3s_ci_image_cli == 'missing'
+
+- name: Detect k3s binary path
+  ansible.builtin.shell: |
+    set -euo pipefail
+    if command -v k3s >/dev/null 2>&1; then
+      command -v k3s
+    elif [ -x /usr/local/bin/k3s ]; then
+      echo /usr/local/bin/k3s
+    else
+      echo missing
+    fi
+  register: k3s_ci_bin_detect
+  changed_when: false
+
+- name: Set k3s binary fact
+  ansible.builtin.set_fact:
+    k3s_ci_bin: "{{ k3s_ci_bin_detect.stdout | trim }}"
+
+- name: Fail when k3s binary missing
+  ansible.builtin.fail:
+    msg: "k3s binary not found on {{ inventory_hostname }}"
+  when: k3s_ci_bin == 'missing'
+
+- name: Ensure podman registries for Nexus (RED OS / podman hosts)
+  when: k3s_ci_image_cli == 'podman'
+  block:
+    - name: Ensure registries.conf.d directory exists
+      ansible.builtin.file:
+        path: /etc/containers/registries.conf.d
+        state: directory
+        mode: "0755"
+
+    - name: Install Nexus podman registries (8345 + 8374)
+      ansible.builtin.template:
+        src: podman-registries.conf.j2
+        dest: /etc/containers/registries.conf.d/cxado-nexus.conf
+        mode: "0644"
+
+    - name: Podman login to Nexus docker registry
+      ansible.builtin.shell: |
+        set -euo pipefail
+        echo "{{ lookup('env', 'NEXUS_PASSWORD') }}" | \
+          podman login --tls-verify=false "{{ nexus_docker_registry }}" \
+          -u "{{ lookup('env', 'NEXUS_USER') | default('admin-SEC', true) }}" --password-stdin
+        echo "{{ lookup('env', 'NEXUS_PASSWORD') }}" | \
+          podman login --tls-verify=false "{{ nexus_docker_group_registry }}" \
+          -u "{{ lookup('env', 'NEXUS_USER') | default('admin-SEC', true) }}" --password-stdin
+      args:
+        executable: /bin/bash
+      changed_when: false
+      no_log: true
+
+- name: Ensure docker daemon Nexus config (P30 / docker hosts)
+  when: k3s_ci_image_cli == 'docker'
+  block:
+    - name: Ensure /etc/docker exists
+      ansible.builtin.file:
+        path: /etc/docker
+        state: directory
+        mode: "0755"
+
+    - name: Install docker daemon.json for Nexus
+      ansible.builtin.copy:
+        dest: /etc/docker/daemon.json
+        mode: "0644"
+        content: |
+          {
+            "insecure-registries": ["{{ nexus_docker_registry }}", "{{ nexus_docker_group_registry }}"],
+            "registry-mirrors": ["https://{{ nexus_docker_registry }}"]
+          }
+      notify: Restart docker
+
+    - name: Docker login to Nexus registries
+      ansible.builtin.shell: |
+        set -euo pipefail
+        echo "{{ lookup('env', 'NEXUS_PASSWORD') }}" | docker login "{{ nexus_docker_registry }}" \
+          -u "{{ lookup('env', 'NEXUS_USER') | default('admin-SEC', true) }}" --password-stdin
+        echo "{{ lookup('env', 'NEXUS_PASSWORD') }}" | docker login "{{ nexus_docker_group_registry }}" \
+          -u "{{ lookup('env', 'NEXUS_USER') | default('admin-SEC', true) }}" --password-stdin
+      args:
+        executable: /bin/bash
+      changed_when: false
+      no_log: true
+
+- name: Ensure CI image in k3s containerd via Nexus proxy pull
+  ansible.builtin.shell: |
+    set -euo pipefail
+    CLI="{{ k3s_ci_image_cli }}"
+    K3S="{{ k3s_ci_bin }}"
+    REF="{{ nexus_docker_registry }}/{{ nexus_docker_repo }}/{{ item.dest }}"
+    TAG="{{ item.dest }}"
+    SRC="{{ item.nexus_src }}"
+    TLS_FLAG=""
+    if [[ "${CLI}" == podman ]]; then
+      TLS_FLAG="--tls-verify=false"
+    fi
+    if ${K3S} ctr images ls 2>/dev/null | grep -Fq "${TAG}"; then
+      echo "present: ${REF}"
+      exit 0
+    fi
+    ${CLI} pull ${TLS_FLAG} "${SRC}" && ${CLI} tag "${SRC}" "${REF}" && ${CLI} save "${REF}" | ${K3S} ctr images import - && {
+      echo "imported: ${REF}"
+      exit 0
+    }
+    TAR="{{ k3s_ci_tar_dir }}/{{ item.dest | replace(':', '_') | replace('/', '_') }}.tar"
+    if [[ -s "${TAR}" ]]; then
+      ${K3S} ctr images import "${TAR}"
+      echo "imported-tar: ${REF}"
+      exit 0
+    fi
+    echo "pull and tar fallback failed for ${REF}" >&2
+    exit 1
+  args:
+    executable: /bin/bash
+  loop: "{{ k3s_ci_image_map }}"
+  register: k3s_ci_pull
+  changed_when: "'present:' not in k3s_ci_pull.stdout"
+  become: true
+
+- name: Verify optional CI images already in containerd
+  ansible.builtin.shell: |
+    set -euo pipefail
+    TAG="{{ item }}"
+    if {{ k3s_ci_bin }} ctr images ls 2>/dev/null | grep -Fq "${TAG}"; then
+      echo "present: ${TAG}"
+      exit 0
+    fi
+    echo "missing optional: ${TAG}" >&2
+    exit 1
+  args:
+    executable: /bin/bash
+  loop: "{{ k3s_ci_optional_verify }}"
+  register: k3s_ci_optional
+  failed_when: false
+  changed_when: false
+  become: true
+
+- name: Warn when optional CI images are missing
+  ansible.builtin.debug:
+    msg: "optional image missing: {{ item.item }} — not in Nexus gitlab-hub; import gitlab-runner-helper manually once"
+  loop: "{{ k3s_ci_optional.results }}"
+  when: item.rc != 0

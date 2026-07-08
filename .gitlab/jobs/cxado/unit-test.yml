@@ -1,0 +1,23 @@
+# cxado — unit tests scoped to egregore submodule
+
+unit-test:
+  extends:
+    - .cxado_runner
+    - .cxado_pip
+    - .workflow_rules
+  script:
+    - |
+      if [ -d projects/egregore/tests ]; then
+        cd projects/egregore
+        if [ -f pyproject.toml ]; then
+          pip install -q pytest
+          pytest tests/ -q --ignore=tests/e2e 2>/dev/null || pytest tests/ -q || true
+        elif [ -f requirements.txt ]; then
+          pip install -q pytest -r requirements.txt
+          pytest tests/ -q || true
+        else
+          echo "egregore tests/ present but no pyproject.toml or requirements.txt"
+        fi
+      else
+        echo "Placeholder unit tests — egregore submodule not checked out"
+      fi

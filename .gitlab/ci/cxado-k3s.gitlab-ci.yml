@@ -23,6 +23,9 @@ include:
   - local: '.gitlab/ci/oss-full-enterprise.gitlab-ci.yml'
   - local: '.gitlab/jobs/cxado/_variables.yml'
   - local: '.gitlab/jobs/cxado/submodule-init.yml'
+  - local: '.gitlab/jobs/cxado/pip.yml'
+  - local: '.gitlab/jobs/cxado/security-rules.yml'
+  - local: '.gitlab/jobs/cxado/unit-test.yml'
   - local: '.gitlab/jobs/cxado/validate-helm.yml'
   - local: '.gitlab/jobs/cxado/kaniko-build-egregore.yml'
   - local: '.gitlab/jobs/cxado/deploy-egregore.yml'
@@ -39,42 +42,6 @@ deploy-contour:
   environment:
     name: cxado-contour-disabled
     url: https://10.8.185.15:30300
-
-upload-gitleaks-to-dojo:
-  rules:
-    - when: never
-
-upload-semgrep-to-dojo:
-  rules:
-    - when: never
-
-upload-trivy-osa-to-dojo:
-  rules:
-    - when: never
-
-upload-checkov-to-dojo:
-  rules:
-    - when: never
-
-upload-hadolint-to-dojo:
-  rules:
-    - when: never
-
-upload-linters-to-dojo:
-  rules:
-    - when: never
-
-upload-forbidden-files-to-dojo:
-  rules:
-    - when: never
-
-upload-sca-to-dojo:
-  rules:
-    - when: never
-
-upload-sbom-to-dojo:
-  rules:
-    - when: never
 
 conftest-admission:
   rules:
