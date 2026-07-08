@@ -93,7 +93,12 @@ push_submodules() {
 }
 
 restore_gitmodules() {
-  git checkout -- .gitmodules 2>/dev/null || git restore .gitmodules 2>/dev/null || true
+  # Never leave GitHub URLs replaced on the dev branch
+  if [[ -f "${ROOT}/.gitmodules.github" ]]; then
+    cp "${ROOT}/.gitmodules.github" .gitmodules
+  else
+    git checkout -- .gitmodules 2>/dev/null || git restore .gitmodules 2>/dev/null || true
+  fi
   git submodule sync --recursive 2>/dev/null || true
 }
 

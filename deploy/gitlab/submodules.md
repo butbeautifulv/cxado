@@ -9,6 +9,16 @@
 
 GitHub and GitLab **diverge by design** on `.gitmodules` only. Same code + submodule SHAs; corp tree never references GitHub.
 
+## Bootstrap all mirrors (one-time)
+
+Creates every project under `av.popov/*` from `.gitmodules.gitlab` and pushes initialized submodules:
+
+```bash
+./scripts/gitlab/bootstrap-gitlab-mirrors.sh
+```
+
+Re-run safe. API calls go via P30 (`CXADO_OFFLINE_SSH_HOST`).
+
 ## Daily workflow (laptop)
 
 ```bash
@@ -39,7 +49,8 @@ Options:
 | File | Purpose |
 |------|---------|
 | `.gitmodules` | GitHub URLs — **committed on `origin/main`** |
-| `.gitmodules.gitlab` | GitLab URLs — template for corp overlay commit |
+| `.gitmodules.github` | Same — restore template if sync touched working tree |
+| `.gitmodules.gitlab` | GitLab URLs — template for corp sync commit |
 | `scripts/gitlab/sync-monorepo-to-gitlab.sh` | Push corp copy |
 | `scripts/gitlab/push-github.sh` | Push to GitHub only |
 | `scripts/gitlab/push-submodule-mirror.sh` | Push one submodule or `--all` |
