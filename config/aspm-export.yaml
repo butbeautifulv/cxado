@@ -12,7 +12,7 @@ defectdojo:
   auto_create_context: true
   minimum_severity: Info
   close_old_findings: false
-  product_name: "${DEFECTDOJO_PRODUCT_NAME:-${CI_PROJECT_NAME:-app}}"
+  product_name: "${DEFECTDOJO_PRODUCT_NAME:-egregore}"
   engagement_name: "${DEFECTDOJO_ENGAGEMENT:-CI/CD}"
   commit_hash: "${CI_COMMIT_SHA:-}"
   branch_tag: "${CI_COMMIT_REF_NAME:-}"
@@ -42,6 +42,9 @@ controls:
   linters:
     scan_type: "SARIF"
     test_title: "linters"
+  skill_scan:
+    scan_type: "SARIF"
+    test_title: "skill-scan"
   dast:
     scan_type: "ZAP Scan"
     test_title: "dast-zap"

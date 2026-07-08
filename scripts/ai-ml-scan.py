@@ -49,7 +49,11 @@ def write_sarif(path: Path, findings: list[dict]) -> None:
 
 def scan_skills(root: Path) -> list[dict]:
     findings: list[dict] = []
-    for base in (root / ".cursor" / "skills", root / ".agents" / "skills"):
+    for base in (
+        root / ".cursor" / "skills",
+        root / ".agents" / "skills",
+        root / "agents" / "skills",
+    ):
         if not base.exists():
             continue
         for skill in base.rglob("SKILL.md"):
