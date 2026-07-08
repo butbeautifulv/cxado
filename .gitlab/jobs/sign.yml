@@ -1,0 +1,29 @@
+# C4 — Cosign signing (manual)
+
+sign-image:
+  stage: post-deploy
+  image: ${OSS_COSIGN_IMAGE:-gcr.io/projectsigstore/cosign:v2.4.0}
+  extends: .registry_login
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  needs:
+    - job: build-image
+    - job: trivy-sca
+      optional: true
+    - job: container_scanning
+      optional: true
+  script:
+    - |
+      if [ "${IMAGE_TAG:-none}" = "none" ]; then
+        echo "No image to sign"
+        exit 0
+      fi
+      IMAGE="${REGISTRY}:${CI_COMMIT_SHA}"
+      if [ -n "${COSIGN_PRIVATE_KEY:-}" ]; then
+        echo "$COSIGN_PRIVATE_KEY" | cosign sign --yes --key env://COSIGN_PRIVATE_KEY "$IMAGE"
+      else
+        export COSIGN_EXPERIMENTAL=1
+        cosign sign --yes "$IMAGE"
+      fi
+  allow_failure: true

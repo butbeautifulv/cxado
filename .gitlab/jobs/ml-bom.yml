@@ -1,0 +1,16 @@
+# ML2 — ML-BOM artifact (main)
+
+ml-bom-generate:
+  stage: build
+  image: python:3.12-slim
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - python scripts/ai-ml-scan.py ml_bom --report ml-bom.json
+    - python scripts/gate-check.py --control ml_bom --report ml-bom.json \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - ml-bom.json
+    expire_in: 90 days
+  allow_failure: true

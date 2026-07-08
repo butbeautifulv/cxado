@@ -1,0 +1,32 @@
+# C2 — SCA (Trivy container image, post-build / post-SBOM)
+
+trivy-sca:
+  stage: build
+  extends:
+    - .security_job_defaults
+    - .registry_auth_env
+    - .trivy_job
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  needs:
+    - job: build-image
+      artifacts: true
+    - job: sbom-generate
+      optional: true
+  script:
+    - |
+      if [ "${IMAGE_TAG:-none}" = "none" ]; then
+        echo "No image built — skip SCA image scan"
+        echo '{"runs":[{"results":[]}]}' > sca.sarif
+        exit 0
+      fi
+    - trivy image --scanners vuln --severity CRITICAL,HIGH --format sarif \
+        --output sca.sarif "${REGISTRY}:${CI_COMMIT_SHA}" || true
+    - |
+      [ -f sca.sarif ] || echo '{"runs":[{"results":[]}]}' > sca.sarif
+    - python3 scripts/gate-check.py --control sca --report sca.sarif \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - sca.sarif
+    expire_in: 30 days

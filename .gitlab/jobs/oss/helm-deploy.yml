@@ -1,0 +1,83 @@
+# D1 — Helm deploy preprod / prod (OSS)
+
+.helm_deploy:
+  image:
+    name: ${OSS_HELM_IMAGE}
+    entrypoint: [""]
+  before_script:
+    - apk add --no-cache curl
+    - |
+      KUBECTL_VERSION="${OSS_KUBECTL_VERSION:-1.32.2}"
+      curl -LO "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+    - chmod +x kubectl && mv kubectl /usr/local/bin/
+    - |
+      CHART="${HELM_CHART_PATH:-chart}"
+      if [ ! -d "$CHART" ] && [ -d "templates/k8s/helm/sample-app" ]; then
+        CHART="templates/k8s/helm/sample-app"
+      fi
+      export HELM_CHART_PATH="$CHART"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  needs:
+    - job: build-image
+    - job: trivy-sca
+      optional: true
+
+deploy-preprod:
+  stage: deploy
+  extends: .helm_deploy
+  environment:
+    name: preprod
+    url: $PREPROD_URL
+  variables:
+    PREPROD_URL: "https://preprod.example.com"
+    NAMESPACE_PREPROD: "preprod"
+    HELM_RELEASE: "sample-app"
+  script:
+    - |
+      if [ "${IMAGE_TAG:-none}" = "none" ]; then
+        echo "No image to deploy"
+        exit 0
+      fi
+    - kubectl create namespace "${NAMESPACE_PREPROD}" --dry-run=client -o yaml | kubectl apply -f -
+    - |
+      helm upgrade --install "${HELM_RELEASE}" "${HELM_CHART_PATH}" \
+        --namespace "${NAMESPACE_PREPROD}" \
+        --set image.repository="${REGISTRY}" \
+        --set image.tag="${CI_COMMIT_SHA}" \
+        --wait --timeout 5m
+
+deploy-prod:
+  stage: deploy
+  extends: .helm_deploy
+  environment:
+    name: production
+    url: $PROD_URL
+  variables:
+    PROD_URL: "https://app.example.com"
+    NAMESPACE_PROD: "prod"
+    HELM_RELEASE: "sample-app"
+  needs:
+    - job: build-image
+    - job: deploy-preprod
+      optional: true
+  script:
+    - |
+      if [ "${IMAGE_TAG:-none}" = "none" ]; then
+        echo "No image to deploy"
+        exit 0
+      fi
+    - kubectl create namespace "${NAMESPACE_PROD}" --dry-run=client -o yaml | kubectl apply -f -
+    - |
+      helm upgrade --install "${HELM_RELEASE}" "${HELM_CHART_PATH}" \
+        --namespace "${NAMESPACE_PROD}" \
+        --set image.repository="${REGISTRY}" \
+        --set image.tag="${CI_COMMIT_SHA}" \
+        --wait --timeout 5m
+
+# Override _base.yml stub
+deploy-prod-manual:
+  stage: deploy
+  rules:
+    - when: never

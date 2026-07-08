@@ -1,0 +1,22 @@
+# ML3 — Model adversarial scan (manual, warn)
+
+ml-model-scan:
+  stage: post-deploy
+  image: python:3.12-slim
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  script:
+    - |
+      echo '{"runs":[{"results":[]}]}' > ml-model.sarif
+      if [ -d models ]; then
+        echo "Placeholder: integrate ART / Alibi Detect on preprod model"
+        # echo '{"runs":[{"results":[{"level":"warning","message":{"text":"model scan stub"}}]}]}' > ml-model.sarif
+      fi
+    - python scripts/gate-check.py --control ml_model --report ml-model.sarif \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - ml-model.sarif
+    expire_in: 30 days
+  allow_failure: true

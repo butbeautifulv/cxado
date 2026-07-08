@@ -1,0 +1,29 @@
+# D1 — DAST (OWASP ZAP baseline)
+
+dast-zap:
+  stage: post-deploy
+  image:
+    name: ${OSS_ZAPROXY_IMAGE:-ghcr.io/zaproxy/zaproxy:2.16.0}
+    entrypoint: [""]
+  extends:
+    - .dast_opt_in_rules
+    - .security_job_defaults
+  variables:
+    PREPROD_URL: "https://preprod.example.com"
+  needs:
+    - job: deploy-preprod
+      optional: true
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq python3
+  script:
+    - |
+      DAST_TARGET="${DAST_WEBSITE:-${PREPROD_URL}}"
+      echo "ZAP target: ${DAST_TARGET}"
+    - mkdir -p reports
+    - zap-baseline.py -t "${DAST_WEBSITE:-${PREPROD_URL}}" -J reports/zap-baseline.json || true
+    - python3 scripts/gate-check.py --control dast --report reports/zap-baseline.json \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - reports/zap-baseline.json
+    expire_in: 30 days

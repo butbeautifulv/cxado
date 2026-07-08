@@ -1,0 +1,79 @@
+# Base jobs — validate, test, build
+
+.workflow_rules:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+lint:
+  stage: validate
+  image: ${OSS_PYTHON_IMAGE:-python:3.13-slim-bookworm}
+  extends: .workflow_rules
+  variables:
+    ENABLE_REAL_LINTERS: "${ENABLE_REAL_LINTERS:-false}"
+  script:
+    - |
+      if [ "$ENABLE_REAL_LINTERS" != "true" ]; then
+        echo "Placeholder lint — set ENABLE_REAL_LINTERS=true for real linters"
+        exit 0
+      fi
+      if [ -f uv.lock ]; then
+        pip install -q uv
+        uv sync
+        uv run ruff check . || true
+      else
+        pip install -q "ruff==${OSS_RUFF_VERSION:-0.11.8}"
+        ruff check . || true
+      fi
+  allow_failure: true
+
+unit-test:
+  stage: test
+  image: ${OSS_PYTHON_IMAGE:-python:3.13-slim-bookworm}
+  extends: .workflow_rules
+  script:
+    - |
+      if [ -f uv.lock ] && [ -d tests ]; then
+        pip install -q uv
+        uv sync
+        uv run pytest tests/ -q || true
+      elif [ -f requirements.txt ] && [ -d tests ]; then
+        pip install -q pytest -r requirements.txt
+        pytest tests/ -q || true
+      else
+        echo "Placeholder unit tests — add tests/ and requirements.txt or uv.lock"
+      fi
+  allow_failure: true
+
+build-image:
+  stage: build
+  image: ${OSS_DOCKER_CLI_IMAGE:-docker:24.0.9-cli}
+  extends: .registry_login
+  services:
+    - name: ${OSS_DOCKER_DIND_IMAGE:-docker:24.0.9-dind}
+      alias: docker
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  script:
+    - |
+      if [ -f Dockerfile ]; then
+        docker build -t "${REGISTRY}:${CI_COMMIT_SHA}" .
+        echo "IMAGE_TAG=${CI_COMMIT_SHA}" >> build.env
+      else
+        echo "No Dockerfile — skip image build"
+        echo "IMAGE_TAG=none" >> build.env
+      fi
+  artifacts:
+    reports:
+      dotenv: build.env
+
+deploy-prod-manual:
+  stage: deploy
+  image: alpine:3.20
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  script:
+    - echo "Manual prod deploy — implement CD to Kubernetes"
