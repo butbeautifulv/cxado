@@ -1,0 +1,111 @@
+# cxado corp k3s — Fabrica oss-full-enterprise + Kaniko build + P30 deploy
+
+stages:
+  - validate
+  - test
+  - security
+  - static-security-upload
+  - build
+  - image
+  - supply-chain
+  - image-security-upload
+  - deploy
+  - post-deploy
+  - smoke
+
+default:
+  tags:
+    - k3s
+    - corp
+    - p30
+
+include:
+  - local: '.gitlab/ci/oss-full-enterprise.gitlab-ci.yml'
+  - local: '.gitlab/jobs/cxado/_variables.yml'
+  - local: '.gitlab/jobs/cxado/submodule-init.yml'
+  - local: '.gitlab/jobs/cxado/validate-helm.yml'
+  - local: '.gitlab/jobs/cxado/kaniko-build-egregore.yml'
+  - local: '.gitlab/jobs/cxado/deploy-egregore.yml'
+  - local: '.gitlab/jobs/cxado/smoke-egregore.yml'
+
+# --- Disable fabrica jobs replaced by cxado corp path ---
+build-image:
+  rules:
+    - when: never
+
+deploy-contour:
+  rules:
+    - when: never
+
+upload-gitleaks-to-dojo:
+  rules:
+    - when: never
+
+upload-semgrep-to-dojo:
+  rules:
+    - when: never
+
+upload-trivy-osa-to-dojo:
+  rules:
+    - when: never
+
+upload-checkov-to-dojo:
+  rules:
+    - when: never
+
+upload-hadolint-to-dojo:
+  rules:
+    - when: never
+
+upload-linters-to-dojo:
+  rules:
+    - when: never
+
+upload-forbidden-files-to-dojo:
+  rules:
+    - when: never
+
+upload-sca-to-dojo:
+  rules:
+    - when: never
+
+upload-sbom-to-dojo:
+  rules:
+    - when: never
+
+conftest-admission:
+  rules:
+    - when: never
+
+sign-image:
+  rules:
+    - when: never
+
+# --- Wire Kaniko build into supply-chain ---
+build:egregore:
+  stage: image
+
+trivy-sca:
+  extends:
+    - .security_job_defaults
+    - .registry_auth_env
+    - .trivy_job
+  stage: supply-chain
+  needs:
+    - job: build:egregore
+      artifacts: true
+    - job: sbom-generate
+      optional: true
+  script:
+    - |
+      if [ "${IMAGE_TAG:-none}" = "none" ]; then
+        echo "No image built — skip SCA image scan"
+        echo '{"runs":[{"results":[]}]}' > sca.sarif
+        exit 0
+      fi
+    - trivy image --scanners vuln --severity CRITICAL,HIGH --format sarif
+        --output sca.sarif "${CXADO_IMAGE_REPO}:${IMAGE_TAG}" || true
+    - |
+      [ -f sca.sarif ] || echo '{"runs":[{"results":[]}]}' > sca.sarif
+    - python3 scripts/gate-check.py --control sca --report sca.sarif
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"

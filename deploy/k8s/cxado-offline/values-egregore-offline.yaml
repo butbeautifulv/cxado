@@ -1,11 +1,11 @@
 image:
-  repository: "docker.io/cxado/egregore"
+  repository: "__CXADO_IMAGE_REPO__"
   tag: "__CXADO_OFFLINE_TAG__"
   pullPolicy: IfNotPresent
 
 ui:
   image:
-    repository: "docker.io/cxado/egregore-ui"
+    repository: "__CXADO_UI_IMAGE_REPO__"
     tag: "__CXADO_OFFLINE_TAG__"
     pullPolicy: IfNotPresent
   replicas: 0

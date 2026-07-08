@@ -1,0 +1,21 @@
+smoke:egregore:
+  extends: .cxado_runner
+  stage: smoke
+  image:
+    name: ${CXADO_KUBECTL_IMAGE}
+    entrypoint: [""]
+  needs:
+    - job: deploy:egregore
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
+  before_script:
+    - ./scripts/gitlab/ci-submodule-init.sh
+    - |
+      if [ -z "${KUBECONFIG:-}" ] || [ ! -f "${KUBECONFIG}" ]; then
+        echo "missing KUBECONFIG file variable" >&2
+        exit 2
+      fi
+      export KUBECONFIG
+  script:
+    - CXADO_OFFLINE_SSH_HOST= ./scripts/k8s/smoke-test-egregore-obs.sh

@@ -1,0 +1,15 @@
+---
+- name: Ensure k3s registry config directory exists
+  ansible.builtin.file:
+    path: "{{ k3s_registry_path | dirname }}"
+    state: directory
+    mode: "0755"
+
+- name: Install k3s registries.yaml for Nexus pull
+  ansible.builtin.template:
+    src: registries.yaml.j2
+    dest: "{{ k3s_registry_path }}"
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Restart k3s

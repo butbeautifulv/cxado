@@ -1,0 +1,12 @@
+# ASPM export — per-scan upload to DefectDojo (after_script snippet)
+
+.aspm_export:
+  after_script:
+    - |
+      [ -n "${ASPM_CONTROL:-}" ] || exit 0
+      [ -n "${ASPM_REPORT:-}" ] && [ -f "${ASPM_REPORT}" ] || exit 0
+      python3 scripts/aspm-export.py \
+        --control "${ASPM_CONTROL}" \
+        --report "${ASPM_REPORT}" \
+        --config "${ASPM_CONFIG:-config/aspm-export.yaml}" || \
+        [ "${DEFECTDOJO_FAIL_ON_ERROR:-false}" != "true" ]

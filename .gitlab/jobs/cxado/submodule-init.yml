@@ -1,0 +1,6 @@
+.cxado_before_script:
+  before_script:
+    - ./scripts/gitlab/ci-submodule-init.sh
+
+.cxado_runner:
+  extends: .cxado_before_script

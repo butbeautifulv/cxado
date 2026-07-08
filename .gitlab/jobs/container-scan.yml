@@ -1,0 +1,33 @@
+# C2 — SCA (container image composition analysis, post-SBOM on main)
+
+include:
+  - template: Security/Container-Scanning.gitlab-ci.yml
+
+container_scanning:
+  stage: build
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  variables:
+    CS_IMAGE: "${REGISTRY}:${CI_COMMIT_SHA}"
+  needs:
+    - job: build-image
+      artifacts: true
+    - job: sbom-generate
+      optional: true
+  artifacts:
+    reports:
+      container_scanning: gl-container-scanning-report.json
+    expire_in: 30 days
+  after_script:
+    - |
+      REPORT=gl-container-scanning-report.json
+      [ -f "$REPORT" ] || echo '{"vulnerabilities":[]}' > "$REPORT"
+      python3 -c "
+import json
+p='$REPORT'
+d=json.load(open(p))
+out={'runs':[{'results':[{'level':(v.get('severity','high')).lower(),'message':{'text':v.get('name','')}} for v in d.get('vulnerabilities',[])]}]}
+json.dump(out, open('sca.sarif','w'))
+"
+      python scripts/gate-check.py --control sca --report sca.sarif \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"

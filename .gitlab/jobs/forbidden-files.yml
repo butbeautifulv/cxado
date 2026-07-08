@@ -1,0 +1,35 @@
+# Forbidden files scan (fintech MR gate — warn only)
+
+forbidden-files:
+  stage: security
+  image: ${OSS_ALPINE_IMAGE:-alpine:3.20.3}
+  extends:
+    - .workflow_rules_security
+    - .security_job_defaults
+  before_script:
+    - apk add --no-cache python3
+  script:
+    - |
+      echo '{"runs":[{"results":[]}]}' > forbidden-files.sarif
+      FOUND=0
+      PATTERNS='\.env$|\.pem$|\.key$|id_rsa|\.p12$|\.pfx$'
+      while IFS= read -r f; do
+        echo "WARN: suspicious file $f"
+        FOUND=1
+      done < <(find . -type f -regextype posix-extended -regex ".*(${PATTERNS})" \
+        ! -path './.git/*' 2>/dev/null || true)
+      while IFS= read -r f; do
+        file "$f" | grep -qiE 'executable|ELF|Mach-O' && {
+          echo "WARN: binary $f"; FOUND=1;
+        }
+      done < <(find . -type f ! -path './.git/*' 2>/dev/null | head -500)
+      if [ "$FOUND" -eq 1 ]; then
+        echo '{"runs":[{"results":[{"level":"medium","message":{"text":"forbidden or suspicious files detected"}}]}]}' > forbidden-files.sarif
+      fi
+      python3 scripts/normalize-sarif.py forbidden-files.sarif forbidden-files
+    - python3 scripts/gate-check.py --control linters --report forbidden-files.sarif \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - forbidden-files.sarif
+    expire_in: 30 days

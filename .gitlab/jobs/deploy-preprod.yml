@@ -1,0 +1,19 @@
+# D1 — Deploy to preprod
+
+deploy-preprod:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  environment:
+    name: preprod
+    url: $PREPROD_URL
+  variables:
+    PREPROD_URL: "https://preprod.example.com"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  needs:
+    - job: build-image
+    - job: container_scanning
+  script:
+    - echo "Deploy ${REGISTRY}:${CI_COMMIT_SHA} to preprod namespace"
+    - echo "kubectl set image deployment/app app=${REGISTRY}:${CI_COMMIT_SHA} -n preprod"
+  when: manual

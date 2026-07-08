@@ -1,0 +1,16 @@
+validate:helm:
+  extends:
+    - .cxado_runner
+    - .workflow_rules
+  stage: validate
+  image:
+    name: ${OSS_HELM_IMAGE}
+    entrypoint: [""]
+  script:
+    - ./scripts/gitlab/render-egregore-values.sh > /tmp/values-egregore-ci.yaml
+    - |
+      helm template egregore "${HELM_CHART_PATH}" \
+        -f /tmp/values-egregore-ci.yaml \
+        --set postgres.password=ci-placeholder \
+        --set redis.password=ci-placeholder \
+        > /dev/null

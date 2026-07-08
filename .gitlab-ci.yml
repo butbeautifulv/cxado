@@ -1,86 +1,9 @@
-# Corp offline deploy — P30 shell runner (tags set in GitLab UI on p30-k3s-shell).
-# GitLab main uses .gitmodules.gitlab (no GitHub) — sync: scripts/gitlab/sync-monorepo-to-gitlab.sh
+# Corp cxado — Fabrica oss-full-enterprise + k3s Kubernetes runner (Kaniko/Helm)
 #
-# Required CI/CD variables — seed: ./scripts/gitlab/setup-ci-variables.sh
-#   POSTGRES_PASSWORD, REDIS_PASSWORD, BUS_SIGNING_KEY, CXADO_OFFLINE_SUDO_PW,
-#   NEXUS_USER, NEXUS_PASSWORD; optional: VM_01_PWD, VM_02_PWD
+# Runner: deploy/k8s/gitlab-runner/ (tags: k8s, corp, cxado)
+# Bootstrap: ./scripts/gitlab/setup-runner-k8s.sh bootstrap
+# CI vars: ./scripts/gitlab/setup-ci-variables.sh
+# Sync corp GitLab: ./scripts/gitlab/sync-monorepo-to-gitlab.sh
 
-stages:
-  - validate
-  - build
-  - deploy
-  - smoke
-
-variables:
-  GIT_SUBMODULE_STRATEGY: none
-  GIT_SUBMODULE_FORCE_HTTPS: "false"
-  GIT_DEPTH: "1"
-  CI_SUBMODULE_GITLAB_PREFIX: "git@gitlab.svo.aero:av.popov"
-  CI_SUBMODULES: "projects/egregore"
-  CXADO_IMAGE_TAG: "${CI_COMMIT_SHORT_SHA}"
-  KUBECONFIG: "/home/bbv/.kube/config"
-  CXADO_APP_NS: "cxado-app"
-
-.p30_runner:
-  tags:
-    - k3s
-    - corp
-    - p30
-  before_script:
-    - ./scripts/gitlab/ci-submodule-init.sh
-
-validate:helm:
-  extends: .p30_runner
-  stage: validate
-  script:
-    - |
-      sed "s/__CXADO_OFFLINE_TAG__/${CXADO_IMAGE_TAG}/g" \
-        deploy/k8s/cxado-offline/values-egregore-offline.yaml \
-        > /tmp/values-egregore-ci.yaml
-    - |
-      helm template egregore projects/egregore/deploy/helm/egregore \
-        -f /tmp/values-egregore-ci.yaml \
-        --set image.tag="${CXADO_IMAGE_TAG}" \
-        --set postgres.password=ci-placeholder \
-        --set redis.password=ci-placeholder \
-        > /dev/null
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "main"
-
-build:egregore:
-  extends: .p30_runner
-  stage: build
-  script:
-    - ./scripts/gitlab/ci-kaniko-build-egregore.sh
-  artifacts:
-    expire_in: 3 days
-    paths:
-      - .ci/image-tag
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-
-deploy:egregore:
-  extends: .p30_runner
-  stage: deploy
-  needs: ["build:egregore"]
-  script:
-    - ./scripts/gitlab/ci-deploy-egregore.sh
-  environment:
-    name: cxado-p30
-    url: https://10.8.185.15:30300
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: manual
-  allow_failure: false
-
-smoke:egregore:
-  extends: .p30_runner
-  stage: smoke
-  needs: ["deploy:egregore"]
-  script:
-    - CXADO_OFFLINE_SSH_HOST= ./scripts/k8s/smoke-test-egregore-obs.sh
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: on_success
+include:
+  - local: '.gitlab/ci/cxado-k3s.gitlab-ci.yml'

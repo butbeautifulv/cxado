@@ -1,76 +1,93 @@
-# GitLab CI/CD → k3s (P30)
+# GitLab CI/CD → k3s (Fabrica + Kaniko)
 
-Pipeline: `.gitlab-ci.yml` on `gitlab.svo.aero/av.popov/cxado`.
+Pipeline entrypoint: [`.gitlab-ci.yml`](../../.gitlab-ci.yml) → [`.gitlab/ci/cxado-k3s.gitlab-ci.yml`](../../.gitlab/ci/cxado-k3s.gitlab-ci.yml).
 
-## Flow
+Project: `gitlab.svo.aero/av.popov/cxado`.
 
-```
-push gitlab/main
-  → validate:helm     (helm template)
-  → build:egregore    (Kaniko Job in cxado-build → Nexus → import nodes)
-  → deploy:egregore   (manual) helm upgrade
-  → smoke:egregore    (observability smoke)
-```
+## Architecture
 
-Runner: `p30-k3s-shell` on `bbv-p30-wifi` (shell, tags `k3s` `corp` `p30`).
+- **Fabrica** profile `oss-full-enterprise`: security gates, SBOM, registry abstraction
+- **cxado overlay**: Kaniko build, helm validate/deploy, smoke
+- **Runner**: Kubernetes executor in `cxado-ci` namespace (tags `k8s` `corp` `cxado`)
+- **Registry**: Nexus — single source of truth in [`deploy/registry.defaults.env`](../registry.defaults.env)
+
+## Stages
+
+`validate` → `test` → `security` → … → `image` (Kaniko) → `supply-chain` → `deploy` (manual) → `smoke`
+
+Key jobs:
+
+| Job | Stage | Notes |
+|-----|-------|-------|
+| `validate:helm` | validate | `helm template` with rendered values |
+| `build:egregore` | image | Kaniko pod, push to Nexus |
+| `deploy:egregore` | deploy | manual on `main` |
+| `smoke:egregore` | smoke | after deploy |
+
+## Registry configuration
+
+All registry URLs derive from env (change once):
+
+| File / mechanism | Variables |
+|------------------|-----------|
+| [`deploy/registry.defaults.env`](../registry.defaults.env) | `NEXUS_DOCKER_REGISTRY`, `NEXUS_PYPI_HOST`, `NEXUS_CXADO_DOCKER_REPO` |
+| GitLab CI/CD vars | seeded by `setup-ci-variables.sh` |
+| [`.gitlab/jobs/cxado/_variables.yml`](../../.gitlab/jobs/cxado/_variables.yml) | `CXADO_CI_REGISTRY`, `OSS_*_IMAGE`, `CXADO_IMAGE_REPO` |
+| Helm values | placeholders `__CXADO_IMAGE_REPO__` → `render-egregore-values.sh` |
+
+Override corp endpoints only in `deploy/.secrets/cxado-k3s.env` or GitLab CI/CD settings.
 
 ## One-time setup
 
 ```bash
-# 1. Runner (if not done)
-./scripts/gitlab/setup-runner-p30.sh register
+# 1. Mirror CI images to Nexus
+./scripts/gitlab/mirror-fabrica-ci-images.sh --ssh bbv-p30-wifi
 
-# 2. Kaniko namespace + Nexus secrets on k3s
-./scripts/k8s/kaniko-bootstrap.sh --ssh bbv-p30-wifi
+# 2. GitLab Runner (kubernetes executor in k3s)
+./scripts/gitlab/setup-runner-k8s.sh --ssh bbv-p30-wifi bootstrap
 
-# 3. Kaniko executor in containerd (optional if already imported)
-./scripts/k8s/nexus-cxado-docker-setup.sh --ssh bbv-p30-wifi --seed-kaniko /tmp/kaniko-executor-v1.23.2.tar
+# 3. k3s node registry config (Ansible)
+./scripts/k8s/k3s-ansible-playbook.sh site.yml
 
-# 4. GitLab CI/CD variables from deploy/.secrets/cxado-k3s.env
+# 4. GitLab CI/CD variables (registry + secrets + KUBECONFIG file)
 ./scripts/gitlab/setup-ci-variables.sh
 
-# 5. GitLab mirrors (submodules)
-./scripts/gitlab/bootstrap-gitlab-mirrors.sh
+# 5. Sync monorepo to corp GitLab
 ./scripts/gitlab/sync-monorepo-to-gitlab.sh
 ```
 
-## CI/CD variables (auto via setup-ci-variables.sh)
+Legacy shell runner (`p30-k3s-shell`) — ops/bootstrap only, not used by pipeline jobs.
+
+## CI/CD variables
 
 | Variable | Purpose |
 |----------|---------|
-| `POSTGRES_PASSWORD` | egregore helm |
-| `REDIS_PASSWORD` | egregore helm |
-| `BUS_SIGNING_KEY` | egregore helm |
-| `CXADO_OFFLINE_SUDO_PW` | sudo on P30 (kaniko hostPath, ctr import) |
-| `NEXUS_USER` / `NEXUS_PASSWORD` | Kaniko build + registry push |
-| `VM_01_PWD` / `VM_02_PWD` | image import on workers (optional) |
+| `NEXUS_DOCKER_REGISTRY` | Docker registry host:port (e.g. `nexus.svo.aero:8345`) |
+| `NEXUS_CXADO_DOCKER_REPO` | Hosted repo name (`cxado-docker`) |
+| `NEXUS_PYPI_HOST` / `NEXUS_PYPI_REPO` | Kaniko build-args |
+| `NEXUS_USER` / `NEXUS_PASSWORD` | Registry auth |
+| `KUBECONFIG` | file — cluster access for deploy/smoke |
+| `POSTGRES_PASSWORD` / `REDIS_PASSWORD` / `BUS_SIGNING_KEY` | Helm deploy |
+
+Seed all: `./scripts/gitlab/setup-ci-variables.sh`
 
 ## Trigger pipeline
 
-```bash
-# after sync to gitlab
-ssh bbv-p30-wifi "curl -sk --request POST \
-  --header 'PRIVATE-TOKEN: \$GITLAB_PAT_RUNNER' \
-  '${GITLAB_URL}/api/v4/projects/1938/pipeline' \
-  -d 'ref=main'"
-```
+GitLab UI → CI/CD → Run pipeline on `main`, or API from P30.
 
-Or: GitLab UI → CI/CD → Run pipeline.
-
-## Deploy
-
-`deploy:egregore` is **manual** on `main`. After build succeeds, click Play in GitLab.
+`deploy:egregore` is **manual** on `main`.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---------|-----|
-| `missing NEXUS_USER` | `./scripts/gitlab/setup-ci-variables.sh` |
-| `Host key verification failed` (submodule) | fixed: CI uses job token HTTPS |
-| Kaniko Job `ImagePullBackOff` | import executor: `nexus-cxado-docker-setup.sh` or use gcr.io image in containerd |
-| `docker pull` Nexus fails | build uses `k3s ctr pull` instead |
+| Jobs stuck (no runner) | `kubectl -n cxado-ci get pods`; `setup-runner-k8s.sh status` |
+| `missing KUBECONFIG` | `setup-ci-variables.sh` (uploads file var) |
+| Kaniko push fails | check `NEXUS_*` vars; Nexus CA mounted on runner pods |
+| Wrong image path in helm | check `NEXUS_DOCKER_REGISTRY` in GitLab vars |
 
 ## Related
 
 - [submodules.md](submodules.md)
 - [README.md](README.md)
+- [registry.defaults.env.example](../registry.defaults.env.example)

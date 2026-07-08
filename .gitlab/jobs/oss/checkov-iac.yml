@@ -1,0 +1,47 @@
+# B4 — IaC scanning (OSS Checkov)
+
+checkov-iac:
+  stage: security
+  image: ${OSS_PYTHON_IMAGE}
+  extends:
+    - .security_job_defaults
+  variables:
+    ASPM_REPORT: reports/checkov-report.json
+  rules:
+    - if: $SAST_DISABLED == 'true' || $SAST_DISABLED == '1' || $SECURITY_DISABLED == 'true' || $SECURITY_DISABLED == '1'
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - "**/*.tf"
+        - "**/k8s/**"
+        - "**/helm/**"
+        - "**/chart/**"
+        - "docker-compose*.yml"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - "**/*.tf"
+        - "**/k8s/**"
+        - "**/helm/**"
+        - "**/chart/**"
+        - "docker-compose*.yml"
+  script:
+    - pip install -q "checkov==${OSS_CHECKOV_VERSION:-3.2.449}"
+    - mkdir -p reports
+    - |
+      checkov -d . --framework terraform,kubernetes,helm,dockerfile,docker_compose --soft-fail \
+        --output sarif --output-file-path reports \
+        --output json --output-file-path reports || true
+      REPORT=reports/results_sarif.sarif
+      [ -f "$REPORT" ] || REPORT=reports/checkov.sarif
+      [ -f "$REPORT" ] || echo '{"runs":[{"results":[]}]}' > reports/checkov.sarif
+      [ -f reports/checkov.sarif ] || cp "$REPORT" reports/checkov.sarif
+      JSON=reports/results_json.json
+      [ -f "$JSON" ] || JSON=reports/checkov-report.json
+      [ -f "$JSON" ] || echo '[]' > reports/checkov-report.json
+      [ -f reports/checkov-report.json ] || cp "$JSON" reports/checkov-report.json
+    - python3 scripts/gate-check.py --control iac --report reports/checkov.sarif \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - reports/
+    expire_in: 30 days

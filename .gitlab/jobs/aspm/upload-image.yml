@@ -1,0 +1,43 @@
+# ASPM upload wave — supply-chain findings (post-build)
+
+.aspm_upload_image:
+  stage: image-security-upload
+  image: ${OSS_PYTHON_IMAGE:-python:3.11.11-slim-bookworm}
+  extends:
+    - .defectdojo_skip_rules
+    - .security_job_defaults
+  before_script:
+    - pip install -q pyyaml
+  script:
+    - |
+      REPORT="${ASPM_REPORT:?}"
+      CONTROL="${ASPM_CONTROL:?}"
+      if [ ! -f "$REPORT" ]; then
+        echo "[aspm] skip — artifact $REPORT not found"
+        exit 0
+      fi
+      if [ ! -s "$REPORT" ]; then
+        echo "[aspm] skip — artifact $REPORT is empty"
+        exit 0
+      fi
+      python3 scripts/aspm-export.py --control "$CONTROL" --report "$REPORT" --skip-empty
+
+upload-sca-to-dojo:
+  extends: .aspm_upload_image
+  variables:
+    ASPM_CONTROL: sca
+    ASPM_REPORT: sca.sarif
+  needs:
+    - job: trivy-sca
+      artifacts: true
+      optional: true
+
+upload-sbom-to-dojo:
+  extends: .aspm_upload_image
+  variables:
+    ASPM_CONTROL: sbom
+    ASPM_REPORT: sbom.cdx.json
+  needs:
+    - job: sbom-generate
+      artifacts: true
+      optional: true

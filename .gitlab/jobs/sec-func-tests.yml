@@ -1,0 +1,43 @@
+# D2 — Security functional tests
+
+sec-func-tests:
+  stage: test
+  image: node:20-bookworm
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  needs:
+    - job: deploy-preprod
+      optional: true
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq python3 python3-pip
+  script:
+    - |
+      echo '{"runs":[{"results":[]}]}' > sec-func.sarif
+      FAILED=0
+      if [ -d tests/security ]; then
+        pip3 install pytest requests -q
+        pytest tests/security/ -v || FAILED=1
+      elif [ -f package.json ]; then
+        if [ -f package-lock.json ]; then npm ci; else npm install; fi
+        if node -e "const p=require('./package.json'); process.exit(p.scripts&&p.scripts['test:security']?0:1)"; then
+          npm run test:security || FAILED=1
+        elif node -e "const p=require('./package.json'); const d=JSON.stringify(p.devDependencies||{}); process.exit(d.includes('vitest')?0:1)"; then
+          npm run test:coverage -- --grep @security 2>/dev/null || npm test -- --grep @security || FAILED=1
+        else
+          echo "No tests/security/ or npm test:security / vitest @security — add security tests (D2)"
+        fi
+      else
+        echo "tests/security not found — add security tests (D2)"
+      fi
+      if [ "$FAILED" -eq 1 ]; then
+        echo '{"runs":[{"results":[{"level":"high","message":{"text":"security functional tests failed"}}]}]}' > sec-func.sarif
+      fi
+      python3 scripts/normalize-sarif.py sec-func.sarif sec-func-tests
+    - python3 scripts/gate-check.py --control sec_func_tests --report sec-func.sarif \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - sec-func.sarif
+    expire_in: 30 days
+  allow_failure: true

@@ -1,0 +1,55 @@
+.cxado_helm:
+  image:
+    name: ${OSS_HELM_IMAGE}
+    entrypoint: [""]
+  extends: .cxado_runner
+  before_script:
+    - ./scripts/gitlab/ci-submodule-init.sh
+    - apk add --no-cache bash openssl
+    - |
+      if [ -z "${KUBECONFIG:-}" ] || [ ! -f "${KUBECONFIG}" ]; then
+        echo "missing KUBECONFIG file variable" >&2
+        exit 2
+      fi
+      export HELM_CMD="helm --kubeconfig ${KUBECONFIG} --namespace ${HELM_NAMESPACE}"
+
+deploy:egregore:
+  extends: .cxado_helm
+  stage: deploy
+  environment:
+    name: cxado-p30
+    url: https://10.8.185.15:30300
+  needs:
+    - job: build:egregore
+      artifacts: true
+    - job: trivy-sca
+      optional: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  script:
+    - |
+      TAG="${IMAGE_TAG:-${CXADO_IMAGE_TAG}}"
+      for var in POSTGRES_PASSWORD REDIS_PASSWORD; do
+        if [ -z "${!var:-}" ]; then
+          echo "missing CI variable: ${var}" >&2
+          exit 2
+        fi
+      done
+      if [ -z "${BUS_SIGNING_KEY:-}" ]; then
+        export BUS_SIGNING_KEY="$(openssl rand -base64 32 | tr -d '\n' | tr '+/' '-_' | tr -d '=')"
+        echo "generated ephemeral BUS_SIGNING_KEY"
+      fi
+    - TAG="${IMAGE_TAG:-${CXADO_IMAGE_TAG}}" ./scripts/gitlab/render-egregore-values.sh > /tmp/values-egregore-ci.yaml
+    - |
+      TAG="${IMAGE_TAG:-${CXADO_IMAGE_TAG}}"
+      ${HELM_CMD} upgrade --install "${HELM_RELEASE}" "${HELM_CHART_PATH}" \
+        -f /tmp/values-egregore-ci.yaml \
+        --create-namespace \
+        --set "image.tag=${TAG}" \
+        --set "ui.image.tag=${TAG}" \
+        --set "postgres.password=${POSTGRES_PASSWORD}" \
+        --set "redis.password=${REDIS_PASSWORD}" \
+        --set "busSigningKey=${BUS_SIGNING_KEY}" \
+        --force-conflicts \
+        --wait --timeout 15m

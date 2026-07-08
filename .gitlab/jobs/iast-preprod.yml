@@ -1,0 +1,41 @@
+# F1 — IAST preprod (OSS: ZAP Full Scan — active runtime testing)
+# Commercial agents (Contrast/Seeker) — optional overlay, see docs/phases/F1-iast.md
+
+iast-preprod:
+  stage: post-deploy
+  image:
+    name: ${OSS_ZAPROXY_IMAGE:-ghcr.io/zaproxy/zaproxy:2.16.0}
+    entrypoint: [""]
+  extends: .aspm_export
+  variables:
+    PREPROD_URL: "https://preprod.example.com"
+    ZAP_IAST_MAX_MIN: "15"
+    ASPM_CONTROL: iast
+    ASPM_REPORT: reports/zap-iast-full.json
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+  needs:
+    - job: deploy-preprod
+      optional: true
+  script:
+    - mkdir -p reports
+    - |
+      zap-full-scan.py -t "${PREPROD_URL}" \
+        -J reports/zap-iast-full.json \
+        -r reports/zap-iast-full.html \
+        -m "${ZAP_IAST_MAX_MIN}" || true
+    - command -v python3 >/dev/null || (apt-get update -qq && apt-get install -y -qq python3)
+    - python3 scripts/gate-check.py --control iast --report reports/zap-iast-full.json \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  after_script:
+    - command -v python3 >/dev/null || (apt-get update -qq && apt-get install -y -qq python3)
+    - !reference [.aspm_export, after_script]
+  artifacts:
+    paths:
+      - reports/zap-iast-full.json
+      - reports/zap-iast-full.html
+    expire_in: 30 days
+  allow_failure: true

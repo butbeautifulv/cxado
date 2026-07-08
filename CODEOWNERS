@@ -1,0 +1,15 @@
+# CODEOWNERS template
+
+# Copy to repository root as CODEOWNERS
+
+# Security-sensitive paths
+/config/security-gate-policy.yaml @security-team
+/.github/workflows/ @security-team @devops-team
+/.gitlab-ci.yml @security-team @devops-team
+/templates/ @security-team @devops-team
+
+# Kubernetes policies
+/templates/k8s/ @security-team @platform-team
+
+# Default
+* @team-leads

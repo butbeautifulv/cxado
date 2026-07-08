@@ -1,0 +1,30 @@
+# B2 — SAST
+
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
+sast:
+  stage: security
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+    expire_in: 30 days
+  after_script:
+    - |
+      REPORT=gl-sast-report.json
+      if [ -f "$REPORT" ]; then
+        python3 -c "
+import json,sys
+p='$REPORT'
+d=json.load(open(p))
+if 'runs' not in d and 'vulnerabilities' in d:
+    out={'runs':[{'results':[{'level':(v.get('severity','high')).lower(),'message':{'text':v.get('name','')}} for v in d.get('vulnerabilities',[])]}]}
+    json.dump(out, open('gl-sast-report.sarif','w'))
+    print('converted to SARIF')
+" 2>/dev/null || cp "$REPORT" gl-sast-report.sarif
+        python scripts/gate-check.py --control sast --report gl-sast-report.sarif \
+          --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+      fi
