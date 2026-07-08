@@ -27,6 +27,12 @@ if [[ ! -f .gitmodules ]]; then
   exit 1
 fi
 
+# Belt-and-suspenders: never hit GitHub from corp runner.
+if [[ -n "${CI_JOB_TOKEN:-}" ]]; then
+  git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@${GITLAB_HOST}/av.popov/".insteadOf \
+    "https://github.com/butbeautifulv/" || true
+fi
+
 for path in ${SUBMODULES}; do
   url="$(git config -f .gitmodules --get "submodule.${path}.url" 2>/dev/null || true)"
   if [[ -z "${url}" ]]; then
@@ -35,7 +41,12 @@ for path in ${SUBMODULES}; do
   fi
   repo="$(basename "${url}" .git)"
   gitlab_url="$(submodule_url "${repo}")"
+
+  rm -rf "${path}" ".git/modules/${path}"
+  git config -f .gitmodules "submodule.${path}.url" "${gitlab_url}"
   git config "submodule.${path}.url" "${gitlab_url}"
+  git config --unset-all "submodule.${path}.active" 2>/dev/null || true
+
   echo "[ci-submodule] ${path} -> gitlab.svo.aero/av.popov/${repo}.git"
   git submodule sync --recursive "${path}"
   git -c protocol.file.allow=always submodule update --init --depth 1 "${path}"
