@@ -1,0 +1,16 @@
+# Egregore unit tests — fail hard on regression.
+
+unit-test:
+  extends:
+    - .egregore_prepare
+    - .cxado_pip
+    - .egregore_blocker
+    - .egregore_workflow
+  stage: test
+  image: ${OSS_PYTHON_IMAGE}
+  script:
+    - |
+      cd "${EGREGORE_ROOT}"
+      pip install -q --index-url "${PIP_INDEX_URL}" --trusted-host "${PIP_TRUSTED_HOST}" uv
+      uv sync
+      ./scripts/pytest_batches.sh

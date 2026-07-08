@@ -1,4 +1,4 @@
-# cxado corp k3s — Fabrica oss-full-enterprise + Kaniko build + P30 deploy
+# cxado corp k3s — Fabrica oss-full-enterprise + Egregore secure pipeline
 
 stages:
   - validate
@@ -24,9 +24,11 @@ include:
   - local: '.gitlab/jobs/cxado/_variables.yml'
   - local: '.gitlab/jobs/cxado/submodule-init.yml'
   - local: '.gitlab/jobs/cxado/pip.yml'
-  - local: '.gitlab/jobs/cxado/security-rules.yml'
-  - local: '.gitlab/jobs/cxado/security-runtime.yml'
-  - local: '.gitlab/jobs/cxado/unit-test.yml'
+  - local: '.gitlab/jobs/cxado/egregore-scope.yml'
+  - local: '.gitlab/jobs/cxado/egregore-security.yml'
+  - local: '.gitlab/jobs/cxado/egregore-test.yml'
+  - local: '.gitlab/jobs/cxado/egregore-aspm.yml'
+  - local: '.gitlab/jobs/cxado/egregore-supply-chain.yml'
   - local: '.gitlab/jobs/cxado/validate-helm.yml'
   - local: '.gitlab/jobs/cxado/kaniko-build-egregore.yml'
   - local: '.gitlab/jobs/cxado/deploy-egregore.yml'
@@ -52,35 +54,7 @@ sign-image:
   rules:
     - when: never
 
-# --- Wire Kaniko build into supply-chain ---
-build:egregore:
-  stage: image
-
-trivy-sca:
-  extends:
-    - .security_job_defaults
-    - .registry_auth_env
-    - .trivy_job
-  stage: supply-chain
-  needs:
-    - job: build:egregore
-      artifacts: true
-    - job: sbom-generate
-      optional: true
-  script:
-    - |
-      if [ "${IMAGE_TAG:-none}" = "none" ]; then
-        echo "No image built — skip SCA image scan"
-        echo '{"runs":[{"results":[]}]}' > sca.sarif
-        exit 0
-      fi
-    - trivy image --scanners vuln --severity CRITICAL,HIGH --format sarif
-        --output sca.sarif "${CXADO_IMAGE_REPO}:${IMAGE_TAG}" || true
-    - |
-      [ -f sca.sarif ] || echo '{"runs":[{"results":[]}]}' > sca.sarif
-    - |
-      if command -v python3 >/dev/null 2>&1; then
-        python3 scripts/gate-check.py --control sca --report sca.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
-      else
-        echo "WARN: skip gate-check (no python3 in trivy image)"
-      fi
+# Monorepo-wide fabrica scans (no egregore submodule) — disabled
+infra-checkov-iac:
+  rules:
+    - when: never

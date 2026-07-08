@@ -18,8 +18,6 @@ NS="${CXADO_CI_NS:-cxado-ci}"
 log() { printf '[smoke-defectdojo-k3s] %s\n' "$*"; }
 die() { echo "[smoke-defectdojo-k3s] ERROR: $*" >&2; exit 2; }
 
-[[ -n "${DD_TOKEN}" ]] || die "missing DEFECTDOJO_API_TOKEN in ${SECRETS}"
-
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --ssh) SSH_HOST="${2:-bbv-p30-wifi}"; shift 2 ;;
@@ -27,10 +25,26 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-log "curl ${DD_URL}/api/v2/users/?limit=1 from pod in ${NS}"
-ssh "${SSH_HOST}" "export KUBECONFIG=/home/bbv/.kube/config; \
+fetch_token_remote() {
+  [[ -n "${VM_01_DEFECTDOJO_SU_PWD:-}" ]] || return 1
+  ssh "${SSH_HOST}" "curl -sk -X POST '${DD_URL%/}/api/v2/api-token-auth/' \
+    -H 'Content-Type: application/json' \
+    -d '{\"username\":\"${VM_01_DEFECTDOJO_SU_NAME:-admin}\",\"password\":\"${VM_01_DEFECTDOJO_SU_PWD}\"}'" \
+    | python3 -c 'import json,sys; print(json.load(sys.stdin).get("token",""))'
+}
+
+if [[ -z "${DD_TOKEN}" ]]; then
+  DD_TOKEN="$(fetch_token_remote 2>/dev/null || true)"
+fi
+
+[[ -n "${DD_TOKEN}" ]] || die "missing DEFECTDOJO_API_TOKEN — set in ${SECRETS} or VM_01_DEFECTDOJO_SU_*"
+
+log "GET ${DD_URL}/api/v2/users/?limit=1 from pod in ${NS}"
+if ! ssh "${SSH_HOST}" "export KUBECONFIG=/home/bbv/.kube/config; \
   k3s kubectl -n '${NS}' run defectdojo-smoke --rm -i --restart=Never \
     --image='${NEXUS_DOCKER_REGISTRY:-nexus.svo.aero:8345}/${NEXUS_CXADO_DOCKER_REPO:-cxado-docker}/alpine:3.20.3' \
-    --command -- wget -qO- --header='Authorization: Token ${DD_TOKEN}' '${DD_URL%/}/api/v2/users/?limit=1'"
+    --command -- wget -qO- --header='Authorization: Token ${DD_TOKEN}' '${DD_URL%/}/api/v2/users/?limit=1'"; then
+  die "pod cannot reach ${DD_URL} (connection reset?) — open firewall P30 pod CIDR → VM_01:8080"
+fi
 
 log "ok — DefectDojo reachable from k3s"

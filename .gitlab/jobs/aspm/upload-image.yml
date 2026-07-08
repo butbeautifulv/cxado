@@ -7,7 +7,7 @@
     - .defectdojo_skip_rules
     - .security_job_defaults
   before_script:
-    - pip install -q pyyaml
+    - pip install -q --index-url "${PIP_INDEX_URL:-https://pypi.org/simple}" --trusted-host "${PIP_TRUSTED_HOST:-pypi.org}" pyyaml
   script:
     - |
       REPORT="${ASPM_REPORT:?}"

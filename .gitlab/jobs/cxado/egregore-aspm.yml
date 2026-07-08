@@ -1,0 +1,38 @@
+# DefectDojo ASPM upload — offline Nexus pip, product egregore.
+
+variables:
+  DEFECTDOJO_PRODUCT_NAME: "egregore"
+  DEFECTDOJO_FAIL_ON_ERROR: "true"
+
+.cxado_aspm_pip:
+  before_script:
+    - !reference [.cxado_pip, before_script]
+    - pip install -q --index-url "${PIP_INDEX_URL}" --trusted-host "${PIP_TRUSTED_HOST}" pyyaml
+
+.aspm_upload_static:
+  extends: .cxado_pip
+  image: ${OSS_PYTHON_IMAGE}
+  variables:
+    DEFECTDOJO_PRODUCT_NAME: "egregore"
+    DEFECTDOJO_FAIL_ON_ERROR: "true"
+  before_script:
+    - !reference [.cxado_aspm_pip, before_script]
+
+.aspm_upload_image:
+  extends: .cxado_pip
+  image: ${OSS_PYTHON_IMAGE}
+  variables:
+    DEFECTDOJO_PRODUCT_NAME: "egregore"
+    DEFECTDOJO_FAIL_ON_ERROR: "true"
+  before_script:
+    - !reference [.cxado_aspm_pip, before_script]
+
+upload-skill-scan-to-dojo:
+  extends: .aspm_upload_static
+  variables:
+    ASPM_CONTROL: skill_scan
+    ASPM_REPORT: skill-scan.sarif
+  needs:
+    - job: skill-scanner
+      artifacts: true
+      optional: true

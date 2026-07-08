@@ -5,7 +5,6 @@
   extends: .cxado_runner
   before_script:
     - ./scripts/gitlab/ci-submodule-init.sh
-    - apk add --no-cache bash openssl
     - |
       if [ -z "${KUBECONFIG:-}" ] || [ ! -f "${KUBECONFIG}" ]; then
         echo "missing KUBECONFIG file variable" >&2
@@ -22,7 +21,14 @@ deploy:egregore:
   needs:
     - job: build:egregore
       artifacts: true
+    - job: unit-test
     - job: trivy-sca
+      optional: true
+    - job: gitleaks-scan
+      optional: true
+    - job: semgrep-sast
+      optional: true
+    - job: trivy-osa
       optional: true
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -37,7 +43,11 @@ deploy:egregore:
         fi
       done
       if [ -z "${BUS_SIGNING_KEY:-}" ]; then
-        export BUS_SIGNING_KEY="$(openssl rand -base64 32 | tr -d '\n' | tr '+/' '-_' | tr -d '=')"
+        if command -v openssl >/dev/null 2>&1; then
+          export BUS_SIGNING_KEY="$(openssl rand -base64 32 | tr -d '\n' | tr '+/' '-_' | tr -d '=')"
+        else
+          export BUS_SIGNING_KEY="$(head -c 32 /dev/urandom | base64 | tr -d '\n' | tr '+/' '-_' | tr -d '=')"
+        fi
         echo "generated ephemeral BUS_SIGNING_KEY"
       fi
     - TAG="${IMAGE_TAG:-${CXADO_IMAGE_TAG}}" ./scripts/gitlab/render-egregore-values.sh > /tmp/values-egregore-ci.yaml

@@ -51,3 +51,6 @@ dast:
 
 sec_func_tests:
   mode: warn
+
+skill_scan:
+  mode: warn

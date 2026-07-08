@@ -1,0 +1,235 @@
+# Egregore-scoped security scans (full job defs — avoid GitLab partial-merge image loss).
+
+gitleaks-scan:
+  extends:
+    - .egregore_prepare
+    - .egregore_blocker
+    - .egregore_workflow
+  stage: security
+  image:
+    name: ${OSS_GITLEAKS_IMAGE}
+    entrypoint: [""]
+  script:
+    - |
+      gitleaks detect --source "${EGREGORE_ROOT}" --report-format sarif \
+        --report-path gitleaks.sarif --no-git || true
+    - |
+      [ -f gitleaks.sarif ] || echo '{"runs":[{"results":[]}]}' > gitleaks.sarif
+    - |
+      if command -v python3 >/dev/null 2>&1; then
+        python3 scripts/gate-check.py --control secrets --report gitleaks.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+      else
+        echo "WARN: skip gate-check (no python3 in gitleaks image)"
+      fi
+  artifacts:
+    paths:
+      - gitleaks.sarif
+    expire_in: 30 days
+
+semgrep-sast:
+  extends:
+    - .egregore_prepare
+    - .egregore_blocker
+    - .egregore_workflow
+  stage: security
+  image: ${OSS_SEMGREP_IMAGE}
+  script:
+    - semgrep scan --config p/ci --sarif -o semgrep.sarif "${EGREGORE_ROOT}" || true
+    - |
+      [ -f semgrep.sarif ] || echo '{"runs":[{"results":[]}]}' > semgrep.sarif
+    - python3 scripts/gate-check.py --control sast --report semgrep.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - semgrep.sarif
+    expire_in: 30 days
+
+.trivy_job:
+  image:
+    name: ${OSS_TRIVY_IMAGE}
+    entrypoint: [""]
+  before_script: []
+
+trivy-osa:
+  extends:
+    - .egregore_prepare
+    - .egregore_blocker
+    - .egregore_workflow
+    - .trivy_job
+  stage: security
+  script:
+    - trivy fs "${EGREGORE_ROOT}" --scanners vuln --severity CRITICAL,HIGH --format sarif --output osa.sarif || true
+    - |
+      [ -f osa.sarif ] || echo '{"runs":[{"results":[]}]}' > osa.sarif
+    - |
+      if command -v python3 >/dev/null 2>&1; then
+        python3 scripts/gate-check.py --control osa --report osa.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+      else
+        echo "WARN: skip gate-check (no python3 in trivy image)"
+      fi
+  artifacts:
+    paths:
+      - osa.sarif
+    expire_in: 30 days
+
+checkov-iac:
+  extends:
+    - .egregore_prepare
+    - .egregore_warn
+    - .egregore_workflow
+  stage: security
+  image:
+    name: ${OSS_CHECKOV_IMAGE}
+    entrypoint: [""]
+  variables:
+    ASPM_REPORT: reports/checkov-report.json
+  script:
+    - mkdir -p reports
+    - |
+      checkov -d "${EGREGORE_ROOT}/deploy/helm" --framework kubernetes,helm --soft-fail \
+        --output sarif --output-file-path reports \
+        --output json --output-file-path reports || true
+      REPORT=reports/results_sarif.sarif
+      [ -f "$REPORT" ] || REPORT=reports/checkov.sarif
+      [ -f "$REPORT" ] || echo '{"runs":[{"results":[]}]}' > reports/checkov.sarif
+      [ -f reports/checkov.sarif ] || cp "$REPORT" reports/checkov.sarif
+      JSON=reports/results_json.json
+      [ -f "$JSON" ] || JSON=reports/checkov-report.json
+      [ -f "$JSON" ] || echo '[]' > reports/checkov-report.json
+      [ -f reports/checkov-report.json ] || cp "$JSON" reports/checkov-report.json
+    - python3 scripts/gate-check.py --control iac --report reports/checkov.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - reports/
+    expire_in: 30 days
+
+dockerfile-lint:
+  extends:
+    - .egregore_prepare
+    - .egregore_warn
+    - .egregore_workflow
+  stage: security
+  image:
+    name: ${OSS_HADOLINT_IMAGE}
+    entrypoint: [""]
+  script:
+    - |
+      echo '{"version":"2.1.0","runs":[{"tool":{"driver":{"name":"hadolint"}},"results":[]}]}' > hadolint.sarif
+      echo '[]' > hadolint-report.json
+      DF="${EGREGORE_ROOT}/Dockerfile.corp"
+      if [ ! -f "${DF}" ]; then
+        echo "No ${DF} — skip hadolint"
+      else
+        echo "Linting ${DF}"
+        hadolint -f json "${DF}" > hadolint-report.json 2>/dev/null || echo '[]' > hadolint-report.json
+      fi
+    - |
+      if command -v python3 >/dev/null 2>&1; then
+        python3 scripts/normalize-sarif.py hadolint.sarif hadolint || true
+        python3 scripts/gate-check.py --control dockerfile --report hadolint.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+      else
+        echo "WARN: skip sarif normalize/gate (no python3 in hadolint image)"
+      fi
+  artifacts:
+    paths:
+      - hadolint.sarif
+      - hadolint-report.json
+    expire_in: 30 days
+
+forbidden-files:
+  extends:
+    - .egregore_prepare
+    - .egregore_warn
+    - .egregore_workflow
+  stage: security
+  image: ${OSS_PYTHON_IMAGE}
+  script:
+    - |
+      echo '{"runs":[{"results":[]}]}' > forbidden-files.sarif
+      FOUND=0
+      PATTERNS='\.env$|\.pem$|\.key$|id_rsa|\.p12$|\.pfx$'
+      while IFS= read -r f; do
+        echo "WARN: suspicious file $f"
+        FOUND=1
+      done < <(find "${EGREGORE_ROOT}" -type f -regextype posix-extended -regex ".*(${PATTERNS})" \
+        ! -path '*/.git/*' 2>/dev/null || true)
+      while IFS= read -r f; do
+        if python3 -c "import pathlib,sys; p=pathlib.Path(sys.argv[1]); h=p.read_bytes()[:4] if p.is_file() else b''; sys.exit(1 if h.startswith((b'\\x7fELF',b'MZ',b'\\xfe\\xed\\xfa')) else 0)" "$f" 2>/dev/null; then
+          :
+        else
+          echo "WARN: binary $f"
+          FOUND=1
+        fi
+      done < <(find "${EGREGORE_ROOT}" -type f ! -path '*/.git/*' 2>/dev/null | head -500)
+      if [ "$FOUND" -eq 1 ]; then
+        echo '{"runs":[{"results":[{"level":"medium","message":{"text":"forbidden or suspicious files detected"}}]}]}' > forbidden-files.sarif
+      fi
+      python3 scripts/normalize-sarif.py forbidden-files.sarif forbidden-files
+    - python3 scripts/gate-check.py --control linters --report forbidden-files.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - forbidden-files.sarif
+    expire_in: 30 days
+
+linter-security:
+  extends:
+    - .egregore_prepare
+    - .cxado_pip
+    - .egregore_warn
+    - .egregore_workflow
+  stage: security
+  image: ${OSS_PYTHON_IMAGE}
+  variables:
+    ENABLE_REAL_LINTERS: "true"
+  script:
+    - |
+      cd "${EGREGORE_ROOT}"
+      pip install -q --index-url "${PIP_INDEX_URL}" --trusted-host "${PIP_TRUSTED_HOST}" uv
+      uv sync
+      uv run ruff check . --output-format sarif -o "${CI_PROJECT_DIR}/linter.sarif" || true
+    - |
+      [ -f linter.sarif ] || echo '{"runs":[{"results":[]}]}' > linter.sarif
+    - python3 scripts/gate-check.py --control linters --report linter.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    reports:
+      codequality: linter.sarif
+    paths:
+      - linter.sarif
+    expire_in: 30 days
+
+skill-scanner:
+  extends:
+    - .egregore_prepare
+    - .cxado_pip
+    - .egregore_warn
+    - .egregore_workflow
+  stage: security
+  image: ${OSS_PYTHON_IMAGE}
+  script:
+    - |
+      if [ ! -d "${EGREGORE_ROOT}/agents/skills" ]; then
+        echo '{"runs":[{"results":[]}]}' > skill-scan.sarif
+        exit 0
+      fi
+    - python3 scripts/ai-ml-scan.py skill_scan --root "${EGREGORE_ROOT}" --report skill-scan.sarif
+    - python3 scripts/gate-check.py --control skill_scan --report skill-scan.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - skill-scan.sarif
+    expire_in: 30 days
+
+lint:
+  extends:
+    - .egregore_prepare
+    - .cxado_pip
+    - .egregore_workflow
+  stage: validate
+  image: ${OSS_PYTHON_IMAGE}
+  variables:
+    ENABLE_REAL_LINTERS: "true"
+  allow_failure: true
+  script:
+    - |
+      cd "${EGREGORE_ROOT}"
+      pip install -q --index-url "${PIP_INDEX_URL}" --trusted-host "${PIP_TRUSTED_HOST}" uv
+      uv sync
+      uv run ruff check .

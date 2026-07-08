@@ -1,18 +1,38 @@
 build:egregore:
   extends:
-    - .cxado_runner
-    - .workflow_rules
+    - .egregore_prepare
+    - .egregore_blocker
+    - .egregore_workflow
   stage: image
   image:
     name: ${KANIKO_EXECUTOR_IMAGE}
     entrypoint: [""]
+  needs:
+    - job: gitleaks-scan
+      optional: false
+    - job: semgrep-sast
+      optional: false
+    - job: trivy-osa
+      optional: false
+    - job: unit-test
+      optional: false
+    - job: checkov-iac
+      optional: true
+    - job: dockerfile-lint
+      optional: true
+    - job: linter-security
+      optional: true
+    - job: forbidden-files
+      optional: true
+    - job: skill-scanner
+      optional: true
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
     - |
-      if [ ! -f "${CI_PROJECT_DIR}/projects/egregore/Dockerfile.corp" ]; then
-        echo "missing Dockerfile.corp — run submodule init" >&2
+      if [ ! -f "${CI_PROJECT_DIR}/${EGREGORE_ROOT}/Dockerfile.corp" ]; then
+        echo "missing ${EGREGORE_ROOT}/Dockerfile.corp — run submodule init" >&2
         exit 2
       fi
     - |
@@ -21,8 +41,8 @@ build:egregore:
         CERT_ARG="--registry-certificate=${REGISTRY_HOST},/etc/ssl/certs/nexus/ca.crt"
       fi
       /kaniko/executor \
-        --dockerfile="${CI_PROJECT_DIR}/projects/egregore/Dockerfile.corp" \
-        --context=dir://${CI_PROJECT_DIR}/projects/egregore \
+        --dockerfile="${CI_PROJECT_DIR}/${EGREGORE_ROOT}/Dockerfile.corp" \
+        --context=dir://${CI_PROJECT_DIR}/${EGREGORE_ROOT} \
         --destination="${CXADO_IMAGE_REPO}:${CXADO_IMAGE_TAG}" \
         --build-arg=NEXUS_REGISTRY=${REGISTRY_HOST} \
         --build-arg=NEXUS_PYPI_HOST=${NEXUS_PYPI_HOST} \

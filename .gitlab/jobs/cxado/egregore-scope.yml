@@ -1,0 +1,20 @@
+# Egregore product scope — submodule checkout before any product job.
+
+variables:
+  EGREGORE_ROOT: "projects/egregore"
+
+.egregore_prepare:
+  before_script:
+    - ./scripts/gitlab/ci-submodule-init.sh
+    - test -f "${EGREGORE_ROOT}/pyproject.toml" || (echo "egregore submodule missing" >&2; exit 2)
+
+.egregore_blocker:
+  allow_failure: false
+
+.egregore_warn:
+  allow_failure: true
+
+.egregore_workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
