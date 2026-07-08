@@ -51,9 +51,11 @@ gitlab_api() {
 
 http_code() { echo "$1" | tail -1 | sed 's/HTTP://'; }
 
+# shellcheck source=scripts/gitlab/lib/discover-mirror-repos.sh
+source "${ROOT}/scripts/gitlab/lib/discover-mirror-repos.sh"
+
 list_mirror_repos() {
-  git config -f "${GITMODULES}" --get-regexp '^submodule\..*\.url$' \
-    | awk '{print $2}' | while read -r url; do basename "${url}" .git; done
+  discover_mirror_repos "${ROOT}" | sort -u
 }
 
 ensure_project() {
@@ -94,7 +96,7 @@ create_all_projects() {
 }
 
 push_all_submodules() {
-  "${ROOT}/scripts/gitlab/push-submodule-mirror.sh" --all
+  "${ROOT}/scripts/gitlab/push-submodule-mirror.sh" --all --recursive
 }
 
 main() {

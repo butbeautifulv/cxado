@@ -11,11 +11,13 @@ GitHub and GitLab **diverge by design** on `.gitmodules` only. Same code + submo
 
 ## Bootstrap all mirrors (one-time)
 
-Creates every project under `av.popov/*` from `.gitmodules.gitlab` and pushes initialized submodules:
+Creates every project under `av.popov/*` from `.gitmodules.gitlab` (including nested, e.g. `tabula/fstec`) and pushes:
 
 ```bash
 ./scripts/gitlab/bootstrap-gitlab-mirrors.sh
 ```
+
+Nested: `projects/tabula/.gitmodules.gitlab` → `av.popov/fstec`. Parent `tabula` push applies GitLab URLs overlay (like monorepo sync).
 
 Re-run safe. API calls go via P30 (`CXADO_OFFLINE_SSH_HOST`).
 
@@ -79,7 +81,9 @@ Creates GitLab project via API if `GITLAB_PAT_RUNNER` is in `deploy/.secrets/cxa
 |-------|-------|
 | **Now** | `projects/egregore` |
 | **Next** | `projects/veil` |
+| **Nested** | `projects/tabula/fstec` (submodule inside tabula — mirrored as `av.popov/fstec`) |
 | **As needed** | `projects/veneno`, MCP repos |
+| **Not in workspace** | [fish](https://github.com/butbeautifulv/fish) — archive donor for hexenhammer, **no submodule** |
 | **Low priority** | `shared/skills`, `shared/references`, `shared/agent-rules`, `shared/gui` |
 | **Optional** | `projects/fabrica`, `projects/tabula`, … |
 
