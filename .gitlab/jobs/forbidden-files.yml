@@ -6,8 +6,6 @@ forbidden-files:
   extends:
     - .workflow_rules_security
     - .security_job_defaults
-  before_script:
-    - apk add --no-cache python3 file
   script:
     - |
       echo '{"runs":[{"results":[]}]}' > forbidden-files.sarif
