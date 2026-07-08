@@ -7,6 +7,7 @@ variables:
   OSS_TRIVY_IMAGE: "aquasec/trivy:0.63.0"
   OSS_GITLEAKS_IMAGE: "ghcr.io/gitleaks/gitleaks:v8.22.1"
   OSS_HADOLINT_IMAGE: "hadolint/hadolint:v2.12.0-alpine"
+  OSS_CHECKOV_IMAGE: "bridgecrew/checkov:3.2.449"
   OSS_CONFTEST_IMAGE: "ghcr.io/openpolicyagent/conftest:v0.56.0"
   OSS_ZAPROXY_IMAGE: "ghcr.io/zaproxy/zaproxy:2.16.0"
   OSS_SCHEMATHESIS_IMAGE: "ghcr.io/schemathesis/schemathesis:4.21.7"

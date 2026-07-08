@@ -2,7 +2,7 @@
 
 linter-security:
   stage: security
-  image: python:3.13-slim-bookworm
+  image: ${OSS_PYTHON_IMAGE:-python:3.11.11-slim-bookworm}
   extends:
     - .workflow_rules_security
     - .security_job_defaults
