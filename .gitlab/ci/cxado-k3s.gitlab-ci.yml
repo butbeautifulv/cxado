@@ -53,8 +53,3 @@ conftest-admission:
 sign-image:
   rules:
     - when: never
-
-# Monorepo-wide fabrica scans (no egregore submodule) — disabled
-infra-checkov-iac:
-  rules:
-    - when: never
