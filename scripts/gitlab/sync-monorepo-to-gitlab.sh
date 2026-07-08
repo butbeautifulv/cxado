@@ -122,7 +122,14 @@ push_monorepo_gitlab_view() {
     log "[dry-run] would push ${GITLAB_REMOTE} ${commit}:${GITLAB_BRANCH}"
     return 0
   fi
-  git push "${GITLAB_REMOTE}" "${commit}:refs/heads/${GITLAB_BRANCH}"
+  git fetch "${GITLAB_REMOTE}" "${GITLAB_BRANCH}" 2>/dev/null || true
+  # gitlab/main is corp-only; overlay commits may diverge from prior gitlab tip
+  if git rev-parse -q --verify "refs/remotes/${GITLAB_REMOTE}/${GITLAB_BRANCH}" >/dev/null 2>&1; then
+    git push "${GITLAB_REMOTE}" "${commit}:refs/heads/${GITLAB_BRANCH}" \
+      --force-with-lease="refs/heads/${GITLAB_BRANCH}:refs/remotes/${GITLAB_REMOTE}/${GITLAB_BRANCH}"
+  else
+    git push "${GITLAB_REMOTE}" "${commit}:refs/heads/${GITLAB_BRANCH}"
+  fi
   log "pushed ${GITLAB_REMOTE}/${GITLAB_BRANCH}"
 }
 
