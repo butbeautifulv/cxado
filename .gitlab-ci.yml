@@ -12,6 +12,7 @@ stages:
 
 variables:
   GIT_SUBMODULE_STRATEGY: none
+  GIT_SUBMODULE_FORCE_HTTPS: "false"
   GIT_DEPTH: "1"
   CI_SUBMODULE_GITLAB_PREFIX: "git@gitlab.svo.aero:av.popov"
   CI_SUBMODULES: "projects/egregore"
