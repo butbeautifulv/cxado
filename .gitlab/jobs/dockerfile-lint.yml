@@ -20,8 +20,6 @@ dockerfile-lint:
         - Dockerfile
         - Dockerfile.*
         - "**/Dockerfile"
-  before_script:
-    - apk add --no-cache python3
   script:
     - |
       echo '{"version":"2.1.0","runs":[{"tool":{"driver":{"name":"hadolint"}},"results":[]}]}' > hadolint.sarif

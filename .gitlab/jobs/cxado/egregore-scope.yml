@@ -7,6 +7,12 @@ variables:
   before_script:
     - ./scripts/gitlab/ci-submodule-init.sh
     - test -f "${EGREGORE_ROOT}/pyproject.toml" || (echo "egregore submodule missing" >&2; exit 2)
+    - |
+      if [ -n "${NEXUS_USER:-}" ] && [ -n "${NEXUS_PASSWORD:-}" ]; then
+        printf 'machine %s\nlogin %s\npassword %s\n' \
+          "${NEXUS_PYPI_HOST}" "${NEXUS_USER}" "${NEXUS_PASSWORD}" > ~/.netrc
+        chmod 600 ~/.netrc
+      fi
 
 .egregore_blocker:
   allow_failure: false
