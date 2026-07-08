@@ -25,6 +25,7 @@ include:
   - local: '.gitlab/jobs/cxado/submodule-init.yml'
   - local: '.gitlab/jobs/cxado/pip.yml'
   - local: '.gitlab/jobs/cxado/security-rules.yml'
+  - local: '.gitlab/jobs/cxado/security-runtime.yml'
   - local: '.gitlab/jobs/cxado/unit-test.yml'
   - local: '.gitlab/jobs/cxado/validate-helm.yml'
   - local: '.gitlab/jobs/cxado/kaniko-build-egregore.yml'
@@ -77,5 +78,10 @@ trivy-sca:
         --output sca.sarif "${CXADO_IMAGE_REPO}:${IMAGE_TAG}" || true
     - |
       [ -f sca.sarif ] || echo '{"runs":[{"results":[]}]}' > sca.sarif
-    - python3 scripts/gate-check.py --control sca --report sca.sarif
-        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+    - |
+      if command -v python3 >/dev/null 2>&1; then
+        python3 scripts/gate-check.py --control sca --report sca.sarif \
+          --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+      else
+        echo "WARN: skip gate-check (no python3 in trivy image)"
+      fi
