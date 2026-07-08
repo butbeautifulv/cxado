@@ -1,8 +1,8 @@
 # Corp offline deploy — P30 shell runner (tags set in GitLab UI on p30-k3s-shell).
-# Submodules: GitHub blocked on P30 → CI rewrites URLs to gitlab.example.invalid/av.popov/* mirrors.
+# GitLab main uses .gitmodules.gitlab (no GitHub) — sync: scripts/gitlab/sync-monorepo-to-gitlab.sh
 #
 # Required CI/CD variables (masked): POSTGRES_PASSWORD, REDIS_PASSWORD, BUS_SIGNING_KEY,
-#   CXADO_OFFLINE_SUDO_PW; optional: NEO4J_PASSWORD, NEXUS_USER, NEXUS_PASSWORD.
+#   CXADO_OFFLINE_SUDO_PW; optional: NEO4J_PASSWORD, NEXUS_USER, NEXUS_PASSWORD (required for Kaniko build).
 
 stages:
   - validate
@@ -51,7 +51,7 @@ build:egregore:
   extends: .p30_runner
   stage: build
   script:
-    - ./scripts/gitlab/ci-build-egregore.sh
+    - ./scripts/gitlab/ci-kaniko-build-egregore.sh
   artifacts:
     expire_in: 3 days
     paths:
