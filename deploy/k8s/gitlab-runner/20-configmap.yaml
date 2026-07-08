@@ -37,6 +37,12 @@ data:
         memory_request = "512Mi"
         memory_limit = "4Gi"
         service_account = "gitlab-runner"
+        [runners.kubernetes.node_selector]
+          "node-role.kubernetes.io/control-plane" = "true"
+        [[runners.kubernetes.node_tolerations]]
+          key = "node-role.kubernetes.io/control-plane"
+          operator = "Exists"
+          effect = "NoSchedule"
         [runners.kubernetes.pod_annotations]
           "cluster-autoscaler.kubernetes.io/safe-to-evict" = "false"
         [[runners.kubernetes.volumes.secret]]
