@@ -126,7 +126,8 @@ if ! sudo_run docker image inspect "${KANIKO_GCR}" >/dev/null 2>&1; then
   exit 1
 fi
 sudo_run docker tag "${KANIKO_GCR}" "${KANIKO_NEXUS}"
-sudo_run sh -c 'printf "%s\n" "${NEXUS_PASSWORD}" | docker login "${NEXUS_DOCKER_REGISTRY}" -u "${NEXUS_USER}" --password-stdin'
+sudo_run env NEXUS_PASSWORD="${NEXUS_PASSWORD}" NEXUS_USER="${NEXUS_USER}" NEXUS_DOCKER_REGISTRY="${NEXUS_DOCKER_REGISTRY}" \
+  sh -c 'printf "%s\n" "$NEXUS_PASSWORD" | docker login "$NEXUS_DOCKER_REGISTRY" -u "$NEXUS_USER" --password-stdin'
 sudo_run docker push "${KANIKO_NEXUS}"
 sudo_run docker save "${KANIKO_NEXUS}" -o /tmp/kaniko-nexus.tar
 sudo_run k3s ctr images import /tmp/kaniko-nexus.tar

@@ -15,6 +15,7 @@ SECRETS="${ROOT}/deploy/.secrets/cxado-k3s.env"
 GITLAB_URL="${GITLAB_URL:-https://gitlab.svo.aero}"
 GITLAB_PREFIX="${CI_SUBMODULE_GITLAB_PREFIX:-git@gitlab.svo.aero:av.popov}"
 PAT="${GITLAB_PAT_RUNNER:-}"
+SSH_HOST="${CXADO_OFFLINE_SSH_HOST:-}"
 PUSH_ALL=false
 SUB_PATH="${1:-}"
 
@@ -28,6 +29,17 @@ usage() {
 gitlab_api() {
   local method="$1" path="$2" body="${3:-}"
   local url="${GITLAB_URL%/}${path}"
+  if [[ -n "${SSH_HOST}" ]]; then
+    if [[ -n "${body}" ]]; then
+      ssh "${SSH_HOST}" "curl -sk --connect-timeout 10 --request '${method}' '${url}' \
+        --header 'PRIVATE-TOKEN: ${PAT}' --header 'Content-Type: application/json' \
+        -d $(printf '%q' "${body}") -w '\nHTTP:%{http_code}\n'" 2>/dev/null || printf '\nHTTP:000\n'
+    else
+      ssh "${SSH_HOST}" "curl -sk --connect-timeout 10 --request '${method}' '${url}' \
+        --header 'PRIVATE-TOKEN: ${PAT}' -w '\nHTTP:%{http_code}\n'" 2>/dev/null || printf '\nHTTP:000\n'
+    fi
+    return 0
+  fi
   if [[ -n "${body}" ]]; then
     curl -sk --connect-timeout 5 --request "${method}" "${url}" \
       --header "PRIVATE-TOKEN: ${PAT}" \
@@ -52,7 +64,7 @@ ensure_gitlab_project() {
     return 0
   fi
   if [[ "${code}" == "000" || -z "${code}" ]]; then
-    log "GitLab API unreachable from this host — skip project create for ${repo}"
+    log "GitLab API unreachable — skip project create for ${repo} (set CXADO_OFFLINE_SSH_HOST or run from corp)"
     return 0
   fi
 
