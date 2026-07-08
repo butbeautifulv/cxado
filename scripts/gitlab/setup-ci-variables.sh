@@ -58,9 +58,11 @@ gitlab_api() {
   local method="$1" path="$2" body="${3:-}"
   local url="${GITLAB_URL%/}${path}"
   if [[ -n "${body}" ]]; then
+    local remote_body="/tmp/cxado-gl-var-$$.json"
+    printf '%s' "${body}" | ssh "${SSH_HOST}" "cat > '${remote_body}'"
     ssh "${SSH_HOST}" "curl -sk --request '${method}' '${url}' \
       --header 'PRIVATE-TOKEN: ${PAT}' --header 'Content-Type: application/json' \
-      -d $(printf '%q' "${body}") -w '\nHTTP:%{http_code}\n'"
+      --data @'${remote_body}' -w '\nHTTP:%{http_code}\n'; rm -f '${remote_body}'"
   else
     ssh "${SSH_HOST}" "curl -sk --request '${method}' '${url}' \
       --header 'PRIVATE-TOKEN: ${PAT}' -w '\nHTTP:%{http_code}\n'"
@@ -69,9 +71,19 @@ gitlab_api() {
 
 http_code() { echo "$1" | tail -1 | sed 's/HTTP://'; }
 
+is_maskable() {
+  [[ "$1" =~ ^[A-Za-z0-9+/=]+$ ]]
+}
+
 upsert_var() {
-  local key="$1" masked="$2" protected="$3" value="$4"
+  local key="$1" want_masked="$2" protected="$3" value="$4"
   [[ -n "${value}" ]] || { log "skip ${key} (empty in ${SECRETS})"; return 0; }
+
+  local masked="${want_masked}"
+  if [[ "${want_masked}" == "true" ]] && ! is_maskable "${value}"; then
+    log "WARN: ${key} not Base64-safe — stored unmasked (GitLab masked var rules)"
+    masked="false"
+  fi
 
   local body code out
   body="$(KEY="${key}" VAL="${value}" MASKED="${masked}" PROTECTED="${protected}" python3 -c '
