@@ -15,7 +15,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SECRETS="${ROOT}/deploy/.secrets/cxado-k3s.env"
 REGISTRY_CONF="${ROOT}/deploy/containers/registries.conf.d/nexus.conf"
+REGISTRY_GROUP_CONF="${ROOT}/deploy/containers/registries.conf.d/nexus-group.conf"
 PODMAN_CONF="${ROOT}/deploy/containers/podman.conf"
+NEXUS_DOCKER_GROUP_REGISTRY="${NEXUS_DOCKER_GROUP_REGISTRY:-nexus.svo.aero:8374}"
 REMOTE_HOST="${1:-}"
 REMOTE_USER="${2:-}"
 
@@ -93,6 +95,14 @@ unqualified-search-registries = ["docker.io"]
 prefix = "docker.io"
 location = "\${REGISTRY}"
 insecure = true
+
+[[registry]]
+location = "\${REGISTRY}"
+insecure = true
+
+[[registry]]
+location = "${NEXUS_DOCKER_GROUP_REGISTRY}"
+insecure = true
 EOF
 if [[ -w /etc/containers/registries.conf.d ]]; then
   install -m 0644 "\${TMP}" "\${TARGET}"
@@ -110,10 +120,10 @@ podman pull docker.io/library/alpine:3.20 || echo "[remote] WARN: podman smoke p
 if command -v docker >/dev/null 2>&1; then
   echo "[remote] docker daemon.json"
   DOCKER_TMP="\$(mktemp)"
-  cat >"\${DOCKER_TMP}" <<'DOCKERJSON'
+  cat >"\${DOCKER_TMP}" <<DOCKERJSON
 {
-  "insecure-registries": ["nexus.svo.aero:8345"],
-  "registry-mirrors": ["https://nexus.svo.aero:8345"]
+  "insecure-registries": ["\${REGISTRY}", "${NEXUS_DOCKER_GROUP_REGISTRY}"],
+  "registry-mirrors": ["https://\${REGISTRY}"]
 }
 DOCKERJSON
   sudo_install cp "\${DOCKER_TMP}" /etc/docker/daemon.json
@@ -150,8 +160,10 @@ run_local() {
   log "install ${target}"
   if [[ -w /etc/containers/registries.conf.d ]]; then
     install -m 0644 "${REGISTRY_CONF}" "${target}"
+    install -m 0644 "${REGISTRY_GROUP_CONF}" /etc/containers/registries.conf.d/nexus-group.conf
   else
     sudo install -m 0644 "${REGISTRY_CONF}" "${target}"
+    sudo install -m 0644 "${REGISTRY_GROUP_CONF}" /etc/containers/registries.conf.d/nexus-group.conf
   fi
   log "podman login ${NEXUS_DOCKER_REGISTRY}"
   echo "${NEXUS_PASSWORD}" | podman login --tls-verify=false "${NEXUS_DOCKER_REGISTRY}" -u "${NEXUS_USER}" --password-stdin

@@ -12,4 +12,6 @@
     owner: root
     group: root
     mode: "0600"
-  notify: Restart k3s
+  notify:
+    - Restart k3s after registry config change
+    - Restart k3s-agent after registry config change

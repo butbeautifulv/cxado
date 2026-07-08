@@ -8,6 +8,7 @@
     - k3s_common
     - k3s_hostpaths
     - k3s_registry
+    - k3s_ci_images
 
 - name: Bootstrap k3s control plane
   hosts: k3s_server

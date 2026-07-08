@@ -22,10 +22,12 @@ KANIKO_NEXUS="${NEXUS_DOCKER_REGISTRY}/${CXADO_DOCKER_REPO}/kaniko-executor:${KA
 
 SSH_VIA=""
 SEED_TAR=""
+REPO_ONLY=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --ssh) SSH_VIA="${2:-bbv-p30-wifi}"; shift 2 ;;
     --seed-kaniko) SEED_TAR="${2:-}"; shift 2 ;;
+    --repo-only) REPO_ONLY=true; shift ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
   esac
 done
@@ -126,15 +128,17 @@ if ! sudo_run docker image inspect "${KANIKO_GCR}" >/dev/null 2>&1; then
   exit 1
 fi
 sudo_run docker tag "${KANIKO_GCR}" "${KANIKO_NEXUS}"
-sudo_run env NEXUS_PASSWORD="${NEXUS_PASSWORD}" NEXUS_USER="${NEXUS_USER}" NEXUS_DOCKER_REGISTRY="${NEXUS_DOCKER_REGISTRY}" \
-  sh -c 'printf "%s\n" "$NEXUS_PASSWORD" | docker login "$NEXUS_DOCKER_REGISTRY" -u "$NEXUS_USER" --password-stdin'
-sudo_run docker push "${KANIKO_NEXUS}"
 sudo_run docker save "${KANIKO_NEXUS}" -o /tmp/kaniko-nexus.tar
 sudo_run k3s ctr images import /tmp/kaniko-nexus.tar
+sudo_run env NEXUS_PASSWORD="${NEXUS_PASSWORD}" NEXUS_USER="${NEXUS_USER}" NEXUS_DOCKER_REGISTRY="${NEXUS_DOCKER_REGISTRY}" \
+  sh -c 'printf "%s\n" "$NEXUS_PASSWORD" | docker login "$NEXUS_DOCKER_REGISTRY" -u "$NEXUS_USER" --password-stdin'
+sudo_run docker push "${KANIKO_NEXUS}" || echo "WARN: kaniko nexus push failed — local ctr import done" >&2
 sudo_run k3s ctr images ls | grep -i kaniko || true
 EOS
 }
 
 ensure_hosted_repo
-seed_kaniko_remote
+if [[ "${REPO_ONLY}" != true ]]; then
+  seed_kaniko_remote
+fi
 log "done — images: ${KANIKO_NEXUS}, ${NEXUS_DOCKER_REGISTRY}/${CXADO_DOCKER_REPO}/egregore:<tag>"

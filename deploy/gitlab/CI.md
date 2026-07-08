@@ -62,7 +62,8 @@ Legacy shell runner (`p30-k3s-shell`) — ops/bootstrap only, not used by pipeli
 
 | Variable | Purpose |
 |----------|---------|
-| `NEXUS_DOCKER_REGISTRY` | Docker registry host:port (e.g. `nexus.svo.aero:8345`) |
+| `NEXUS_DOCKER_REGISTRY` | Docker Hub proxy (e.g. `nexus.svo.aero:8345`) |
+| `NEXUS_DOCKER_GROUP_REGISTRY` | Docker-SEPS group for gcr/ghcr (e.g. `nexus.svo.aero:8374`) |
 | `NEXUS_CXADO_DOCKER_REPO` | Hosted repo name (`cxado-docker`) |
 | `NEXUS_PYPI_HOST` / `NEXUS_PYPI_REPO` | Kaniko build-args |
 | `NEXUS_USER` / `NEXUS_PASSWORD` | Registry auth |
@@ -85,6 +86,19 @@ GitLab UI → CI/CD → Run pipeline on `main`, or API from P30.
 | `missing KUBECONFIG` | `setup-ci-variables.sh` (uploads file var) |
 | Kaniko push fails | check `NEXUS_*` vars; Nexus CA mounted on runner pods |
 | Wrong image path in helm | check `NEXUS_DOCKER_REGISTRY` in GitLab vars |
+| Security job `ImagePullBackOff` | `mirror-fabrica-ci-images.sh --ssh bbv-p30-wifi` + ansible `playbooks/ci-images.yml` (podman on RED OS VMs, docker on P30) |
+| DefectDojo upload skipped | `DEFECTDOJO_URL` + `DEFECTDOJO_API_TOKEN` via `setup-ci-variables.sh` |
+
+## DefectDojo upload
+
+| Variable | Default |
+|----------|---------|
+| `DEFECTDOJO_URL` | `http://10.20.16.195:8080` |
+| `DEFECTDOJO_API_TOKEN` | API key from DefectDojo UI |
+| `DEFECTDOJO_PRODUCT_NAME` | `cxado` |
+
+Seed: `./scripts/gitlab/setup-ci-variables.sh`  
+Pre-flight: `./scripts/gitlab/smoke-defectdojo-from-k3s.sh`
 
 ## Related
 

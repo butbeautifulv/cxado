@@ -49,6 +49,10 @@ VARS=(
   "NEXUS_PYPI_HOST|false|false|env"
   "NEXUS_PYPI_REPO|false|false|env"
   "GITLAB_RUNNER_TOKEN|true|false|env"
+  "DEFECTDOJO_URL|false|false|env"
+  "DEFECTDOJO_API_TOKEN|true|false|env"
+  "DEFECTDOJO_PRODUCT_NAME|false|false|env"
+  "DEFECTDOJO_ENGAGEMENT|false|false|env"
 )
 
 value_for() {
@@ -69,6 +73,10 @@ value_for() {
     NEXUS_PYPI_HOST) echo "${NEXUS_PYPI_HOST:-}" ;;
     NEXUS_PYPI_REPO) echo "${NEXUS_PYPI_REPO:-}" ;;
     GITLAB_RUNNER_TOKEN) echo "${GITLAB_RUNNER_TOKEN:-}" ;;
+    DEFECTDOJO_URL) echo "${DEFECTDOJO_URL:-http://${VM_01_IP:-10.20.16.195}:8080}" ;;
+    DEFECTDOJO_API_TOKEN) echo "${DEFECTDOJO_API_TOKEN:-${VM_01_DEFECTDOJO_API_TOKEN:-}}" ;;
+    DEFECTDOJO_PRODUCT_NAME) echo "${DEFECTDOJO_PRODUCT_NAME:-cxado}" ;;
+    DEFECTDOJO_ENGAGEMENT) echo "${DEFECTDOJO_ENGAGEMENT:-CI/CD}" ;;
     *) return 1 ;;
   esac
 }
@@ -138,14 +146,18 @@ print(json.dumps({
   if [[ "${code}" == "200" ]]; then
     out="$(gitlab_api PUT "/api/v4/projects/${PROJECT_ID}/variables/${key}" "${body}")"
     code="$(http_code "${out}")"
-    [[ "${code}" == "200" ]] || die "update ${key} HTTP ${code}"
+    [[ "${code}" == "200" ]] || { log "ERROR: update ${key} HTTP ${code}"; return 1; }
     log "updated ${key}"
   else
     out="$(gitlab_api POST "/api/v4/projects/${PROJECT_ID}/variables" "${body}")"
     code="$(http_code "${out}")"
-    [[ "${code}" == "201" ]] || die "create ${key} HTTP ${code}"
+    [[ "${code}" == "201" ]] || { log "ERROR: create ${key} HTTP ${code}"; return 1; }
     log "created ${key}"
   fi
+}
+
+upsert_var_best_effort() {
+  upsert_var "$@" || log "WARN: could not set $1 (continuing)"
 }
 
 main() {
@@ -154,7 +166,7 @@ main() {
   for spec in "${VARS[@]}"; do
     IFS='|' read -r key masked protected vtype <<<"${spec}"
     val="$(value_for "${key}")"
-    upsert_var "${key}" "${masked}" "${protected}" "${vtype}" "${val}"
+    upsert_var_best_effort "${key}" "${masked}" "${protected}" "${vtype}" "${val}"
   done
 
   local kc

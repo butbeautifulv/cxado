@@ -18,6 +18,8 @@ if [[ ! -f "${SECRETS}" ]]; then
   exit 2
 fi
 
+# shellcheck source=deploy/registry.defaults.env
+[[ -f "${ROOT}/deploy/registry.defaults.env" ]] && source "${ROOT}/deploy/registry.defaults.env"
 # shellcheck source=/dev/null
 source "${SECRETS}"
 
@@ -30,6 +32,9 @@ done
 
 export CXADO_OFFLINE_SUDO_PW VM_01_PWD VM_02_PWD
 export NEXUS_USER NEXUS_PASSWORD
+export NEXUS_DOCKER_REGISTRY="${NEXUS_DOCKER_REGISTRY:-nexus.svo.aero:8345}"
+export NEXUS_DOCKER_GROUP_REGISTRY="${NEXUS_DOCKER_GROUP_REGISTRY:-nexus.svo.aero:8374}"
+export NEXUS_CXADO_DOCKER_REPO="${NEXUS_CXADO_DOCKER_REPO:-cxado-docker}"
 export NEXUS_API_URL="${NEXUS_API_URL:-https://nexus.svo.aero:8443}"
 export NEXUS_K3S_PROXY_REPO="${NEXUS_K3S_PROXY_REPO:-k3s-releases-proxy}"
 export NEXUS_K3S_GET_PROXY_REPO="${NEXUS_K3S_GET_PROXY_REPO:-k3s-get-proxy}"

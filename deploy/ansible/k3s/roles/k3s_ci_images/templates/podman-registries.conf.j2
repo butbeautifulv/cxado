@@ -1,0 +1,15 @@
+# Managed by Ansible role k3s_ci_images — Nexus docker + group proxies
+unqualified-search-registries = ["docker.io"]
+
+[[registry]]
+prefix = "docker.io"
+location = "{{ nexus_docker_registry }}"
+insecure = true
+
+[[registry]]
+location = "{{ nexus_docker_registry }}"
+insecure = true
+
+[[registry]]
+location = "{{ nexus_docker_group_registry }}"
+insecure = true
