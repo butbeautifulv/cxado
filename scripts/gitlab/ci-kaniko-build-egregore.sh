@@ -15,7 +15,6 @@ WORKSPACE="${KANIKO_BUILD_DIR}/${BUILD_ID}"
 
 NEXUS_DOCKER_REGISTRY="${NEXUS_DOCKER_REGISTRY:-nexus.svo.aero:8345}"
 NEXUS_CXADO_REPO="${NEXUS_CXADO_DOCKER_REPO:-cxado-docker}"
-KANIKO_IMAGE="${KANIKO_EXECUTOR_IMAGE:-${NEXUS_DOCKER_REGISTRY}/${NEXUS_CXADO_REPO}/kaniko-executor:v1.23.2}"
 DEST_IMAGE="${NEXUS_DOCKER_REGISTRY}/${NEXUS_CXADO_REPO}/egregore:${TAG}"
 LOCAL_IMAGE="docker.io/cxado/egregore:${TAG}"
 
@@ -40,6 +39,20 @@ sudo_run() {
     sudo "$@"
   fi
 }
+
+resolve_kaniko_image() {
+  if [[ -n "${KANIKO_EXECUTOR_IMAGE:-}" ]]; then
+    echo "${KANIKO_EXECUTOR_IMAGE}"
+    return
+  fi
+  if sudo_run k3s ctr images ls 2>/dev/null | grep -q 'kaniko-executor'; then
+    echo "${NEXUS_DOCKER_REGISTRY}/${NEXUS_CXADO_REPO}/kaniko-executor:v1.23.2"
+  else
+    echo "gcr.io/kaniko-project/executor:v1.23.2"
+  fi
+}
+
+KANIKO_IMAGE="$(resolve_kaniko_image)"
 
 if [[ ! -f "${DOCKERFILE}" ]]; then
   echo "missing ${DOCKERFILE} — run ci-submodule-init.sh first" >&2
@@ -134,9 +147,14 @@ fi
 
 log "retag for helm (docker.io/cxado/egregore:${TAG})"
 OUT_TAR="/tmp/cxado_egregore_${TAG}.tar"
-sudo_run docker pull "${DEST_IMAGE}"
-sudo_run docker tag "${DEST_IMAGE}" "${LOCAL_IMAGE}"
-sudo_run docker save -o "${OUT_TAR}" "${LOCAL_IMAGE}"
+if sudo_run k3s ctr images ls | grep -q "${DEST_IMAGE}"; then
+  log "image already in containerd: ${DEST_IMAGE}"
+else
+  log "ctr pull ${DEST_IMAGE}"
+  sudo_run k3s ctr images pull --user "${NEXUS_USER}:${NEXUS_PASSWORD}" "${DEST_IMAGE}"
+fi
+sudo_run k3s ctr images tag "${DEST_IMAGE}" "${LOCAL_IMAGE}"
+sudo_run k3s ctr images export "${OUT_TAR}" "${LOCAL_IMAGE}"
 
 log "distribute to cluster nodes"
 "${ROOT}/scripts/k8s/k3s-distribute-image.sh" "${OUT_TAR}"

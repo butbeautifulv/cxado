@@ -1,8 +1,9 @@
 # Corp offline deploy — P30 shell runner (tags set in GitLab UI on p30-k3s-shell).
 # GitLab main uses .gitmodules.gitlab (no GitHub) — sync: scripts/gitlab/sync-monorepo-to-gitlab.sh
 #
-# Required CI/CD variables (masked): POSTGRES_PASSWORD, REDIS_PASSWORD, BUS_SIGNING_KEY,
-#   CXADO_OFFLINE_SUDO_PW; optional: NEO4J_PASSWORD, NEXUS_USER, NEXUS_PASSWORD (required for Kaniko build).
+# Required CI/CD variables — seed: ./scripts/gitlab/setup-ci-variables.sh
+#   POSTGRES_PASSWORD, REDIS_PASSWORD, BUS_SIGNING_KEY, CXADO_OFFLINE_SUDO_PW,
+#   NEXUS_USER, NEXUS_PASSWORD; optional: VM_01_PWD, VM_02_PWD
 
 stages:
   - validate

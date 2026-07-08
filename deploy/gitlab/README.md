@@ -51,16 +51,16 @@ PAT with `create_runner` scope: `./scripts/gitlab/create-gitlab-pat.sh` → save
 | deploy | `deploy:egregore` | **manual** on `main` — `helm upgrade` |
 | smoke | `smoke:egregore` | observability smoke test |
 
-**CI/CD variables** (Settings → CI/CD → Variables, masked):
+**CI/CD variables** — `./scripts/gitlab/setup-ci-variables.sh` (from `cxado-k3s.env`). Details: [CI.md](CI.md).
 
 | Variable | Required |
 |----------|----------|
 | `POSTGRES_PASSWORD` | yes |
 | `REDIS_PASSWORD` | yes |
-| `BUS_SIGNING_KEY` | yes (or generated per deploy) |
-| `CXADO_OFFLINE_SUDO_PW` | yes (for `k3s ctr import`) |
-| `NEXUS_USER` | yes (Kaniko build + registry push) |
-| `NEXUS_PASSWORD` | yes (Kaniko build + registry push) |
+| `BUS_SIGNING_KEY` | yes |
+| `CXADO_OFFLINE_SUDO_PW` | yes |
+| `NEXUS_USER` / `NEXUS_PASSWORD` | yes (Kaniko) |
+| `VM_01_PWD` / `VM_02_PWD` | optional (workers) |
 
 ### Kaniko (in-cluster build)
 
