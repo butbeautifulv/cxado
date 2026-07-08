@@ -65,9 +65,13 @@ ensure_gitlab_project() {
   fi
 }
 
+is_submodule_checkout() {
+  [[ -e "${ROOT}/${1}/.git" ]]
+}
+
 push_one() {
   local path="$1"
-  if [[ ! -d "${ROOT}/${path}/.git" ]]; then
+  if ! is_submodule_checkout "${path}"; then
     echo "not a submodule checkout: ${ROOT}/${path}" >&2
     exit 2
   fi
@@ -97,7 +101,7 @@ fi
 if [[ "${PUSH_ALL}" == true ]]; then
   while IFS= read -r path; do
     [[ -n "${path}" ]] || continue
-    if [[ -d "${ROOT}/${path}/.git" ]]; then
+    if is_submodule_checkout "${path}"; then
       push_one "${path}"
     else
       log "skip ${path} (not initialized)"

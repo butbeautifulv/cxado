@@ -70,7 +70,7 @@ paths_to_sync() {
 
 ensure_submodule_init() {
   local path="$1"
-  if [[ ! -d "${path}/.git" ]]; then
+  if [[ ! -e "${path}/.git" ]]; then
     log "init submodule ${path} (GitHub url for local checkout)"
     git submodule update --init --depth 1 "${path}"
   fi
