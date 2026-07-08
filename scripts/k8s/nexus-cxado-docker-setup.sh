@@ -101,10 +101,15 @@ seed_kaniko_remote() {
   else
     log "no --seed-kaniko tar; expect gcr image already loaded on ${host}"
   fi
-  ssh "${host}" "NEXUS_PASSWORD='${NEXUS_PASSWORD}' NEXUS_USER='${NEXUS_USER}' \
-    NEXUS_DOCKER_REGISTRY='${NEXUS_DOCKER_REGISTRY}' CXADO_DOCKER_REPO='${CXADO_DOCKER_REPO}' \
-    KANIKO_GCR='${KANIKO_GCR}' KANIKO_NEXUS='${KANIKO_NEXUS}' KANIKO_VERSION='${KANIKO_VERSION}' \
-    SUDO_PW='${sudo_pw}' bash -s" <<'EOS'
+  ssh "${host}" env \
+    NEXUS_PASSWORD="${NEXUS_PASSWORD}" \
+    NEXUS_USER="${NEXUS_USER}" \
+    NEXUS_DOCKER_REGISTRY="${NEXUS_DOCKER_REGISTRY}" \
+    CXADO_DOCKER_REPO="${CXADO_DOCKER_REPO}" \
+    KANIKO_GCR="${KANIKO_GCR}" \
+    KANIKO_NEXUS="${KANIKO_NEXUS}" \
+    SUDO_PW="${sudo_pw}" \
+    bash -s <<'EOS'
 set -euo pipefail
 sudo_run() {
   if [[ -n "${SUDO_PW:-}" ]]; then
@@ -121,7 +126,7 @@ if ! sudo_run docker image inspect "${KANIKO_GCR}" >/dev/null 2>&1; then
   exit 1
 fi
 sudo_run docker tag "${KANIKO_GCR}" "${KANIKO_NEXUS}"
-sudo_run bash -c "printf '%s\n' \"\${NEXUS_PASSWORD}\" | docker login \"\${NEXUS_DOCKER_REGISTRY}\" -u \"\${NEXUS_USER}\" --password-stdin"
+sudo_run sh -c 'printf "%s\n" "${NEXUS_PASSWORD}" | docker login "${NEXUS_DOCKER_REGISTRY}" -u "${NEXUS_USER}" --password-stdin'
 sudo_run docker push "${KANIKO_NEXUS}"
 sudo_run docker save "${KANIKO_NEXUS}" -o /tmp/kaniko-nexus.tar
 sudo_run k3s ctr images import /tmp/kaniko-nexus.tar

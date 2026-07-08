@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Init submodules for corp CI — GitLab URLs only, never GitHub.
 #
-# On gitlab.svo.aero/av.popov/cxado, .gitmodules already points to GitLab (via sync script).
-# Safety: block any github.com/butbeautifulv fetch even if misconfigured.
+# On gitlab.svo.aero/av.popov/cxado, .gitmodules points to GitLab (via sync script).
+# In CI always uses HTTPS + CI_JOB_TOKEN (no SSH / known_hosts).
 #
 # Env:
 #   CI_SUBMODULE_GITLAB_PREFIX  default: git@gitlab.svo.aero:av.popov
@@ -31,16 +31,21 @@ block_github() {
       "https://github.com/butbeautifulv/" || true
     git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@${GITLAB_HOST}/av.popov/".insteadOf \
       "git@github.com:butbeautifulv/" || true
+    git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@${GITLAB_HOST}/av.popov/".insteadOf \
+      "git@${GITLAB_HOST}:av.popov/" || true
   fi
   git config --global url."https://gitlab.svo.aero/av.popov/".insteadOf \
     "https://github.com/butbeautifulv/" 2>/dev/null || true
 }
 
-needs_url_rewrite() {
-  local path="$1"
-  local url
-  url="$(git config -f .gitmodules --get "submodule.${path}.url" 2>/dev/null || true)"
-  [[ "${url}" == *"github.com"* ]]
+repo_name_from_url() {
+  local url="$1"
+  basename "${url}" .git
+}
+
+needs_ci_https_url() {
+  local url="$1"
+  [[ -n "${CI_JOB_TOKEN:-}" ]] && [[ "${url}" != *"gitlab-ci-token:"* ]]
 }
 
 if [[ ! -f .gitmodules ]]; then
@@ -57,15 +62,16 @@ for path in ${SUBMODULES}; do
     continue
   fi
 
-  if needs_url_rewrite "${path}"; then
-    repo="$(basename "${url}" .git)"
-    gitlab_url="$(submodule_url "${repo}")"
+  repo="$(repo_name_from_url "${url}")"
+  gitlab_url="$(submodule_url "${repo}")"
+
+  if [[ "${url}" == *"github.com"* ]] || needs_ci_https_url "${url}"; then
     rm -rf "${path}" ".git/modules/${path}"
     git config -f .gitmodules "submodule.${path}.url" "${gitlab_url}"
     git config "submodule.${path}.url" "${gitlab_url}"
-    echo "[ci-submodule] rewrite ${path} -> gitlab.svo.aero/av.popov/${repo}"
+    echo "[ci-submodule] ${path} -> av.popov/${repo} (CI token HTTPS)"
   else
-    echo "[ci-submodule] ${path} already GitLab (${url})"
+    echo "[ci-submodule] ${path} ok (${url})"
   fi
 
   git config --unset-all "submodule.${path}.active" 2>/dev/null || true
