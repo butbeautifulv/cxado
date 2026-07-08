@@ -38,16 +38,40 @@ Secrets: `deploy/.secrets/cxado-k3s.env` (`GITLAB_*`, `NEXUS_*`).
 ./scripts/gitlab/setup-runner-p30.sh register
 ```
 
-**Instance policy:** `gitlab.svo.aero` blocks runner creation by project members (`Please contact an admin to create runners`). Shared runners are **enabled** on the project — jobs can use instance runners (`kubernetes`, `docker`, `cd-runner` tags) until a dedicated P30 runner is registered.
+**Runner:** `p30-k3s-shell` registered (id 312, shell executor, user `bbv`).
 
 PAT with `create_runner` scope: `./scripts/gitlab/create-gitlab-pat.sh` → save as `GITLAB_PAT_RUNNER` in `cxado-k3s.env`.
 
+## Pipeline (`.gitlab-ci.yml`)
+
+| Stage | Job | Notes |
+|-------|-----|-------|
+| validate | `validate:helm` | `helm template` egregore chart |
+| build | `build:egregore` | `docker build` + `k3s ctr images import` on P30 |
+| deploy | `deploy:egregore` | **manual** on `main` — `helm upgrade` |
+| smoke | `smoke:egregore` | observability smoke test |
+
+**CI/CD variables** (Settings → CI/CD → Variables, masked):
+
+| Variable | Required |
+|----------|----------|
+| `POSTGRES_PASSWORD` | yes |
+| `REDIS_PASSWORD` | yes |
+| `BUS_SIGNING_KEY` | yes (or generated per deploy) |
+| `CXADO_OFFLINE_SUDO_PW` | yes (for `k3s ctr import`) |
+
+**Submodules:** GitHub blocked on P30 — mirrors on `gitlab.svo.aero/av.popov/*`. See [submodules.md](submodules.md). Egregore mirror: **done**.
+
+```bash
+./scripts/gitlab/push-submodule-mirror.sh projects/egregore   # refresh mirror
+```
+
 ## CI/CD plan
 
-1. ~~**GitLab Runner** on P30~~ — **installed**, pending `GITLAB_RUNNER_TOKEN` from admin
-2. **Build** — `docker build` / `podman build`, push to `nexus.svo.aero:8345/av.popov/cxado/<image>`
-3. **Deploy** — `helm upgrade` / `kubectl apply` via kubeconfig on runner (`/home/bbv/.kube/config` on P30)
-4. **Secrets** — GitLab CI variables (masked): `NEXUS_PASSWORD`, `KUBECONFIG` base64, app secrets
+1. ~~**GitLab Runner** on P30~~ — **done** (`p30-k3s-shell`)
+2. ~~**Build** pipeline~~ — **MVP** in `.gitlab-ci.yml`
+3. **Deploy** — manual job on `main`; extend for veil / MCPs later
+4. **Secrets** — GitLab CI variables (see table above)
 
 ## Push monorepo (when ready)
 
@@ -57,7 +81,7 @@ git remote add gitlab git@gitlab.svo.aero:av.popov/cxado.git
 git push gitlab main
 ```
 
-Submodules: decide mirror vs `git submodule` URLs pointing at GitLab forks.
+Submodules: inward mirrors on `gitlab.svo.aero/av.popov/*` — see [submodules.md](submodules.md). `.gitmodules` keeps GitHub URLs for laptop dev.
 
 ## Related
 

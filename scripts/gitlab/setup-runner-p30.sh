@@ -53,7 +53,7 @@ install_binary() {
     /tmp/gitlab-runner --version | head -1
   "
   remote_sudo "install -m 755 /tmp/gitlab-runner /usr/local/bin/gitlab-runner"
-  remote_sudo "gitlab-runner install --user=${RUNNER_USER} --working-directory=/home/${RUNNER_USER}"
+  remote_sudo "gitlab-runner install --user=${RUNNER_USER} --working-directory=/home/${RUNNER_USER} 2>/dev/null || true"
   remote_sudo "systemctl enable gitlab-runner"
   remote_sudo "systemctl restart gitlab-runner"
   log "gitlab-runner service active on ${SSH_HOST}"
@@ -88,10 +88,7 @@ register_runner() {
     --url '${GITLAB_URL}' \
     --token '${token}' \
     --executor shell \
-    --description '${RUNNER_DESC}' \
-    --tag-list '${RUNNER_TAGS}' \
-    --run-untagged=false \
-    --locked=false"
+    --description '${RUNNER_DESC}'"
   remote_sudo "systemctl restart gitlab-runner"
   status_runner
 }

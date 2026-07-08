@@ -1,0 +1,84 @@
+# Corp offline deploy — P30 shell runner (tags set in GitLab UI on p30-k3s-shell).
+# Submodules: GitHub blocked on P30 → CI rewrites URLs to gitlab.svo.aero/av.popov/* mirrors.
+#
+# Required CI/CD variables (masked): POSTGRES_PASSWORD, REDIS_PASSWORD, BUS_SIGNING_KEY,
+#   CXADO_OFFLINE_SUDO_PW; optional: NEO4J_PASSWORD, NEXUS_USER, NEXUS_PASSWORD.
+
+stages:
+  - validate
+  - build
+  - deploy
+  - smoke
+
+variables:
+  GIT_SUBMODULE_STRATEGY: none
+  GIT_DEPTH: "1"
+  CI_SUBMODULE_GITLAB_PREFIX: "git@gitlab.svo.aero:av.popov"
+  CI_SUBMODULES: "projects/egregore"
+  CXADO_IMAGE_TAG: "${CI_COMMIT_SHORT_SHA}"
+  KUBECONFIG: "/home/bbv/.kube/config"
+  CXADO_APP_NS: "cxado-app"
+
+.p30_runner:
+  tags:
+    - k3s
+    - corp
+    - p30
+  before_script:
+    - ./scripts/gitlab/ci-submodule-init.sh
+
+validate:helm:
+  extends: .p30_runner
+  stage: validate
+  script:
+    - |
+      sed "s/__CXADO_OFFLINE_TAG__/${CXADO_IMAGE_TAG}/g" \
+        deploy/k8s/cxado-offline/values-egregore-offline.yaml \
+        > /tmp/values-egregore-ci.yaml
+    - |
+      helm template egregore projects/egregore/deploy/helm/egregore \
+        -f /tmp/values-egregore-ci.yaml \
+        --set image.tag="${CXADO_IMAGE_TAG}" \
+        --set postgres.password=ci-placeholder \
+        --set redis.password=ci-placeholder \
+        > /dev/null
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+build:egregore:
+  extends: .p30_runner
+  stage: build
+  script:
+    - ./scripts/gitlab/ci-build-egregore.sh
+  artifacts:
+    expire_in: 3 days
+    paths:
+      - .ci/image-tag
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+deploy:egregore:
+  extends: .p30_runner
+  stage: deploy
+  needs: ["build:egregore"]
+  script:
+    - ./scripts/gitlab/ci-deploy-egregore.sh
+  environment:
+    name: cxado-p30
+    url: https://10.8.185.15:30300
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+  allow_failure: false
+
+smoke:egregore:
+  extends: .p30_runner
+  stage: smoke
+  needs: ["deploy:egregore"]
+  script:
+    - CXADO_OFFLINE_SSH_HOST= ./scripts/k8s/smoke-test-egregore-obs.sh
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: on_success
