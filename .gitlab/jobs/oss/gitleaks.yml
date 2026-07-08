@@ -1,0 +1,20 @@
+# B1 — Secret detection (OSS Gitleaks via pinned container image)
+
+gitleaks-scan:
+  stage: security
+  extends:
+    - .workflow_rules_security
+    - .security_job_defaults
+    - .oss_docker_job
+  script:
+    - |
+      docker run --rm -v "$PWD:/repo" -w /repo "${OSS_GITLEAKS_IMAGE:-ghcr.io/gitleaks/gitleaks:v8.22.1}" \
+        detect --source . --report-format sarif --report-path gitleaks.sarif --no-git || true
+    - |
+      [ -f gitleaks.sarif ] || echo '{"runs":[{"results":[]}]}' > gitleaks.sarif
+    - python3 scripts/gate-check.py --control secrets --report gitleaks.sarif \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - gitleaks.sarif
+    expire_in: 30 days

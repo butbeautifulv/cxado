@@ -1,0 +1,47 @@
+# Shared security rules — kill-switch, DefectDojo skip, DAST opt-in (common-templates pattern)
+
+.security_kill_switch:
+  rules:
+    - if: $SAST_DISABLED == 'true' || $SAST_DISABLED == '1' || $SECURITY_DISABLED == 'true' || $SECURITY_DISABLED == '1'
+      when: never
+
+.security_job_defaults:
+  allow_failure: true
+  artifacts:
+    expire_in: 30 days
+
+.defectdojo_skip_rules:
+  rules:
+    - if: $SAST_DISABLED == 'true' || $SAST_DISABLED == '1' || $SECURITY_DISABLED == 'true' || $SECURITY_DISABLED == '1'
+      when: never
+    - if: '$DEFECTDOJO_URL == null || $DEFECTDOJO_URL == ""'
+      when: never
+    - if: '$DEFECTDOJO_API_TOKEN == null || $DEFECTDOJO_API_TOKEN == ""'
+      when: never
+
+.workflow_rules_security:
+  rules:
+    - if: $SAST_DISABLED == 'true' || $SAST_DISABLED == '1' || $SECURITY_DISABLED == 'true' || $SECURITY_DISABLED == '1'
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+.dast_opt_in_rules:
+  rules:
+    - if: $SAST_DISABLED == 'true' || $SAST_DISABLED == '1' || $SECURITY_DISABLED == 'true' || $SECURITY_DISABLED == '1'
+      when: never
+    - if: '$DAST_WEBSITE != null && $DAST_WEBSITE != ""'
+      when: on_success
+    - if: '$PREPROD_URL != null && $PREPROD_URL != "" && $PREPROD_URL != "https://preprod.example.com"'
+      when: on_success
+    - if: '$DAST_TARGET_URL != null && $DAST_TARGET_URL != "" && $DAST_TARGET_URL != "http://localhost:3000"'
+      when: on_success
+    - when: manual
+
+.dast_compose_opt_in_rules:
+  rules:
+    - if: $SAST_DISABLED == 'true' || $SAST_DISABLED == '1' || $SECURITY_DISABLED == 'true' || $SECURITY_DISABLED == '1'
+      when: never
+    - if: '$DAST_COMPOSE_ENABLED == "true"'
+      when: on_success
+    - when: manual

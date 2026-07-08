@@ -1,0 +1,29 @@
+# B3 — OSA (Open Source Analysis) — dependency manifests on MR
+
+include:
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+
+dependency_scanning:
+  stage: security
+  variables:
+    DS_MAX_DEPTH: "2"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  artifacts:
+    reports:
+      dependency_scanning: gl-dependency-scanning-report.json
+    expire_in: 30 days
+  after_script:
+    - |
+      REPORT=gl-dependency-scanning-report.json
+      [ -f "$REPORT" ] || echo '{"vulnerabilities":[]}' > "$REPORT"
+      python3 -c "
+import json
+p='$REPORT'
+d=json.load(open(p))
+out={'runs':[{'results':[{'level':(v.get('severity','high')).lower(),'message':{'text':v.get('name','')}} for v in d.get('vulnerabilities',[])]}]}
+json.dump(out, open('osa.sarif','w'))
+"
+      python scripts/gate-check.py --control osa --report osa.sarif \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"

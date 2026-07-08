@@ -1,0 +1,25 @@
+# E1 — Conftest admission policy tests
+
+conftest-admission:
+  stage: validate
+  image:
+    name: ${OSS_CONFTEST_IMAGE:-ghcr.io/openpolicyagent/conftest:v0.56.0}
+    entrypoint: [""]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - templates/k8s/admission/**
+        - k8s/**
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - templates/k8s/admission/**
+        - k8s/**
+  script:
+    - |
+      FAILED=0
+      for f in templates/k8s/admission/*.yaml k8s/**/*.yaml; do
+        [ -f "$f" ] || continue
+        echo "Validating $f"
+        conftest test "$f" --policy templates/k8s/admission/policies || FAILED=1
+      done
+      exit $FAILED

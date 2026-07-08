@@ -1,0 +1,20 @@
+# ML1 — Dataset PII scan (block on PII)
+
+ml-data-scan:
+  stage: security
+  image: python:3.12-slim
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - "data/**"
+        - "datasets/**"
+        - "**/*.csv"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - python scripts/ai-ml-scan.py ml_data --report ml-data.sarif
+    - python scripts/gate-check.py --control ml_data --report ml-data.sarif \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - ml-data.sarif
+    expire_in: 30 days

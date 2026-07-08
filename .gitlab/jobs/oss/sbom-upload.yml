@@ -1,0 +1,23 @@
+# F3 — SBOM upload to Dependency-Track (manual, optional)
+
+sbom-upload:
+  stage: post-deploy
+  image: ${OSS_CURL_IMAGE}
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  needs:
+    - job: sbom-generate
+      artifacts: true
+  script:
+    - |
+      if [ -z "${DTRACK_URL:-}" ] || [ -z "${DTRACK_API_KEY:-}" ] || [ -z "${DTRACK_PROJECT_UUID:-}" ]; then
+        echo "Set DTRACK_URL, DTRACK_API_KEY, DTRACK_PROJECT_UUID to enable upload"
+        exit 0
+      fi
+    - |
+      curl -f -X POST "${DTRACK_URL}/api/v1/bom" \
+        -H "X-Api-Key: ${DTRACK_API_KEY}" \
+        -F "project=${DTRACK_PROJECT_UUID}" \
+        -F "bom=@sbom.cdx.json"
+  allow_failure: true

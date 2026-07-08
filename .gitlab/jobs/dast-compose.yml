@@ -1,0 +1,53 @@
+# D1 — DAST against app started via Docker Compose
+
+dast-compose:
+  stage: post-deploy
+  image: docker:27.3.1-cli
+  services:
+    - docker:27.3.1-dind
+  extends:
+    - .dast_compose_opt_in_rules
+    - .security_job_defaults
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+    DAST_COMPOSE_FILE: "${DAST_COMPOSE_FILE:-docker-compose.yml}"
+    DAST_TARGET_URL: "${DAST_TARGET_URL:-http://localhost:3000}"
+    DAST_HEALTH_PATH: "${DAST_HEALTH_PATH:-/}"
+    OSS_ZAPROXY_IMAGE: "${OSS_ZAPROXY_IMAGE:-ghcr.io/zaproxy/zaproxy:2.16.0}"
+  needs:
+    - job: deploy-preprod
+      optional: true
+  before_script:
+    - apk add --no-cache curl python3 py3-pip nodejs npm
+  script:
+    - |
+      if [ -n "${DAST_COMPOSE_SERVICES:-}" ]; then
+        docker compose -f "$DAST_COMPOSE_FILE" up -d --wait $DAST_COMPOSE_SERVICES
+      fi
+      if [ -f package.json ]; then
+        if [ -f package-lock.json ]; then npm ci; else npm install; fi
+        node -e "const p=require('./package.json'); process.exit(p.scripts&&p.scripts.build?0:1)" && npm run build || true
+        if node -e "const p=require('./package.json'); process.exit(p.scripts&&p.scripts.start?0:1)"; then
+          npm run start > /tmp/dast-app.log 2>&1 &
+        elif node -e "const p=require('./package.json'); process.exit(p.scripts&&p.scripts.dev?0:1)"; then
+          npm run dev > /tmp/dast-app.log 2>&1 &
+        fi
+      fi
+      BASE="${DAST_TARGET_URL%/}"
+      URL="${BASE}${DAST_HEALTH_PATH}"
+      for attempt in $(seq 1 60); do
+        curl -fsS "$URL" > /dev/null && break
+        sleep 2
+        [ "$attempt" -eq 60 ] && { tail -n 200 /tmp/dast-app.log 2>/dev/null; exit 1; }
+      done
+      mkdir -p reports
+      docker run --rm --network host -v "$PWD/reports:/zap/wrk:rw" "$OSS_ZAPROXY_IMAGE" \
+        zap-baseline.py -t "$DAST_TARGET_URL" -J /zap/wrk/zap-baseline.json || true
+    - python3 scripts/gate-check.py --control dast --report reports/zap-baseline.json \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  after_script:
+    - docker compose -f "${DAST_COMPOSE_FILE:-docker-compose.yml}" down --remove-orphans 2>/dev/null || true
+  artifacts:
+    paths:
+      - reports/zap-baseline.json
+    expire_in: 30 days

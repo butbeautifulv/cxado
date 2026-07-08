@@ -1,0 +1,36 @@
+# OSS profile validate stage — lint + unit-test only (no stub build/deploy)
+
+.workflow_rules:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+lint:
+  stage: validate
+  image: ${OSS_PYTHON_IMAGE:-python:3.11.11-slim-bookworm}
+  extends: .workflow_rules
+  variables:
+    ENABLE_REAL_LINTERS: "${ENABLE_REAL_LINTERS:-false}"
+  script:
+    - |
+      if [ "$ENABLE_REAL_LINTERS" = "true" ]; then
+        pip install -q "ruff==${OSS_RUFF_VERSION:-0.11.8}"
+        ruff check . || true
+      else
+        echo "Placeholder lint — set ENABLE_REAL_LINTERS=true for real linters"
+      fi
+  allow_failure: true
+
+unit-test:
+  stage: test
+  image: ${OSS_PYTHON_IMAGE:-python:3.11.11-slim-bookworm}
+  extends: .workflow_rules
+  script:
+    - |
+      if [ -f requirements.txt ] && [ -d tests ]; then
+        pip install -q pytest -r requirements.txt
+        pytest tests/ -q || true
+      else
+        echo "Placeholder unit tests — add tests/ and requirements.txt"
+      fi
+  allow_failure: true

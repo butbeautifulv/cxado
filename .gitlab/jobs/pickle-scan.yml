@@ -1,0 +1,21 @@
+# AI2 — Pickle artifact scan (warn)
+
+pickle-scan:
+  stage: security
+  image: python:3.12-slim
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - "**/*.pkl"
+        - "**/*.pickle"
+        - "models/**"
+    - when: manual
+  script:
+    - python scripts/ai-ml-scan.py pickle_scan --report pickle-scan.sarif
+    - python scripts/gate-check.py --control pickle_scan --report pickle-scan.sarif \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - pickle-scan.sarif
+    expire_in: 30 days
+  allow_failure: true

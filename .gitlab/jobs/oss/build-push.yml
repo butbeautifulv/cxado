@@ -1,0 +1,26 @@
+# OSS build — push image to container registry (GitLab or external)
+
+build-image:
+  stage: build
+  image: ${OSS_DOCKER_CLI_IMAGE}
+  extends: .registry_login
+  services:
+    - name: ${OSS_DOCKER_DIND_IMAGE}
+      alias: docker
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  script:
+    - |
+      if [ ! -f Dockerfile ]; then
+        echo "No Dockerfile — skip image build"
+        echo "IMAGE_TAG=none" >> build.env
+        exit 0
+      fi
+    - docker build -t "${REGISTRY}:${CI_COMMIT_SHA}" .
+    - docker push "${REGISTRY}:${CI_COMMIT_SHA}"
+    - echo "IMAGE_TAG=${CI_COMMIT_SHA}" >> build.env
+  artifacts:
+    reports:
+      dotenv: build.env

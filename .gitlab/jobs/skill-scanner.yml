@@ -1,0 +1,26 @@
+# AI1 — Skill scanner (optional, warn)
+
+skill-scanner:
+  stage: security
+  image: python:3.12-slim
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - ".cursor/skills/**/*"
+        - ".agents/skills/**/*"
+    - when: manual
+  script:
+    - pip install -q pip 2>/dev/null || true
+    - |
+      if command -v skill-scanner >/dev/null 2>&1; then
+        skill-scanner scan .cursor/skills/ .agents/skills/ -o skill-scan.sarif || true
+      else
+        python scripts/ai-ml-scan.py skill_scan --report skill-scan.sarif
+      fi
+    - python scripts/gate-check.py --control skill_scan --report skill-scan.sarif \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - skill-scan.sarif
+    expire_in: 30 days
+  allow_failure: true

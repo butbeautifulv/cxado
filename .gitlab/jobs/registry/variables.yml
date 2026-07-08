@@ -1,0 +1,7 @@
+# Registry backend — override REGISTRY_BACKEND for Nexus / Harbor / Artifactory
+# Default gitlab uses REGISTRY from profile (${CI_REGISTRY_IMAGE})
+
+variables:
+  REGISTRY_BACKEND: "gitlab"
+  REGISTRY_HOST: ""
+  REGISTRY_REPOSITORY: ""

@@ -1,0 +1,21 @@
+# AI2 — AI BOM (main)
+
+aibom-generate:
+  stage: build
+  image: python:3.12-slim
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - |
+      if command -v aibom >/dev/null 2>&1; then
+        aibom generate . -o aibom.json || python scripts/ai-ml-scan.py aibom --report aibom.json
+      else
+        python scripts/ai-ml-scan.py aibom --report aibom.json
+      fi
+    - python scripts/gate-check.py --control aibom --report aibom.json \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - aibom.json
+    expire_in: 90 days
+  allow_failure: true

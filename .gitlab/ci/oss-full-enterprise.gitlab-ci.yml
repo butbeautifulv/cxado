@@ -1,0 +1,55 @@
+# Profile: oss-full-enterprise — copied from fabrica adopt (paths fixed for cxado monorepo)
+
+stages:
+  - validate
+  - test
+  - security
+  - static-security-upload
+  - build
+  - image
+  - supply-chain
+  - image-security-upload
+  - deploy
+  - post-deploy
+
+variables:
+  REGISTRY: "${CI_REGISTRY_IMAGE}"
+  SECURITY_POLICY: "config/security-gate-policy-adopt.yaml"
+  ENABLE_REAL_LINTERS: "true"
+  HELM_CHART_PATH: "chart"
+  HELM_RELEASE: "sample-app"
+  PREPROD_URL: "https://preprod.example.com"
+
+include:
+  - local: '.gitlab/jobs/_security.common.yml'
+  - local: '.gitlab/jobs/oss/versions.yml'
+  - local: '.gitlab/jobs/oss/_docker.yml'
+  - local: '.gitlab/jobs/registry/variables.yml'
+  - local: '.gitlab/jobs/registry/login.yml'
+  - local: '.gitlab/jobs/oss/_base-validate.yml'
+  - local: '.gitlab/jobs/oss/gitleaks.yml'
+  - local: '.gitlab/jobs/forbidden-files.yml'
+  - local: '.gitlab/jobs/oss/semgrep-sast.yml'
+  - local: '.gitlab/jobs/oss/trivy-osa.yml'
+  - local: '.gitlab/jobs/oss/checkov-iac.yml'
+  - local: '.gitlab/jobs/dockerfile-lint.yml'
+  - local: '.gitlab/jobs/linter-security.yml'
+  - local: '.gitlab/jobs/aspm/upload-static.yml'
+  - local: '.gitlab/jobs/oss/build-push.yml'
+  - local: '.gitlab/jobs/sbom.yml'
+  - local: '.gitlab/jobs/oss/trivy-sca.yml'
+  - local: '.gitlab/jobs/aspm/upload-image.yml'
+  - local: '.gitlab/jobs/oss/helm-deploy-contour.yml'
+  - local: '.gitlab/jobs/dast.yml'
+  - local: '.gitlab/jobs/dast-compose.yml'
+  - local: '.gitlab/jobs/sign.yml'
+  - local: '.gitlab/jobs/conftest-admission.yml'
+
+sbom-generate:
+  stage: supply-chain
+
+trivy-sca:
+  stage: supply-chain
+
+build-image:
+  stage: image
