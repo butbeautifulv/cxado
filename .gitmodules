@@ -1,33 +1,35 @@
+# GitLab-only submodule URLs — used on gitlab.example.invalid/av.popov/cxado (corp, no GitHub).
+# Local dev keeps .gitmodules (GitHub). Sync: scripts/gitlab/sync-monorepo-to-gitlab.sh
 [submodule "projects/veil"]
 	path = projects/veil
-	url = https://github.com/butbeautifulv/veil.git
+	url = git@gitlab.example.invalid:av.popov/veil.git
 [submodule "projects/egregore"]
 	path = projects/egregore
-	url = https://github.com/butbeautifulv/egregore.git
+	url = git@gitlab.example.invalid:av.popov/egregore.git
 [submodule "projects/fabrica"]
 	path = projects/fabrica
-	url = https://github.com/butbeautifulv/fabrica.git
+	url = git@gitlab.example.invalid:av.popov/fabrica.git
 [submodule "projects/asoc-api"]
 	path = projects/asoc-api
-	url = https://github.com/butbeautifulv/asoc-api.git
+	url = git@gitlab.example.invalid:av.popov/asoc-api.git
 [submodule "shared/skills"]
 	path = shared/skills
-	url = https://github.com/butbeautifulv/cxado-skills.git
+	url = git@gitlab.example.invalid:av.popov/cxado-skills.git
 [submodule "shared/references"]
 	path = shared/references
-	url = https://github.com/butbeautifulv/cxado-references.git
+	url = git@gitlab.example.invalid:av.popov/cxado-references.git
 [submodule "shared/agent-rules"]
 	path = shared/agent-rules
-	url = https://github.com/butbeautifulv/cxado-agent-rules.git
+	url = git@gitlab.example.invalid:av.popov/cxado-agent-rules.git
 [submodule "projects/veneno"]
 	path = projects/veneno
-	url = https://github.com/butbeautifulv/veneno.git
+	url = git@gitlab.example.invalid:av.popov/veneno.git
 [submodule "shared/gui"]
 	path = shared/gui
-	url = https://github.com/butbeautifulv/cxado-gui.git
+	url = git@gitlab.example.invalid:av.popov/cxado-gui.git
 [submodule "projects/hexenhammer"]
 	path = projects/hexenhammer
-	url = https://github.com/butbeautifulv/hexenhammer.git
+	url = git@gitlab.example.invalid:av.popov/hexenhammer.git
 [submodule "projects/tabula"]
 	path = projects/tabula
-	url = https://github.com/butbeautifulv/tabula.git
+	url = git@gitlab.example.invalid:av.popov/tabula.git
