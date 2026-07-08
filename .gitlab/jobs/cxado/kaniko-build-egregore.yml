@@ -1,0 +1,40 @@
+build:egregore:
+  extends:
+    - .cxado_runner
+    - .workflow_rules
+  stage: image
+  image:
+    name: ${KANIKO_EXECUTOR_IMAGE}
+    entrypoint: [""]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+    - |
+      if [ ! -f "${CI_PROJECT_DIR}/projects/egregore/Dockerfile.corp" ]; then
+        echo "missing Dockerfile.corp — run submodule init" >&2
+        exit 2
+      fi
+    - |
+      CERT_ARG=""
+      if [ -f /etc/ssl/certs/nexus/ca.crt ]; then
+        CERT_ARG="--registry-certificate=${REGISTRY_HOST},/etc/ssl/certs/nexus/ca.crt"
+      fi
+      /kaniko/executor \
+        --dockerfile="${CI_PROJECT_DIR}/projects/egregore/Dockerfile.corp" \
+        --context=dir://${CI_PROJECT_DIR}/projects/egregore \
+        --destination="${CXADO_IMAGE_REPO}:${CXADO_IMAGE_TAG}" \
+        --build-arg=NEXUS_REGISTRY=${REGISTRY_HOST} \
+        --build-arg=NEXUS_PYPI_HOST=${NEXUS_PYPI_HOST} \
+        --build-arg=NEXUS_PYPI_REPO=${NEXUS_PYPI_REPO} \
+        --build-arg=NEXUS_USER=${NEXUS_USER} \
+        --build-arg=NEXUS_PASSWORD=${NEXUS_PASSWORD} \
+        ${CERT_ARG} \
+        --snapshot-mode=redo \
+        --log-format=text
+    - echo "IMAGE_TAG=${CXADO_IMAGE_TAG}" >> build.env
+    - echo "REGISTRY=${CXADO_IMAGE_REPO%/*}" >> build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+    expire_in: 3 days

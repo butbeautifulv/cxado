@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cxado-ci
+  labels:
+    app.kubernetes.io/name: cxado-ci
+    app.kubernetes.io/component: gitlab-runner

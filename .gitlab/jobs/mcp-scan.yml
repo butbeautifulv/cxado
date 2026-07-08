@@ -1,0 +1,25 @@
+# AI1 — MCP config scanner (optional, warn)
+
+mcp-scan:
+  stage: security
+  image: python:3.12-slim
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - "**/mcp*.json"
+        - ".cursor/mcp.json"
+    - when: manual
+  script:
+    - |
+      if command -v mcp-scanner >/dev/null 2>&1; then
+        mcp-scanner scan . -o mcp-scan.sarif || true
+      else
+        python scripts/ai-ml-scan.py mcp_scan --report mcp-scan.sarif
+      fi
+    - python scripts/gate-check.py --control mcp_scan --report mcp-scan.sarif \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - mcp-scan.sarif
+    expire_in: 30 days
+  allow_failure: true

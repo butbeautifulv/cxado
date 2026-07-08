@@ -1,0 +1,69 @@
+# Helm deploy with multi-contour kubeconfig (common-templates pattern)
+
+.helm_contour:
+  image:
+    name: ${OSS_HELM_IMAGE}
+    entrypoint: [""]
+  before_script:
+    - apk add --no-cache curl bash
+    - |
+      KUBECTL_VERSION="${OSS_KUBECTL_VERSION:-1.32.2}"
+      curl -LO "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+    - chmod +x kubectl && mv kubectl /usr/local/bin/
+    - |
+      NS="${HELM_NAMESPACE:-${CI_PROJECT_ROOT_NAMESPACE:-app}}"
+      case "$NS" in
+        *-prod|*-PROD) export HELM_DEST=PROD ;;
+        *-uat|*-UAT) export HELM_DEST=UAT ;;
+        *-int|*-INT) export HELM_DEST=INT ;;
+        *-test|*-dev|*-TEST|*-DEV) export HELM_DEST=TEST ;;
+        *) export HELM_DEST=INT ;;
+      esac
+      PREFIX="${CI_PROJECT_ROOT_NAMESPACE:-APP}"
+      PREFIX="${PREFIX^^}"
+      VAR_KUBE="KUBE_${HELM_DEST}_CONFIG"
+      VAR_ENV="HELM_ENV_${PREFIX}_${HELM_DEST}"
+      export KUBECONFIG_FILE="${!VAR_KUBE:-${KUBECONFIG:-}}"
+      export HELM_EXTRA_ARGS="${!VAR_ENV:-}"
+      if [ -z "${KUBECONFIG_FILE}" ]; then
+        echo "WARN: ${VAR_KUBE} not set — using KUBECONFIG file variable"
+        KUBECONFIG_FILE="${KUBECONFIG:-}"
+      fi
+      export HELM_CMD="helm --kubeconfig ${KUBECONFIG_FILE} --namespace ${NS}"
+      export KUBE_CMD="kubectl --kubeconfig ${KUBECONFIG_FILE} --namespace ${NS}"
+    - |
+      CHART="${HELM_CHART_PATH:-chart}"
+      if [ ! -d "$CHART" ] && [ -d "templates/k8s/helm/sample-app" ]; then
+        CHART="templates/k8s/helm/sample-app"
+      fi
+      export HELM_CHART_PATH="$CHART"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  needs:
+    - job: build-image
+    - job: trivy-sca
+      optional: true
+
+deploy-contour:
+  stage: deploy
+  extends: .helm_contour
+  environment:
+    name: "${HELM_DEST:-INT}"
+    url: "${PREPROD_URL:-https://preprod.example.com}"
+  variables:
+    HELM_NAMESPACE: "${HELM_NAMESPACE:-${CI_PROJECT_ROOT_NAMESPACE}-int}"
+    HELM_RELEASE: "${HELM_APP_NAME:-${CI_PROJECT_NAME}}"
+  script:
+    - |
+      if [ "${IMAGE_TAG:-none}" = "none" ]; then
+        echo "No image to deploy"
+        exit 0
+      fi
+    - ${KUBE_CMD} create namespace "${HELM_NAMESPACE}" --dry-run=client -o yaml | ${KUBE_CMD} apply -f -
+    - |
+      ${HELM_CMD} upgrade --install "${HELM_RELEASE}" "${HELM_CHART_PATH}" \
+        ${HELM_EXTRA_ARGS} \
+        --set image.repository="${REGISTRY}" \
+        --set image.tag="${CI_COMMIT_SHA}" \
+        --wait --timeout 5m

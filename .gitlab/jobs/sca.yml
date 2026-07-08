@@ -1,0 +1,3 @@
+# Backward-compatible include — B3 OSA (was sca.yml for manifest scan)
+include:
+  - local: '/templates/gitlab/jobs/osa.yml'

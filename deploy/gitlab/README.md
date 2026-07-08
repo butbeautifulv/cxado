@@ -7,7 +7,7 @@
 | URL | https://gitlab.svo.aero/av.popov/cxado |
 | SSH | `git@gitlab.svo.aero:av.popov/cxado.git` |
 | HTTPS | `https://gitlab.svo.aero/av.popov/cxado.git` |
-| Registry | `registry.svo.aero:443/av.popov/cxado` (or Nexus `:8345` mirror) |
+| Docker registry | `${NEXUS_DOCKER_REGISTRY}/${NEXUS_CXADO_DOCKER_REPO}` — see [registry.defaults.env](../registry.defaults.env) |
 
 Secrets: `deploy/.secrets/cxado-k3s.env` (`GITLAB_*`, `NEXUS_*`).
 
@@ -19,85 +19,65 @@ Secrets: `deploy/.secrets/cxado-k3s.env` (`GITLAB_*`, `NEXUS_*`).
 | VM_01 | worker | `10.20.16.195` |
 | VM_02 | worker | `10.20.16.185` |
 
-## GitLab Runner (P30)
+## GitLab Runner (kubernetes executor)
 
 | Item | Value |
 |------|--------|
-| Host | `bbv-p30-wifi` (`bbv`, shell executor) |
-| Tags | `k3s`, `corp`, `p30` |
-| Binary | extracted from `nexus.svo.aero:8345/gitlab/gitlab-runner:latest` (v19.1.1) |
-| Service | `gitlab-runner` (user `bbv`, working dir `/home/bbv`) |
-| Kubeconfig | `/home/bbv/.kube/config` on P30 |
+| Namespace | `cxado-ci` on P30 k3s |
+| Tags | `k8s`, `corp`, `cxado` |
+| Image | `${NEXUS_DOCKER_REGISTRY}/gitlab/gitlab-runner:latest` |
+| Manifests | [deploy/k8s/gitlab-runner/](../k8s/gitlab-runner/) |
 
 ```bash
-# install / status (from laptop)
-./scripts/gitlab/setup-runner-p30.sh install
-./scripts/gitlab/setup-runner-p30.sh status
-
-# after admin provides glrt- token → add GITLAB_RUNNER_TOKEN to cxado-k3s.env
-./scripts/gitlab/setup-runner-p30.sh register
+# bootstrap runner in cluster
+./scripts/gitlab/setup-runner-k8s.sh --ssh bbv-p30-wifi bootstrap
+./scripts/gitlab/setup-runner-k8s.sh --ssh bbv-p30-wifi status
 ```
 
-**Runner:** `p30-k3s-shell` registered (id 312, shell executor, user `bbv`).
+Legacy shell runner (`p30-k3s-shell`) — ops/bootstrap only. Install: `./scripts/gitlab/setup-runner-p30.sh`.
 
-PAT with `create_runner` scope: `./scripts/gitlab/create-gitlab-pat.sh` → save as `GITLAB_PAT_RUNNER` in `cxado-k3s.env`.
+## Pipeline
 
-## Pipeline (`.gitlab-ci.yml`)
+Fabrica `oss-full-enterprise` + cxado Kaniko overlay. Details: [CI.md](CI.md).
 
-| Stage | Job | Notes |
-|-------|-----|-------|
-| validate | `validate:helm` | `helm template` egregore chart |
-| build | `build:egregore` | **Kaniko Job** in `cxado-build` ns → Nexus `cxado-docker/egregore` → import all nodes |
-| deploy | `deploy:egregore` | **manual** on `main` — `helm upgrade` |
-| smoke | `smoke:egregore` | observability smoke test |
-
-**CI/CD variables** — `./scripts/gitlab/setup-ci-variables.sh` (from `cxado-k3s.env`). Details: [CI.md](CI.md).
-
-| Variable | Required |
-|----------|----------|
-| `POSTGRES_PASSWORD` | yes |
-| `REDIS_PASSWORD` | yes |
-| `BUS_SIGNING_KEY` | yes |
-| `CXADO_OFFLINE_SUDO_PW` | yes |
-| `NEXUS_USER` / `NEXUS_PASSWORD` | yes (Kaniko) |
-| `VM_01_PWD` / `VM_02_PWD` | optional (workers) |
-
-### Kaniko (in-cluster build)
-
-Dedicated Kaniko on P30 k3s — namespace `cxado-build`, push to Nexus hosted repo `cxado-docker`.
+| Stage | Key jobs |
+|-------|----------|
+| validate | `validate:helm`, fabrica lint |
+| security | gitleaks, semgrep, trivy-osa, checkov, … |
+| image | `build:egregore` (Kaniko → Nexus) |
+| deploy | `deploy:egregore` (manual) |
+| smoke | `smoke:egregore` |
 
 ```bash
-# one-time: Nexus repo + Kaniko executor image
-./scripts/k8s/nexus-cxado-docker-setup.sh --ssh bbv-p30-wifi --seed-kaniko /tmp/kaniko-executor-v1.23.2.tar
+# CI images → Nexus
+./scripts/gitlab/mirror-fabrica-ci-images.sh --ssh bbv-p30-wifi
 
-# bootstrap secrets + hostPath /var/lib/cxado/kaniko-build
-./scripts/k8s/kaniko-bootstrap.sh --ssh bbv-p30-wifi
+# GitLab CI/CD variables (registry + secrets + KUBECONFIG file)
+./scripts/gitlab/setup-ci-variables.sh
+
+# Sync monorepo to corp GitLab
+./scripts/gitlab/sync-monorepo-to-gitlab.sh
 ```
 
-Corp Dockerfile: `projects/egregore/Dockerfile.corp` (Nexus base + PyPI, no BuildKit mounts).
+## Registry (change once)
 
-**Submodules:** GitLab-only on `gitlab/main` — see [submodules.md](submodules.md). Sync from laptop:
-
-```bash
-./scripts/gitlab/sync-monorepo-to-gitlab.sh              # submodules + monorepo → GitLab
-./scripts/gitlab/push-github.sh                          # GitHub only (unchanged)
-./scripts/gitlab/push-submodule-mirror.sh projects/egregore
-```
+| File | Purpose |
+|------|---------|
+| [deploy/registry.defaults.env](../registry.defaults.env) | `NEXUS_DOCKER_REGISTRY`, `NEXUS_PYPI_HOST`, `CXADO_CI_REGISTRY` |
+| [deploy/registry.defaults.env.example](../registry.defaults.env.example) | template for secrets overlay |
 
 ## Push monorepo
 
 ```bash
-# Public dev (GitHub) — as before
-./scripts/gitlab/push-github.sh
-
-# Corp (GitLab, isolated .gitmodules)
-./scripts/gitlab/sync-monorepo-to-gitlab.sh
+./scripts/gitlab/push-github.sh              # GitHub (public dev)
+./scripts/gitlab/sync-monorepo-to-gitlab.sh  # corp GitLab (isolated .gitmodules)
 ```
 
-Do **not** `git push gitlab main` directly — use `sync-monorepo-to-gitlab.sh` so `.gitmodules` on GitLab stays GitHub-free.
+Do **not** `git push gitlab main` directly — use `sync-monorepo-to-gitlab.sh`.
 
 ## Related
 
+- [CI.md](CI.md)
+- [submodules.md](submodules.md)
 - [k3s Ansible](../ansible/k3s/README.md)
-- [Nexus k3s repos](../../scripts/k8s/nexus-k3s-repos-setup.sh)
 - [ports.md](../ports.md)

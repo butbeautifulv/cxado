@@ -9,6 +9,10 @@
 # Ansible inventory alternative: deploy/ansible/k3s/inventories/offline/hosts.yml
 
 : "${CXADO_OFFLINE_ENV_ROOT:=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+if [[ -f "${CXADO_OFFLINE_ENV_ROOT}/deploy/registry.defaults.env" ]]; then
+  # shellcheck source=/dev/null
+  source "${CXADO_OFFLINE_ENV_ROOT}/deploy/registry.defaults.env"
+fi
 if [[ -f "${CXADO_OFFLINE_ENV_ROOT}/deploy/.secrets/cxado-k3s.env" ]]; then
   # shellcheck source=/dev/null
   source "${CXADO_OFFLINE_ENV_ROOT}/deploy/.secrets/cxado-k3s.env"

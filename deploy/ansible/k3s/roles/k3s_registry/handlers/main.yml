@@ -1,0 +1,14 @@
+---
+- name: Restart k3s after registry config change
+  ansible.builtin.systemd:
+    name: "{{ k3s_service_name | default('k3s') }}"
+    state: restarted
+    daemon_reload: true
+  when: k3s_service_name is defined or inventory_hostname in groups.get('k3s_server', [])
+
+- name: Restart k3s-agent after registry config change
+  ansible.builtin.systemd:
+    name: k3s-agent
+    state: restarted
+    daemon_reload: true
+  when: inventory_hostname in groups.get('k3s_agent', [])

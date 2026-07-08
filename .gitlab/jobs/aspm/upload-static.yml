@@ -1,0 +1,107 @@
+# ASPM upload wave — static findings (security stage)
+
+.aspm_upload_static:
+  stage: static-security-upload
+  image: ${OSS_PYTHON_IMAGE:-python:3.11.11-slim-bookworm}
+  extends:
+    - .defectdojo_skip_rules
+    - .security_job_defaults
+  before_script:
+    - pip install -q pyyaml
+  script:
+    - |
+      REPORT="${ASPM_REPORT:?}"
+      CONTROL="${ASPM_CONTROL:?}"
+      if [ ! -f "$REPORT" ]; then
+        echo "[aspm] skip — artifact $REPORT not found (scan job skipped)"
+        exit 0
+      fi
+      if [ ! -s "$REPORT" ]; then
+        echo "[aspm] skip — artifact $REPORT is empty"
+        exit 0
+      fi
+      python3 scripts/aspm-export.py --control "$CONTROL" --report "$REPORT" --skip-empty
+
+upload-gitleaks-to-dojo:
+  extends: .aspm_upload_static
+  variables:
+    ASPM_CONTROL: secrets
+    ASPM_REPORT: gitleaks.sarif
+  needs:
+    - job: gitleaks-scan
+      artifacts: true
+      optional: true
+
+upload-semgrep-to-dojo:
+  extends: .aspm_upload_static
+  variables:
+    ASPM_CONTROL: sast
+    ASPM_REPORT: semgrep.sarif
+  needs:
+    - job: semgrep-sast
+      artifacts: true
+      optional: true
+
+upload-trivy-osa-to-dojo:
+  extends: .aspm_upload_static
+  variables:
+    ASPM_CONTROL: osa
+    ASPM_REPORT: osa.sarif
+  needs:
+    - job: trivy-osa
+      artifacts: true
+      optional: true
+
+upload-checkov-to-dojo:
+  extends: .aspm_upload_static
+  variables:
+    ASPM_CONTROL: iac
+    ASPM_REPORT: reports/checkov-report.json
+  needs:
+    - job: checkov-iac
+      artifacts: true
+      optional: true
+
+upload-hadolint-to-dojo:
+  extends: .aspm_upload_static
+  variables:
+    ASPM_CONTROL: dockerfile
+    ASPM_REPORT: hadolint-report.json
+  needs:
+    - job: dockerfile-lint
+      artifacts: true
+      optional: true
+
+upload-linters-to-dojo:
+  extends: .aspm_upload_static
+  variables:
+    ASPM_CONTROL: linters
+    ASPM_REPORT: linter.sarif
+  needs:
+    - job: linter-security
+      artifacts: true
+      optional: true
+
+upload-forbidden-files-to-dojo:
+  extends: .aspm_upload_static
+  variables:
+    ASPM_CONTROL: linters
+    ASPM_REPORT: forbidden-files.sarif
+  needs:
+    - job: forbidden-files
+      artifacts: true
+      optional: true
+
+upload-dast-to-dojo:
+  stage: post-deploy
+  extends: .aspm_upload_static
+  variables:
+    ASPM_CONTROL: dast
+    ASPM_REPORT: reports/zap-baseline.json
+  needs:
+    - job: dast-zap
+      artifacts: true
+      optional: true
+    - job: dast-compose
+      artifacts: true
+      optional: true

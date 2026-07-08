@@ -1,0 +1,69 @@
+# OSS profile validate stage — Node/TypeScript (npm, ESLint, Vitest)
+
+.workflow_rules:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+lint:
+  stage: validate
+  image: node:20-bookworm
+  extends: .workflow_rules
+  cache:
+    key: npm-${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+  script:
+    - |
+      if [ ! -f package.json ]; then
+        echo "Skip Node lint — no package.json"
+        exit 0
+      fi
+      if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      if node -e "const p=require('./package.json'); process.exit(p.scripts&&(p.scripts.lint||p.scripts.eslint)?0:1)"; then
+        npm run lint 2>/dev/null || npm run eslint
+      else
+        echo "Skip lint — add npm run lint to package.json"
+      fi
+  allow_failure: true
+
+typecheck:
+  stage: validate
+  image: node:20-bookworm
+  extends: .workflow_rules
+  cache:
+    key: npm-${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+  script:
+    - |
+      if [ ! -f package.json ]; then exit 0; fi
+      if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      if node -e "const p=require('./package.json'); process.exit(p.scripts&&p.scripts.typecheck?0:1)"; then
+        npm run typecheck
+      else
+        echo "Skip typecheck — add npm run typecheck to package.json"
+      fi
+  allow_failure: true
+
+unit-test:
+  stage: test
+  image: node:20-bookworm
+  extends: .workflow_rules
+  cache:
+    key: npm-${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+  script:
+    - |
+      if [ ! -f package.json ]; then
+        echo "Skip Node tests — no package.json"
+        exit 0
+      fi
+      if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      if node -e "const p=require('./package.json'); const s=p.scripts||{}; process.exit(s.test||s['test:coverage']?0:1)"; then
+        npm run test:coverage 2>/dev/null || npm test
+      else
+        echo "Skip tests — add npm test to package.json"
+      fi
+  allow_failure: true

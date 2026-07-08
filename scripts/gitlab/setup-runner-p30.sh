@@ -9,6 +9,9 @@
 # Usage:
 #   ./scripts/gitlab/setup-runner-p30.sh install          # binary + systemd only
 #   ./scripts/gitlab/setup-runner-p30.sh register         # register (needs GITLAB_RUNNER_TOKEN)
+#   ./scripts/gitlab/setup-runner-p30.sh pause            # stop shell executor (CI jobs won't pick p30)
+#   ./scripts/gitlab/setup-runner-p30.sh unpause          # start shell executor again
+#   ./scripts/gitlab/setup-runner-p30.sh unregister       # remove p30-k3s-shell from GitLab
 #   ./scripts/gitlab/setup-runner-p30.sh create-token   # try API; fails if instance blocks users
 #   ./scripts/gitlab/setup-runner-p30.sh status
 set -euo pipefail
@@ -99,17 +102,39 @@ register_runner() {
 status_runner() {
   remote_sudo "gitlab-runner list || true"
   remote_sudo "systemctl is-active gitlab-runner"
-  remote "command -v kubectl >/dev/null && kubectl get nodes -o wide 2>/dev/null | head -5 || true"
+  remote "command -v k3s >/dev/null && k3s kubectl get nodes -o wide 2>/dev/null | head -5 || true"
+}
+
+pause_runner() {
+  log "stop shell runner service on ${SSH_HOST} (tags: ${RUNNER_TAGS})"
+  remote_sudo "systemctl stop gitlab-runner"
+  remote_sudo "systemctl is-active gitlab-runner" && die "gitlab-runner still active" || log "gitlab-runner stopped"
+}
+
+unpause_runner() {
+  log "start shell runner service on ${SSH_HOST}"
+  remote_sudo "systemctl start gitlab-runner"
+  status_runner
+}
+
+unregister_runner() {
+  log "unregister ${RUNNER_DESC} on ${SSH_HOST}"
+  remote_sudo "gitlab-runner unregister --name '${RUNNER_DESC}' 2>/dev/null || true"
+  remote_sudo "systemctl stop gitlab-runner"
+  log "shell runner unregistered and stopped"
 }
 
 cmd="${1:-install}"
 case "${cmd}" in
   install) install_binary ;;
   register) install_binary; register_runner ;;
+  pause) pause_runner ;;
+  unpause) unpause_runner ;;
+  unregister) unregister_runner ;;
   create-token) create_runner_token ;;
   status) status_runner ;;
   *)
-    echo "usage: $0 {install|register|create-token|status}" >&2
+    echo "usage: $0 {install|register|pause|unpause|unregister|create-token|status}" >&2
     exit 2
     ;;
 esac

@@ -1,0 +1,5 @@
+---
+k3s_registry_path: /etc/rancher/k3s/registries.yaml
+nexus_docker_registry: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}"
+nexus_docker_repo: "{{ lookup('env', 'NEXUS_CXADO_DOCKER_REPO') | default('cxado-docker', true) }}"
+k3s_registry_insecure: "{{ lookup('env', 'K3S_REGISTRY_INSECURE') | default('true', true) | bool }}"

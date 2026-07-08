@@ -1,0 +1,16 @@
+# F3 — Scheduled full SAST (configure schedule in GitLab CI/CD → Schedules)
+
+nightly-sast-scheduled:
+  stage: security
+  image:
+    name: ${OSS_SEMGREP_IMAGE}
+    entrypoint: [""]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  script:
+    - semgrep scan --config auto --json -o gl-sast-report.json . || true
+  artifacts:
+    paths:
+      - gl-sast-report.json
+    expire_in: 30 days
+  allow_failure: true

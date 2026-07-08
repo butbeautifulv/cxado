@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitlab-runner
+  namespace: cxado-ci
+  labels:
+    app.kubernetes.io/name: gitlab-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gitlab-runner
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gitlab-runner
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      hostAliases:
+        - ip: "10.248.70.33"
+          hostnames:
+            - "gitlab.svo.aero"
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      serviceAccountName: gitlab-runner
+      imagePullSecrets:
+        - name: nexus-registry
+      containers:
+        - name: gitlab-runner
+          image: __NEXUS_DOCKER_REGISTRY__/gitlab/gitlab-runner:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "/config/configure-runner.sh"]
+          env:
+            - name: CI_SERVER_URL
+              value: "https://gitlab.svo.aero/"
+            - name: RUNNER_EXECUTOR
+              value: "kubernetes"
+            - name: RUNNER_TAG_LIST
+              value: "k8s,corp,cxado"
+            - name: RUNNER_DESCRIPTION
+              value: "cxado-k8s-runner"
+            - name: RUNNER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gitlab-runner-token
+                  key: runner-token
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: runner-config
+              mountPath: /etc/gitlab-runner
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: config
+          configMap:
+            name: gitlab-runner-config
+            defaultMode: 0755
+        - name: runner-config
+          emptyDir: {}

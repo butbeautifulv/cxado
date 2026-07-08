@@ -1,0 +1,20 @@
+# C1 — SBOM generation (artifact contract: sbom.cdx.json)
+
+sbom-generate:
+  stage: build
+  image:
+    name: ${OSS_SYFT_IMAGE:-anchore/syft:v1.20.0}
+    entrypoint: [""]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq python3
+  script:
+    - syft dir:. -o cyclonedx-json > sbom.cdx.json
+    - test -s sbom.cdx.json
+    - python3 scripts/gate-check.py --control sbom --report sbom.cdx.json \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    paths:
+      - sbom.cdx.json
+    expire_in: 90 days

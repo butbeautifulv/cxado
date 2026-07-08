@@ -1,0 +1,32 @@
+# B6 — Security linters (MR gate)
+
+linter-security:
+  stage: security
+  image: python:3.13-slim-bookworm
+  extends:
+    - .workflow_rules_security
+    - .security_job_defaults
+  variables:
+    ENABLE_REAL_LINTERS: "${ENABLE_REAL_LINTERS:-false}"
+  script:
+    - |
+      if [ "$ENABLE_REAL_LINTERS" != "true" ]; then
+        echo "Linter gate stub — set ENABLE_REAL_LINTERS=true"
+        echo '{"runs":[{"results":[]}]}' > linter.sarif
+        exit 0
+      fi
+      if [ -f uv.lock ]; then
+        pip install -q uv
+        uv sync
+        uv run ruff check . --output-format sarif -o linter.sarif || true
+      else
+        pip install -q "ruff==${OSS_RUFF_VERSION:-0.11.8}"
+        ruff check . --output-format sarif -o linter.sarif || true
+      fi
+    - python3 scripts/gate-check.py --control linters --report linter.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+  artifacts:
+    reports:
+      codequality: linter.sarif
+    paths:
+      - linter.sarif
+    expire_in: 30 days

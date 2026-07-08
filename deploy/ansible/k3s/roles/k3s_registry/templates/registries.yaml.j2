@@ -1,0 +1,13 @@
+mirrors:
+  "{{ nexus_docker_registry }}":
+    endpoint:
+      - "https://{{ nexus_docker_registry }}"
+configs:
+  "{{ nexus_docker_registry }}":
+{% if k3s_registry_insecure %}
+    tls:
+      insecure_skip_verify: true
+{% endif %}
+    auth:
+      username: "{{ lookup('env', 'NEXUS_USER') | default('admin-SEC', true) }}"
+      password: "{{ lookup('env', 'NEXUS_PASSWORD') | default('', true) }}"

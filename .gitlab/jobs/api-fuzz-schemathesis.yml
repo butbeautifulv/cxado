@@ -1,0 +1,50 @@
+# D1/API — property-based API fuzzing (Schemathesis + OpenAPI)
+
+api-fuzz-schemathesis:
+  stage: post-deploy
+  image:
+    name: ${OSS_SCHEMATHESIS_IMAGE:-ghcr.io/schemathesis/schemathesis:4.21.7}
+    entrypoint: [""]
+  extends: .aspm_export
+  variables:
+    PREPROD_URL: "https://preprod.example.com"
+    OPENAPI_SPEC: "${PREPROD_URL}/openapi.json"
+    API_BASE_URL: "${PREPROD_URL}"
+    SCHEMATHESIS_PHASES: "examples,coverage,fuzzing"
+    ASPM_CONTROL: fuzzing
+    ASPM_REPORT: reports/schemathesis-junit.xml
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+  needs:
+    - job: deploy-preprod
+      optional: true
+  script:
+    - mkdir -p reports
+    - |
+      HOOKS_PATH="${SCHEMATHESIS_HOOKS:-tests/security/schemathesis-hooks.py}"
+      if [ -f "${HOOKS_PATH}" ]; then
+        cp "${HOOKS_PATH}" /app/hooks.py
+      fi
+    - |
+      set +e
+      schemathesis run -w auto "${OPENAPI_SPEC}" --url "${API_BASE_URL}" \
+        --phases "${SCHEMATHESIS_PHASES}" \
+        --report junit --report-junit-path reports/schemathesis-junit.xml
+      SC_EXIT=$?
+      set -e
+    - command -v python3 >/dev/null || (apt-get update -qq && apt-get install -y -qq python3)
+    - |
+      python3 scripts/gate-check.py --control fuzzing --report reports/schemathesis-junit.xml \
+        --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}" || GATE_EXIT=$?
+      exit ${GATE_EXIT:-${SC_EXIT:-0}}
+  after_script:
+    - command -v python3 >/dev/null || (apt-get update -qq && apt-get install -y -qq python3)
+    - !reference [.aspm_export, after_script]
+  artifacts:
+    paths:
+      - reports/schemathesis-junit.xml
+    expire_in: 30 days
+  allow_failure: true
