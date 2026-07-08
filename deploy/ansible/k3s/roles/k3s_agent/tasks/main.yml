@@ -14,6 +14,52 @@
       k3s_node_token and k3s_server_host in inventory/group_vars.
   when: k3s_node_token is not defined or k3s_server_host is not defined
 
+- name: Check for existing k3s server unit
+  ansible.builtin.stat:
+    path: /etc/systemd/system/k3s.service
+  register: k3s_server_unit
+
+- name: Uninstall existing k3s server before agent join
+  ansible.builtin.shell: |
+    set -euo pipefail
+    if [ -x "{{ k3s_airgap_staging_dir }}/k3s-uninstall.sh" ]; then
+      "{{ k3s_airgap_staging_dir }}/k3s-uninstall.sh"
+    else
+      /usr/local/bin/k3s-uninstall.sh
+    fi
+  args:
+    executable: /bin/bash
+  when:
+    - k3s_agent_replace_cluster | default(false)
+    - k3s_server_unit.stat.exists
+
+- name: Check for existing k3s agent unit
+  ansible.builtin.stat:
+    path: /etc/systemd/system/k3s-agent.service
+  register: k3s_agent_unit
+
+- name: Uninstall existing k3s agent before rejoin
+  ansible.builtin.shell: |
+    set -euo pipefail
+    if [ -x "{{ k3s_airgap_staging_dir }}/k3s-agent-uninstall.sh" ]; then
+      "{{ k3s_airgap_staging_dir }}/k3s-agent-uninstall.sh"
+    else
+      /usr/local/bin/k3s-agent-uninstall.sh
+    fi
+  args:
+    executable: /bin/bash
+  when:
+    - k3s_agent_replace_cluster | default(false)
+    - k3s_agent_unit.stat.exists
+
+- name: Restore k3s binary on PATH after cluster uninstall
+  ansible.builtin.copy:
+    src: "{{ k3s_airgap_staging_dir }}/k3s"
+    dest: /usr/local/bin/k3s
+    mode: "0755"
+    remote_src: true
+  when: k3s_agent_replace_cluster | default(false)
+
 - name: Ensure k3s agent images directory exists
   ansible.builtin.file:
     path: /var/lib/rancher/k3s/agent/images
@@ -38,7 +84,7 @@
 
 - name: Check if k3s agent is already installed
   ansible.builtin.stat:
-    path: /usr/local/bin/k3s
+    path: /etc/systemd/system/k3s-agent.service
   register: k3s_agent_installed
 
 - name: Install k3s agent (offline join)
@@ -53,7 +99,6 @@
     ./install.sh
   args:
     executable: /bin/bash
-    creates: /usr/local/bin/k3s
   when: not k3s_agent_installed.stat.exists
 
 - name: Enable and start k3s-agent service

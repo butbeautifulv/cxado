@@ -38,8 +38,14 @@
 
 - name: Check if k3s server is already installed
   ansible.builtin.stat:
-    path: /usr/local/bin/k3s
+    path: /etc/systemd/system/k3s.service
   register: k3s_installed
+
+- name: Read installed k3s version
+  ansible.builtin.command: k3s --version
+  register: k3s_current_version
+  changed_when: false
+  when: k3s_installed.stat.exists
 
 - name: Install k3s server (offline)
   ansible.builtin.shell: |
@@ -51,10 +57,22 @@
     ./install.sh
   args:
     executable: /bin/bash
-    creates: /usr/local/bin/k3s
-  environment:
-    INSTALL_K3S_SKIP_DOWNLOAD: "true"
   when: not k3s_installed.stat.exists
+
+- name: Upgrade k3s server (offline)
+  ansible.builtin.shell: |
+    set -euo pipefail
+    cd "{{ k3s_airgap_staging_dir }}"
+    INSTALL_K3S_SKIP_DOWNLOAD=true \
+    INSTALL_K3S_VERSION="{{ k3s_version }}" \
+    K3S_NODE_IP="{{ k3s_node_ip }}" \
+    ./install.sh
+  args:
+    executable: /bin/bash
+  when:
+    - k3s_installed.stat.exists
+    - k3s_version not in k3s_current_version.stdout
+  notify: Restart k3s
 
 - name: Enable and start k3s service
   ansible.builtin.systemd:

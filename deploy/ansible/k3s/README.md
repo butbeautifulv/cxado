@@ -13,17 +13,20 @@ Application deployment (egregore, veil, obs) stays in existing shell scripts und
 ## Quick start
 
 ```bash
-# 1. Fetch offline artifacts (controller, with internet)
-./scripts/k8s/k3s-airgap-fetch.sh
+# 1. Ensure Nexus k3s repos (one-time)
+./scripts/k8s/nexus-k3s-repos-setup.sh --ssh bbv-p30-wifi --test
 
-# 2. Configure inventory
+# 2. Configure inventory (no secrets in hosts.yml)
 cd deploy/ansible/k3s
 cp inventories/offline/hosts.yml.example inventories/offline/hosts.yml
-# edit hosts.yml — ansible_host, k3s_node_ip, TLS SANs
 
-# 3. Bootstrap control plane (+ optional workers)
-ansible-playbook -i inventories/offline playbooks/site.yml --ask-become-pass
+# 3. Secrets in deploy/.secrets/cxado-k3s.env (sudo + VM passwords + NEXUS_*)
+
+# 4. Bootstrap — nodes pull k3s/helm from Nexus (no laptop copy)
+../../scripts/k8s/k3s-ansible-playbook.sh playbooks/site.yml
 ```
+
+P30 on Ubuntu 25.10: `host_vars/p30-k44.yml` uses `/usr/bin/sudo.ws` (sudo-rs breaks Ansible become).
 
 ### Control plane only
 
@@ -93,20 +96,17 @@ See also:
 
 ## Airgap artifacts
 
-Fetched by [`scripts/k8s/k3s-airgap-fetch.sh`](../../../scripts/k8s/k3s-airgap-fetch.sh) into `files/airgap/` (gitignored):
+By default (`k3s_airgap_source: nexus` in `group_vars/all.yml`) each node pulls from corp Nexus:
 
-| File | Purpose |
-|------|---------|
-| `k3s`, `k3s-arm64` | k3s binaries |
-| `install.sh` | k3s installer (with `INSTALL_K3S_SKIP_DOWNLOAD=true`) |
-| `k3s-airgap-images-amd64.tar` | Embedded k3s images |
-| `helm-v4.1.0-linux-amd64.tar.gz` | Helm binary |
+| Artifact | Nexus repo |
+|----------|------------|
+| `k3s`, images tar | `k3s-releases-proxy` |
+| `install.sh` | `k3s-get-proxy` |
+| `helm-*.tar.gz` | `helm-get-proxy` |
 
-Override versions:
+Setup: [`scripts/k8s/nexus-k3s-repos-setup.sh`](../../../scripts/k8s/nexus-k3s-repos-setup.sh)
 
-```bash
-K3S_VERSION=v1.35.0+k3s1 HELM_VERSION=v4.1.0 ARCH=amd64 ./scripts/k8s/k3s-airgap-fetch.sh
-```
+Fallback (`k3s_airgap_source: controller`): pre-fetch with [`k3s-airgap-fetch.sh`](../../../scripts/k8s/k3s-airgap-fetch.sh) into `files/airgap/`, Ansible copies to nodes.
 
 ## Verification checklist
 
@@ -122,9 +122,10 @@ After `site.yml` on a fresh node:
 
 ## Secrets
 
-- Use `--ask-become-pass` or `ansible_become_password` (same as `CXADO_OFFLINE_SUDO_PW` in deploy scripts)
+- **Never** put passwords in `hosts.yml` — use `deploy/.secrets/cxado-k3s.env` + `./scripts/k8s/k3s-ansible-playbook.sh`
+- `host_vars/p30-k44.yml` reads `CXADO_OFFLINE_SUDO_PW`; VM hosts read `VM_01_PWD` / `VM_02_PWD`
 - `k3s_node_token` is read from the server at runtime — do not commit
-- `inventories/offline/hosts.yml` is gitignored; only `hosts.yml.example` is tracked
+- `inventories/offline/hosts.yml` is gitignored (topology only; copy from `hosts.yml.example`)
 
 ## Out of scope (v1)
 

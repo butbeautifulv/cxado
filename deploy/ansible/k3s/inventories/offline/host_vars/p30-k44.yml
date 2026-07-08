@@ -1,0 +1,6 @@
+---
+# Become password from deploy/.secrets/cxado-k3s.env (CXADO_OFFLINE_SUDO_PW).
+# Ubuntu 25.10: default sudo-rs breaks Ansible — use classic sudo.ws.
+ansible_become_password: "{{ lookup('env', 'CXADO_OFFLINE_SUDO_PW') }}"
+ansible_become_exe: /usr/bin/sudo.ws
+ansible_become_flags: '-H -S'

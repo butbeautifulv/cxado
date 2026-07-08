@@ -1,11 +1,16 @@
 ---
 cxado_deploy_user: bbv
 
-k3s_version: v1.35.0+k3s1
+k3s_version: v1.35.6+k3s1
 helm_version: v4.1.0
 
-# Populated by k3s-airgap-fetch.sh on the Ansible controller (laptop).
+# Nodes pull airgap artifacts directly from corp Nexus (see k3s_common/tasks/nexus_fetch.yml).
+k3s_airgap_source: nexus
 k3s_airgap_dir: "{{ playbook_dir }}/../files/airgap"
+nexus_api_url: "{{ lookup('env', 'NEXUS_API_URL') | default('https://nexus.svo.aero:8443', true) }}"
+nexus_k3s_proxy_repo: "{{ lookup('env', 'NEXUS_K3S_PROXY_REPO') | default('k3s-releases-proxy', true) }}"
+nexus_k3s_get_proxy_repo: "{{ lookup('env', 'NEXUS_K3S_GET_PROXY_REPO') | default('k3s-get-proxy', true) }}"
+nexus_helm_proxy_repo: "{{ lookup('env', 'NEXUS_HELM_PROXY_REPO') | default('helm-get-proxy', true) }}"
 
 ssh_extra_ports:
   - 22012

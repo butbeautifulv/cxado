@@ -1,0 +1,4 @@
+{
+  "insecure-registries": ["nexus.svo.aero:8345"],
+  "registry-mirrors": ["https://nexus.svo.aero:8345"]
+}

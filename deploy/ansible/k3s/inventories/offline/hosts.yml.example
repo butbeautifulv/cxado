@@ -11,6 +11,9 @@ all:
           ansible_host: 192.168.0.133
           ansible_port: 22
           ansible_user: bbv
+          # Ubuntu 25.10 ships sudo-rs by default; Ansible needs classic sudo.ws:
+          # ansible_become_exe: /usr/bin/sudo.ws
+          # ansible_become_flags: '-H -S'
           k3s_node_ip: 10.8.185.15
           k3s_tls_sans:
             - bbv-p30-k44

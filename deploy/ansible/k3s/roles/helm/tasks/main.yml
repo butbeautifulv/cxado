@@ -3,9 +3,28 @@
   ansible.builtin.set_fact:
     helm_airgap_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
 
+- name: Set helm staging path
+  ansible.builtin.set_fact:
+    helm_airgap_tarball_dest: "/tmp/helm-{{ helm_version }}-linux-{{ helm_airgap_arch }}.tar.gz"
+
+- name: Pull helm tarball from Nexus
+  ansible.builtin.get_url:
+    url: >-
+      {{ nexus_api_url | regex_replace('/$', '')
+      }}/repository/{{ nexus_helm_proxy_repo }}/helm-{{ helm_version }}-linux-{{ helm_airgap_arch }}.tar.gz
+    dest: "{{ helm_airgap_tarball_dest }}"
+    mode: "0644"
+    url_username: "{{ lookup('env', 'NEXUS_USER') }}"
+    url_password: "{{ lookup('env', 'NEXUS_PASSWORD') }}"
+    validate_certs: false
+    force: false
+  when: k3s_airgap_source == 'nexus'
+  no_log: true
+
 - name: Define helm tarball path on controller
   ansible.builtin.set_fact:
     helm_airgap_tarball_src: "{{ k3s_airgap_dir }}/helm-{{ helm_version }}-linux-{{ helm_airgap_arch }}.tar.gz"
+  when: k3s_airgap_source != 'nexus'
 
 - name: Stat helm tarball on controller
   ansible.builtin.stat:
@@ -14,24 +33,28 @@
   become: false
   run_once: true
   register: helm_tarball_stat
+  when: k3s_airgap_source != 'nexus'
 
-- name: Fail when helm tarball is missing
+- name: Fail when helm tarball is missing on controller
   ansible.builtin.fail:
     msg: >-
       Missing helm tarball {{ helm_airgap_tarball_src }}.
       Run scripts/k8s/k3s-airgap-fetch.sh on the Ansible controller first.
-  when: not helm_tarball_stat.stat.exists
+  when:
+    - k3s_airgap_source != 'nexus'
+    - not helm_tarball_stat.stat.exists
   run_once: true
 
-- name: Copy helm tarball to node
+- name: Copy helm tarball to node from controller
   ansible.builtin.copy:
     src: "{{ helm_airgap_tarball_src }}"
-    dest: "/tmp/helm-{{ helm_version }}-linux-{{ helm_airgap_arch }}.tar.gz"
+    dest: "{{ helm_airgap_tarball_dest }}"
     mode: "0644"
+  when: k3s_airgap_source != 'nexus'
 
 - name: Extract helm binary
   ansible.builtin.unarchive:
-    src: "/tmp/helm-{{ helm_version }}-linux-{{ helm_airgap_arch }}.tar.gz"
+    src: "{{ helm_airgap_tarball_dest }}"
     dest: /tmp
     remote_src: true
     creates: "/tmp/linux-{{ helm_airgap_arch }}/helm"

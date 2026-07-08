@@ -1,5 +1,8 @@
 ---
-- name: Install base packages
+- name: Install base packages (Debian/Astra)
+  when:
+    - cxado_manage_packages | default(true)
+    - ansible_pkg_mgr == "apt"
   ansible.builtin.apt:
     name:
       - curl
@@ -10,20 +13,53 @@
       - docker.io
       - python3
     state: present
-    update_cache: true
-  when: ansible_os_family == "Debian"
+    update_cache: "{{ cxado_apt_update_cache | default(false) }}"
 
-- name: Ensure deploy user is in docker and sudo groups
+- name: Install base packages (RedHat/RED OS)
+  when:
+    - cxado_manage_packages | default(true)
+    - ansible_pkg_mgr in ["dnf", "yum"]
+  ansible.builtin.dnf:
+    name:
+      - curl
+      - openssh-server
+      - ca-certificates
+      - iptables
+      - podman-docker
+      - python3
+    state: present
+
+- name: Detect docker group
+  ansible.builtin.getent:
+    database: group
+    key: docker
+  register: cxado_docker_group
+  failed_when: false
+
+- name: Ensure deploy user privilege groups
   ansible.builtin.user:
     name: "{{ cxado_deploy_user }}"
-    groups:
-      - docker
-      - sudo
+    groups: "{{ cxado_deploy_groups }}"
     append: true
+  vars:
+    cxado_priv_group: "{{ 'wheel' if ansible_pkg_mgr in ['dnf', 'yum'] else 'sudo' }}"
+    cxado_deploy_groups: >-
+      {{
+        [cxado_priv_group]
+        + (['docker'] if cxado_docker_group.get('getent_group', {}).get('docker') else [])
+      }}
 
-- name: Enable and start Docker
+- name: Enable and start Docker (Debian/Astra)
+  when: ansible_pkg_mgr == "apt"
   ansible.builtin.systemd:
     name: docker
+    enabled: true
+    state: started
+
+- name: Enable podman socket (RED OS)
+  when: ansible_pkg_mgr in ["dnf", "yum"]
+  ansible.builtin.systemd:
+    name: podman.socket
     enabled: true
     state: started
 
@@ -50,7 +86,7 @@
     content: |
       net.bridge.bridge-nf-call-iptables = 1
       net.ipv4.ip_forward = 1
-  notify: Apply sysctl
+  notify: Apply sysctl settings
 
 - name: Apply sysctl settings
   ansible.builtin.meta: flush_handlers

@@ -1,0 +1,78 @@
+---
+- name: Build Nexus airgap URLs
+  ansible.builtin.set_fact:
+    k3s_version_enc: "{{ k3s_version | replace('+', '%2B') }}"
+    k3s_nexus_k3s_base: >-
+      {{ nexus_api_url | regex_replace('/$', '')
+      }}/repository/{{ nexus_k3s_proxy_repo }}/k3s-io/k3s/releases/download/{{ k3s_version | replace('+', '%2B') }}
+    k3s_nexus_install_url: >-
+      {{ nexus_api_url | regex_replace('/$', '')
+      }}/repository/{{ nexus_k3s_get_proxy_repo }}/
+    k3s_nexus_helm_base: >-
+      {{ nexus_api_url | regex_replace('/$', '')
+      }}/repository/{{ nexus_helm_proxy_repo }}
+
+- name: Pull k3s binary from Nexus
+  ansible.builtin.get_url:
+    url: "{{ k3s_nexus_k3s_base }}/k3s"
+    dest: "{{ k3s_airgap_staging_dir }}/k3s"
+    mode: "0755"
+    url_username: "{{ lookup('env', 'NEXUS_USER') }}"
+    url_password: "{{ lookup('env', 'NEXUS_PASSWORD') }}"
+    validate_certs: false
+    force: false
+  no_log: true
+
+- name: Pull k3s install script from Nexus
+  ansible.builtin.get_url:
+    url: "{{ k3s_nexus_install_url }}"
+    dest: "{{ k3s_airgap_staging_dir }}/install.sh"
+    mode: "0755"
+    url_username: "{{ lookup('env', 'NEXUS_USER') }}"
+    url_password: "{{ lookup('env', 'NEXUS_PASSWORD') }}"
+    validate_certs: false
+    force: false
+  no_log: true
+
+- name: Pull k3s airgap images tarball from Nexus
+  ansible.builtin.get_url:
+    url: "{{ k3s_nexus_k3s_base }}/k3s-airgap-images-{{ k3s_airgap_arch }}.tar"
+    dest: "{{ k3s_airgap_staging_dir }}/k3s-airgap-images-{{ k3s_airgap_arch }}.tar"
+    mode: "0644"
+    url_username: "{{ lookup('env', 'NEXUS_USER') }}"
+    url_password: "{{ lookup('env', 'NEXUS_PASSWORD') }}"
+    validate_certs: false
+    force: false
+  register: k3s_nexus_images_tar
+  ignore_errors: true
+  no_log: true
+
+- name: Pull k3s airgap images zst tarball from Nexus
+  ansible.builtin.get_url:
+    url: "{{ k3s_nexus_k3s_base }}/k3s-airgap-images-{{ k3s_airgap_arch }}.tar.zst"
+    dest: "{{ k3s_airgap_staging_dir }}/k3s-airgap-images-{{ k3s_airgap_arch }}.tar.zst"
+    mode: "0644"
+    url_username: "{{ lookup('env', 'NEXUS_USER') }}"
+    url_password: "{{ lookup('env', 'NEXUS_PASSWORD') }}"
+    validate_certs: false
+    force: false
+  when: k3s_nexus_images_tar is failed
+  register: k3s_nexus_images_zst
+  no_log: true
+
+- name: Stat k3s images tarball on node after Nexus pull
+  ansible.builtin.stat:
+    path: "{{ k3s_airgap_staging_dir }}/k3s-airgap-images-{{ k3s_airgap_arch }}.tar"
+  register: k3s_images_tar_stat
+
+- name: Stat k3s images zst tarball on node after Nexus pull
+  ansible.builtin.stat:
+    path: "{{ k3s_airgap_staging_dir }}/k3s-airgap-images-{{ k3s_airgap_arch }}.tar.zst"
+  register: k3s_images_zst_stat
+
+- name: Fail when k3s images tarball missing after Nexus pull
+  ansible.builtin.fail:
+    msg: >-
+      Could not download k3s-airgap-images-{{ k3s_airgap_arch }}.tar(.zst) from Nexus.
+      Run scripts/k8s/nexus-k3s-repos-setup.sh --test
+  when: not k3s_images_tar_stat.stat.exists and not k3s_images_zst_stat.stat.exists

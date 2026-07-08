@@ -1,5 +1,6 @@
 ---
 - name: Install SSH drop-in for cxado dual-port access
+  when: ssh_extra_ports | default([]) | length > 0
   ansible.builtin.template:
     src: sshd-cxado-wifi.conf.j2
     dest: "/etc/ssh/sshd_config.d/{{ ssh_dropin_name }}"
