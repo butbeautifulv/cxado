@@ -80,8 +80,7 @@ trivy-sca:
       [ -f sca.sarif ] || echo '{"runs":[{"results":[]}]}' > sca.sarif
     - |
       if command -v python3 >/dev/null 2>&1; then
-        python3 scripts/gate-check.py --control sca --report sca.sarif \
-          --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
+        python3 scripts/gate-check.py --control sca --report sca.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
       else
         echo "WARN: skip gate-check (no python3 in trivy image)"
       fi
