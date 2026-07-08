@@ -1,54 +1,77 @@
-# Submodules: GitHub vs GitLab mirrors
+# Submodules: GitHub (dev) vs GitLab (corp)
 
-## Problem
+## Two remotes, one laptop
 
-P30 (GitLab runner + k3s) **cannot reach GitHub**. `git submodule update` with URLs from `.gitmodules` fails in CI.
+| Remote | URL | `.gitmodules` | Who uses it |
+|--------|-----|---------------|-------------|
+| `origin` | `github.com/butbeautifulv/cxado` | GitHub submodule URLs | Public dev, laptop |
+| `gitlab` | `gitlab.svo.aero/av.popov/cxado` | **GitLab-only** URLs | P30 runner, corp CI, airgap |
 
-Laptops on the open internet can keep using GitHub URLs in `.gitmodules` unchanged.
+GitHub and GitLab **diverge by design** on `.gitmodules` only. Same code + submodule SHAs; corp tree never references GitHub.
 
-## Recommended strategy (phased)
-
-| Phase | Repos | Why |
-|-------|-------|-----|
-| **Now** | `projects/egregore` | Egregore image + Helm chart for deploy pipeline |
-| **Next** | `projects/veil` | `--with-veil` offline deploy |
-| **As needed** | `projects/veneno`, MCP repos | Separate CI jobs |
-| **Low priority** | `shared/skills`, `shared/references`, `shared/agent-rules`, `shared/gui` | Agent/docs; not required for runtime images |
-| **Optional** | `projects/fabrica`, `projects/tabula`, … | No k3s deploy dependency today |
-
-**Direction:** mirror **inward** to `gitlab.svo.aero/av.popov/<repo>` (GitHub remains upstream for public/dev). Do **not** mirror outward to GitHub from corp.
-
-## How CI resolves submodules
-
-`.gitlab-ci.yml` sets `GIT_SUBMODULE_STRATEGY: none` and runs:
+## Daily workflow (laptop)
 
 ```bash
-./scripts/gitlab/ci-submodule-init.sh
+# 1. Dev as usual — commit on main, submodules on GitHub URLs
+git push origin main
+./scripts/gitlab/push-github.sh          # same as above
+
+# 2. When corp needs an update — one command
+./scripts/gitlab/sync-monorepo-to-gitlab.sh
 ```
 
-That rewrites submodule URLs at job time:
+`sync-monorepo-to-gitlab.sh`:
 
-```
-https://github.com/butbeautifulv/egregore.git
-  → git@gitlab.svo.aero:av.popov/egregore.git
-```
+1. Pushes each submodule to `gitlab.svo.aero/av.popov/<repo>`
+2. Adds one overlay commit with `.gitmodules.gitlab` → pushes to `gitlab/main`
+3. Restores local `.gitmodules` (GitHub) — **nothing breaks for GitHub**
 
-Only paths in `CI_SUBMODULES` are fetched (default: `projects/egregore`).
-
-## Push / refresh a mirror
+Options:
 
 ```bash
-# one submodule (creates GitLab project if missing)
+./scripts/gitlab/sync-monorepo-to-gitlab.sh --only projects/egregore,projects/veil
+./scripts/gitlab/sync-monorepo-to-gitlab.sh --skip-submodules   # monorepo pointer only
+./scripts/gitlab/sync-monorepo-to-gitlab.sh --dry-run
+```
+
+## Files
+
+| File | Purpose |
+|------|---------|
+| `.gitmodules` | GitHub URLs — **committed on `origin/main`** |
+| `.gitmodules.gitlab` | GitLab URLs — template for corp overlay commit |
+| `scripts/gitlab/sync-monorepo-to-gitlab.sh` | Push corp copy |
+| `scripts/gitlab/push-github.sh` | Push to GitHub only |
+| `scripts/gitlab/push-submodule-mirror.sh` | Push one submodule or `--all` |
+
+## CI on P30
+
+After sync, GitLab `main` has GitLab URLs in `.gitmodules`. Runner does **not** reach GitHub.
+
+`ci-submodule-init.sh` still blocks `github.com/butbeautifulv` as belt-and-suspenders.
+
+Default fetch: `CI_SUBMODULES=projects/egregore` (extend when veil/MCPs join pipeline).
+
+## Mirror one submodule manually
+
+```bash
+git submodule update --init projects/egregore
 ./scripts/gitlab/push-submodule-mirror.sh projects/egregore
-./scripts/gitlab/push-submodule-mirror.sh projects/veil
+./scripts/gitlab/push-submodule-mirror.sh --all   # all initialized submodules
 ```
 
-After pushing, re-run pipeline on `main`.
+Creates GitLab project via API if `GITLAB_PAT_RUNNER` is in `deploy/.secrets/cxado-k3s.env`.
+
+## Phase plan (which mirrors matter)
+
+| Phase | Repos |
+|-------|-------|
+| **Now** | `projects/egregore` |
+| **Next** | `projects/veil` |
+| **As needed** | `projects/veneno`, MCP repos |
+| **Low priority** | `shared/skills`, `shared/references`, `shared/agent-rules`, `shared/gui` |
+| **Optional** | `projects/fabrica`, `projects/tabula`, … |
 
 ## GitLab pull mirror (alternative)
 
-For hands-off sync, an admin can configure **Pull mirror** on each GitLab project (Settings → Repository → Mirroring). Requires GitLab server reachability to GitHub — often blocked in corp; manual `push-submodule-mirror.sh` from laptop is simpler.
-
-## Changing `.gitmodules` permanently?
-
-Only if the team stops using GitHub entirely. Until then, keep GitHub URLs in `.gitmodules` and let CI rewrite for corp runners.
+Admin can configure **Pull mirror** on each GitLab project — only if GitLab server can reach GitHub (often blocked in corp). Manual `sync-monorepo-to-gitlab.sh` from laptop is the default.

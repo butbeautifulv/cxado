@@ -47,7 +47,7 @@ PAT with `create_runner` scope: `./scripts/gitlab/create-gitlab-pat.sh` → save
 | Stage | Job | Notes |
 |-------|-----|-------|
 | validate | `validate:helm` | `helm template` egregore chart |
-| build | `build:egregore` | `docker build` + `k3s ctr images import` on P30 |
+| build | `build:egregore` | **Kaniko Job** in `cxado-build` ns → Nexus `cxado-docker/egregore` → import all nodes |
 | deploy | `deploy:egregore` | **manual** on `main` — `helm upgrade` |
 | smoke | `smoke:egregore` | observability smoke test |
 
@@ -59,29 +59,42 @@ PAT with `create_runner` scope: `./scripts/gitlab/create-gitlab-pat.sh` → save
 | `REDIS_PASSWORD` | yes |
 | `BUS_SIGNING_KEY` | yes (or generated per deploy) |
 | `CXADO_OFFLINE_SUDO_PW` | yes (for `k3s ctr import`) |
+| `NEXUS_USER` | yes (Kaniko build + registry push) |
+| `NEXUS_PASSWORD` | yes (Kaniko build + registry push) |
 
-**Submodules:** GitHub blocked on P30 — mirrors on `gitlab.svo.aero/av.popov/*`. See [submodules.md](submodules.md). Egregore mirror: **done**.
+### Kaniko (in-cluster build)
 
-```bash
-./scripts/gitlab/push-submodule-mirror.sh projects/egregore   # refresh mirror
-```
-
-## CI/CD plan
-
-1. ~~**GitLab Runner** on P30~~ — **done** (`p30-k3s-shell`)
-2. ~~**Build** pipeline~~ — **MVP** in `.gitlab-ci.yml`
-3. **Deploy** — manual job on `main`; extend for veil / MCPs later
-4. **Secrets** — GitLab CI variables (see table above)
-
-## Push monorepo (when ready)
+Dedicated Kaniko on P30 k3s — namespace `cxado-build`, push to Nexus hosted repo `cxado-docker`.
 
 ```bash
-git remote add gitlab git@gitlab.svo.aero:av.popov/cxado.git
-# or HTTPS with GITLAB_TOKEN
-git push gitlab main
+# one-time: Nexus repo + Kaniko executor image
+./scripts/k8s/nexus-cxado-docker-setup.sh --ssh bbv-p30-wifi --seed-kaniko /tmp/kaniko-executor-v1.23.2.tar
+
+# bootstrap secrets + hostPath /var/lib/cxado/kaniko-build
+./scripts/k8s/kaniko-bootstrap.sh --ssh bbv-p30-wifi
 ```
 
-Submodules: inward mirrors on `gitlab.svo.aero/av.popov/*` — see [submodules.md](submodules.md). `.gitmodules` keeps GitHub URLs for laptop dev.
+Corp Dockerfile: `projects/egregore/Dockerfile.corp` (Nexus base + PyPI, no BuildKit mounts).
+
+**Submodules:** GitLab-only on `gitlab/main` — see [submodules.md](submodules.md). Sync from laptop:
+
+```bash
+./scripts/gitlab/sync-monorepo-to-gitlab.sh              # submodules + monorepo → GitLab
+./scripts/gitlab/push-github.sh                          # GitHub only (unchanged)
+./scripts/gitlab/push-submodule-mirror.sh projects/egregore
+```
+
+## Push monorepo
+
+```bash
+# Public dev (GitHub) — as before
+./scripts/gitlab/push-github.sh
+
+# Corp (GitLab, isolated .gitmodules)
+./scripts/gitlab/sync-monorepo-to-gitlab.sh
+```
+
+Do **not** `git push gitlab main` directly — use `sync-monorepo-to-gitlab.sh` so `.gitmodules` on GitLab stays GitHub-free.
 
 ## Related
 

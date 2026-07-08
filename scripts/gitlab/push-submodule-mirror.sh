@@ -5,48 +5,104 @@
 #
 # Usage:
 #   ./scripts/gitlab/push-submodule-mirror.sh projects/egregore
-#   ./scripts/gitlab/push-submodule-mirror.sh projects/veil
+#   ./scripts/gitlab/push-submodule-mirror.sh --all
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 SECRETS="${ROOT}/deploy/.secrets/cxado-k3s.env"
 [[ -f "${SECRETS}" ]] && source "${SECRETS}"
 
-SUB_PATH="${1:?usage: $0 <submodule-path> e.g. projects/egregore}"
 GITLAB_URL="${GITLAB_URL:-https://gitlab.svo.aero}"
 GITLAB_PREFIX="${CI_SUBMODULE_GITLAB_PREFIX:-git@gitlab.svo.aero:av.popov}"
 PAT="${GITLAB_PAT_RUNNER:-}"
-
-if [[ ! -d "${ROOT}/${SUB_PATH}/.git" ]]; then
-  echo "not a submodule checkout: ${ROOT}/${SUB_PATH}" >&2
-  exit 2
-fi
-
-url="$(git config -f "${ROOT}/.gitmodules" --get "submodule.${SUB_PATH}.url")"
-repo="$(basename "${url}" .git)"
-gitlab_ssh="${GITLAB_PREFIX}/${repo}.git"
+PUSH_ALL=false
+SUB_PATH="${1:-}"
 
 log() { printf '[push-submodule-mirror] %s\n' "$*"; }
 
-if [[ -n "${PAT}" ]]; then
-  ns_id="$(ssh "${CXADO_OFFLINE_SSH_HOST:-bbv-p30-wifi}" \
-    "curl -sk --header 'PRIVATE-TOKEN: ${PAT}' '${GITLAB_URL}/api/v4/namespaces?search=av.popov'" \
-    | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['id'])")"
-  code="$(ssh "${CXADO_OFFLINE_SSH_HOST:-bbv-p30-wifi}" \
-    "curl -sk -o /tmp/gl-create.json -w '%{http_code}' --request POST '${GITLAB_URL}/api/v4/projects' \
-      --header 'PRIVATE-TOKEN: ${PAT}' --header 'Content-Type: application/json' \
-      -d '{\"name\":\"${repo}\",\"path\":\"${repo}\",\"namespace_id\":${ns_id},\"visibility\":\"private\",\"description\":\"Mirror of butbeautifulv/${repo} for cxado corp CI\"}'")"
+usage() {
+  echo "usage: $0 <submodule-path> | --all" >&2
+  exit 2
+}
+
+gitlab_api() {
+  local method="$1" path="$2" body="${3:-}"
+  local url="${GITLAB_URL%/}${path}"
+  if [[ -n "${body}" ]]; then
+    curl -sk --request "${method}" "${url}" \
+      --header "PRIVATE-TOKEN: ${PAT}" \
+      --header "Content-Type: application/json" \
+      --data "${body}" \
+      -w "\nHTTP:%{http_code}\n"
+  else
+    curl -sk --request "${method}" "${url}" \
+      --header "PRIVATE-TOKEN: ${PAT}" \
+      -w "\nHTTP:%{http_code}\n"
+  fi
+}
+
+ensure_gitlab_project() {
+  local repo="$1"
+  [[ -n "${PAT}" ]] || return 0
+
+  local code
+  code="$(gitlab_api GET "/api/v4/projects/av.popov%2F${repo}" | tail -1 | sed 's/HTTP://')"
+  if [[ "${code}" == "200" ]]; then
+    return 0
+  fi
+
+  local ns_id
+  ns_id="$(gitlab_api GET "/api/v4/namespaces?search=av.popov" \
+    | sed '$d' | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0]['id'])")"
+
+  code="$(gitlab_api POST "/api/v4/projects" \
+    "{\"name\":\"${repo}\",\"path\":\"${repo}\",\"namespace_id\":${ns_id},\"visibility\":\"private\",\"description\":\"Corp mirror of ${repo} for cxado (no outbound GitHub)\"}" \
+    | tail -1 | sed 's/HTTP://')"
   if [[ "${code}" == "201" ]]; then
     log "created ${GITLAB_URL}/av.popov/${repo}"
   else
-    log "project create HTTP ${code} (may already exist)"
+    log "project create HTTP ${code} for ${repo} (may already exist)"
   fi
+}
+
+push_one() {
+  local path="$1"
+  if [[ ! -d "${ROOT}/${path}/.git" ]]; then
+    echo "not a submodule checkout: ${ROOT}/${path}" >&2
+    exit 2
+  fi
+
+  local url repo gitlab_ssh branch
+  url="$(git config -f "${ROOT}/.gitmodules" --get "submodule.${path}.url")"
+  repo="$(basename "${url}" .git)"
+  gitlab_ssh="${GITLAB_PREFIX}/${repo}.git"
+
+  ensure_gitlab_project "${repo}"
+
+  cd "${ROOT}/${path}"
+  branch="$(git branch --show-current)"
+  git remote remove gitlab 2>/dev/null || true
+  git remote add gitlab "${gitlab_ssh}"
+  log "push ${path} (${branch}) -> ${gitlab_ssh}"
+  git push -u gitlab "${branch}" --force-with-lease
+  log "done ${repo}"
+}
+
+if [[ "${SUB_PATH}" == "--all" ]]; then
+  PUSH_ALL=true
+elif [[ -z "${SUB_PATH}" ]]; then
+  usage
 fi
 
-cd "${ROOT}/${SUB_PATH}"
-branch="$(git branch --show-current)"
-git remote remove gitlab 2>/dev/null || true
-git remote add gitlab "${gitlab_ssh}"
-log "push ${branch} -> ${gitlab_ssh}"
-git push -u gitlab "${branch}"
-log "done ${repo}"
+if [[ "${PUSH_ALL}" == true ]]; then
+  while IFS= read -r path; do
+    [[ -n "${path}" ]] || continue
+    if [[ -d "${ROOT}/${path}/.git" ]]; then
+      push_one "${path}"
+    else
+      log "skip ${path} (not initialized)"
+    fi
+  done < <(git config -f "${ROOT}/.gitmodules" --get-regexp '^submodule\..*\.path$' | awk '{print $2}')
+else
+  push_one "${SUB_PATH}"
+fi

@@ -57,6 +57,9 @@ install_binary() {
   remote_sudo "systemctl enable gitlab-runner"
   remote_sudo "systemctl restart gitlab-runner"
   log "gitlab-runner service active on ${SSH_HOST}"
+  remote "grep -q 'return 0' ~/.bashrc 2>/dev/null || sed -i 's/^\\s*) return;;$/      *) return 0;;/' ~/.bashrc"
+  remote "mkdir -p /home/bbv/builds && chmod 755 /home/bbv/builds"
+  log "patched ~/.bashrc return 0 for shell executor (non-interactive CI)"
 }
 
 create_runner_token() {
