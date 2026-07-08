@@ -11,7 +11,7 @@
 #
 # What it does:
 #   1. Push submodule commits to gitlab.svo.aero/av.popov/<repo> mirrors
-#   2. Build a one-commit overlay on HEAD with .gitmodules.gitlab → push to gitlab main
+#   2. Merge into gitlab/main + apply .gitmodules.gitlab (fast-forward, protected-branch safe)
 #   3. Restore local .gitmodules (GitHub URLs) — working tree identical to before
 set -euo pipefail
 
@@ -100,30 +100,51 @@ restore_gitmodules() {
 trap restore_gitmodules EXIT
 
 push_monorepo_gitlab_view() {
-  local parent tree commit
+  local parent saved_branch remote_tip work_branch
   parent="$(git rev-parse HEAD)"
+  saved_branch="$(git branch --show-current)"
+  work_branch="cxado-gitlab-sync-$$"
+
+  if [[ "${DRY_RUN}" == true ]]; then
+    log "[dry-run] would merge ${parent:0:12} into ${GITLAB_REMOTE}/${GITLAB_BRANCH} + .gitmodules.gitlab"
+    return 0
+  fi
+
+  git fetch "${GITLAB_REMOTE}" "${GITLAB_BRANCH}" 2>/dev/null || true
+  remote_tip=""
+  if git rev-parse -q --verify "refs/remotes/${GITLAB_REMOTE}/${GITLAB_BRANCH}" >/dev/null 2>&1; then
+    remote_tip="$(git rev-parse "refs/remotes/${GITLAB_REMOTE}/${GITLAB_BRANCH}")"
+  fi
+
+  if [[ -n "${remote_tip}" && "${remote_tip}" != "${parent}" ]]; then
+    log "merge github ${parent:0:12} into gitlab tip ${remote_tip:0:12}"
+    git checkout -B "${work_branch}" "${remote_tip}"
+    git merge --no-edit -m "chore(gitlab): sync monorepo ${parent:0:12}" "${parent}"
+  elif [[ -n "${remote_tip}" && "${remote_tip}" == "${parent}" ]]; then
+    log "gitlab tip matches github HEAD — update .gitmodules only"
+    git checkout -B "${work_branch}" "${remote_tip}"
+  else
+    log "first push to ${GITLAB_REMOTE}/${GITLAB_BRANCH}"
+    git checkout -B "${work_branch}" "${parent}"
+  fi
 
   cp "${GITMODULES_GITLAB}" .gitmodules
   git add .gitmodules
-  tree="$(git write-tree)"
-  git checkout -- .gitmodules
-
-  commit="$(
-    GIT_AUTHOR_NAME="${GIT_AUTHOR_NAME:-$(git config user.name || echo cxado-sync)}"
-    GIT_AUTHOR_EMAIL="${GIT_AUTHOR_EMAIL:-$(git config user.email || echo cxado-sync@local)}"
-    GIT_COMMITTER_NAME="${GIT_COMMITTER_NAME:-$GIT_AUTHOR_NAME}"
-    GIT_COMMITTER_EMAIL="${GIT_COMMITTER_EMAIL:-$GIT_AUTHOR_EMAIL}"
-    export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL
-    git commit-tree -p "${parent}" -m "chore(gitlab): corp-isolated submodule URLs" "${tree}"
-  )"
-
-  log "gitlab overlay commit ${commit:0:12} (parent ${parent:0:12})"
-  if [[ "${DRY_RUN}" == true ]]; then
-    log "[dry-run] would push ${GITLAB_REMOTE} ${commit}:${GITLAB_BRANCH}"
-    return 0
+  if git diff --cached --quiet; then
+    log "no .gitmodules change on gitlab view"
+  else
+    git commit -m "chore(gitlab): corp-isolated submodule URLs"
   fi
-  git push "${GITLAB_REMOTE}" "${commit}:refs/heads/${GITLAB_BRANCH}"
-  log "pushed ${GITLAB_REMOTE}/${GITLAB_BRANCH}"
+
+  git push "${GITLAB_REMOTE}" "HEAD:refs/heads/${GITLAB_BRANCH}"
+  log "pushed ${GITLAB_REMOTE}/${GITLAB_BRANCH} ($(git rev-parse --short HEAD))"
+
+  if [[ -n "${saved_branch}" ]]; then
+    git checkout "${saved_branch}"
+  else
+    git checkout "${parent}"
+  fi
+  git branch -D "${work_branch}" 2>/dev/null || true
 }
 
 main() {
