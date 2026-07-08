@@ -29,15 +29,15 @@ gitlab_api() {
   local method="$1" path="$2" body="${3:-}"
   local url="${GITLAB_URL%/}${path}"
   if [[ -n "${body}" ]]; then
-    curl -sk --request "${method}" "${url}" \
+    curl -sk --connect-timeout 5 --request "${method}" "${url}" \
       --header "PRIVATE-TOKEN: ${PAT}" \
       --header "Content-Type: application/json" \
       --data "${body}" \
-      -w "\nHTTP:%{http_code}\n"
+      -w "\nHTTP:%{http_code}\n" 2>/dev/null || printf '\nHTTP:000\n'
   else
-    curl -sk --request "${method}" "${url}" \
+    curl -sk --connect-timeout 5 --request "${method}" "${url}" \
       --header "PRIVATE-TOKEN: ${PAT}" \
-      -w "\nHTTP:%{http_code}\n"
+      -w "\nHTTP:%{http_code}\n" 2>/dev/null || printf '\nHTTP:000\n'
   fi
 }
 
@@ -45,15 +45,23 @@ ensure_gitlab_project() {
   local repo="$1"
   [[ -n "${PAT}" ]] || return 0
 
-  local code
-  code="$(gitlab_api GET "/api/v4/projects/av.popov%2F${repo}" | tail -1 | sed 's/HTTP://')"
+  local out code
+  out="$(gitlab_api GET "/api/v4/projects/av.popov%2F${repo}" 2>/dev/null || true)"
+  code="$(echo "${out}" | tail -1 | sed 's/HTTP://')"
   if [[ "${code}" == "200" ]]; then
     return 0
   fi
+  if [[ "${code}" == "000" || -z "${code}" ]]; then
+    log "GitLab API unreachable from this host — skip project create for ${repo}"
+    return 0
+  fi
 
-  local ns_id
-  ns_id="$(gitlab_api GET "/api/v4/namespaces?search=av.popov" \
-    | sed '$d' | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0]['id'])")"
+  local ns_out ns_id
+  ns_out="$(gitlab_api GET "/api/v4/namespaces?search=av.popov" 2>/dev/null || true)"
+  if ! ns_id="$(echo "${ns_out}" | sed '$d' | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0]['id'])" 2>/dev/null)"; then
+    log "WARN: cannot resolve namespace — skip project create for ${repo}"
+    return 0
+  fi
 
   code="$(gitlab_api POST "/api/v4/projects" \
     "{\"name\":\"${repo}\",\"path\":\"${repo}\",\"namespace_id\":${ns_id},\"visibility\":\"private\",\"description\":\"Corp mirror of ${repo} for cxado (no outbound GitHub)\"}" \
