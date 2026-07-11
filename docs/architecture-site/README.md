@@ -52,7 +52,7 @@ make cxado-local-e2e
 ```
 
 - UI host-dev: `EGREGORE_API_UPSTREAM=http://127.0.0.1:8080` в `projects/egregore/ui/.env.local` (Next.js Operator UI :3000)
-- k3s offline UI: static `ui-minimal` на :30300 (не Next.js)
+- k3s offline UI: Next.js `egregore-ui` на :30300 (same-origin API) и :30301
 - Grafana compose datasources → `prometheus:9090` (не k8s DNS)
 - Runbook: [deploy/README.md](../../deploy/README.md), [OBSERVABILITY.md](../../projects/egregore/docs/OBSERVABILITY.md)
 
@@ -66,7 +66,7 @@ make cxado-local-e2e
 Смежные k3s deploy (контекст топологии, не обязательны для arch-docs):
 
 ```bash
-./scripts/k8s/k3s-deploy-ui-minimal-offline.sh   # egregore-ui-minimal :30300
+./scripts/k8s/k3s-offline-bundle-egregore-ui.sh   # egregore-ui :30300/:30301
 ./scripts/k8s/k3s-deploy-siem-mcp.sh             # siem-mcp ClusterIP :8094
 ```
 

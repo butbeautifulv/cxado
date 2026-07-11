@@ -93,7 +93,7 @@
           <tbody>
             <tr><td>Veil</td><td>TI graph, ingest, veil-api, veil-mcp</td><td>Go, Neo4j, NATS</td></tr>
             <tr><td>Veneno</td><td>Pentest execution, veneno-mcp</td><td>Go</td></tr>
-            <tr><td><strong>Egregore</strong></td><td>SOC multi-agent, API; UI: Next.js host :3000 / ui-minimal k3s :30300</td><td>Python, FastAPI, Next.js</td></tr>
+            <tr><td><strong>Egregore</strong></td><td>SOC multi-agent, API; UI: Next.js host :3000 / k3s :30300–30301</td><td>Python, FastAPI, Next.js</td></tr>
             <tr><td>maxpatrol-siem-mcp</td><td>MaxPatrol SIEM read-only MCP (incidents, events, assets)</td><td>Python, FastAPI</td></tr>
             <tr><td>Fabrica</td><td>DevSecOps reference, CI gates</td><td>YAML, scripts</td></tr>
             <tr><td>ASOC API</td><td>Scan aggregation → NATS</td><td>Go</td></tr>
@@ -306,8 +306,8 @@
         <h3>WorkerJob state</h3>
         <p class="muted">Переходы статусов enforced in domain (<code>WorkerJob.transition_to</code>).</p>
         <div class="diagram" data-diagram="D10"><p class="diagram-loading">Загрузка диаграммы…</p></div>
-        <p>UI: Operator UI (Next.js host) <code>/approvals</code>, SSE status stream.
-          k3s offline — <code>ui-minimal</code> console (engagements/jobs), без полного Next.js UI.</p>
+        <p>UI: Operator UI (Next.js host) <code>/work-orders</code>, SSE status stream.
+          k3s offline — Next.js <code>egregore-ui</code> на :30300 (same-origin API) и :30301.</p>
       </section>
 
       <section id="evals">
@@ -392,12 +392,13 @@
       <section id="k3s-topology">
         <h2>14. k3s offline deploy topology</h2>
         <p>TLS gateway <code>cxado-tls-gateway</code> в namespace <code>cxado-edge</code> проксирует сервисы по NodePort-подобным портам.
-          Порт <strong>30300</strong> — same-origin reverse proxy: static <code>egregore-ui-minimal</code> + API paths (<code>/v1/</code>, <code>/catalog/</code>).</p>
+          Порт <strong>30300</strong> — same-origin reverse proxy: Next.js <code>egregore-ui</code> + API paths (<code>/v1/</code>, <code>/catalog/</code>).</p>
         <div class="diagram" data-diagram="D12"><p class="diagram-loading">Загрузка диаграммы…</p></div>
         <table>
           <thead><tr><th>Port (TLS)</th><th>Service</th></tr></thead>
           <tbody>
-            <tr><td>30300</td><td>egregore-ui-minimal + egregore-api (same-origin)</td></tr>
+            <tr><td>30300</td><td>egregore-ui + egregore-api (same-origin)</td></tr>
+            <tr><td>30301</td><td>egregore-ui (direct)</td></tr>
             <tr><td>30880</td><td>egregore-api (direct)</td></tr>
             <tr><td><strong>30080</strong></td><td><strong>architecture docs (this site)</strong></td></tr>
             <tr><td>30002</td><td>Grafana</td></tr>
@@ -409,7 +410,7 @@
           </tbody>
         </table>
         <p class="muted">Deploy: <code>scripts/k8s/k3s-deploy-arch-docs-offline.sh</code> ·
-          <code>scripts/k8s/k3s-deploy-ui-minimal-offline.sh</code> ·
+          <code>scripts/k8s/k3s-offline-bundle-egregore-ui.sh</code> ·
           <code>scripts/k8s/k3s-deploy-siem-mcp.sh</code></p>
       </section>
 

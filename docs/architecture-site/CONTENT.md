@@ -33,7 +33,7 @@ SSOT for section IDs, diagram registry, and markdown cross-links.
 | 11 | `#observability` | Observability | `OBSERVABILITY.md`, Grafana `egregore-eval` |
 | 12 | `#local-dev` | Local-first dev | `deploy/README.md`, `make cxado-up-minimal` |
 | 13 | `#integrations` | Интеграции | `docs/integration/`, `egregore-siem-mcp.md`, `egregore-veil-mcp.md` |
-| 14 | `#k3s-topology` | k3s offline topology | `deploy/k8s/*-offline/`, `ui-minimal-offline/`, `siem-mcp` helm |
+| 14 | `#k3s-topology` | k3s offline topology | `deploy/k8s/*-offline/`, `siem-mcp` helm |
 | 15 | `#references` | Markdown-канон | links to repo docs |
 
 ## Diagram registry

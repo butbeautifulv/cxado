@@ -21,7 +21,7 @@
 | Observability ports | metrics/tracing inline implied | §arch-gates, §ddd-layers — MetricsPort, CorrelationIdPort adapters |
 | Engagement lifecycle | store field mutation implied | §engagement, D14 — domain lifecycle methods |
 | Footer ARCHITECTURE_DEBT | PLATFORM_TRUTH_MAP.md (missing) | §references → ARCHITECTURE_DEBT.md |
-| k3s UI :30300 | Site labeled egregore-ui / Next.js | ui-minimal static console + same-origin API via gateway |
+| k3s UI :30300 | Site labeled egregore-ui / Next.js | Next.js egregore-ui + same-origin API via gateway |
 | SIEM MCP integration | Legacy `query_siem_readonly` only | maxpatrol-siem-mcp + curated tools + `siem-investigation` skill |
 | services.js internal | No siem-mcp row | siem-mcp cxado-app:8094 ClusterIP |
 

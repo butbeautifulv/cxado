@@ -57,4 +57,4 @@ Veil **ingest**, **pipeline**, and **engage-events** workers are **optional** fo
 
 ## Operator UI note
 
-egregore **Next.js UI** in `cxado-app` is separate (opt-in bundle). Operator console default: **ui-minimal** on `cxado-edge`.
+egregore **Next.js UI** (`egregore-ui`) runs in `cxado-app` by default. Bundle: `k3s-offline-bundle-egregore-ui.sh`.
