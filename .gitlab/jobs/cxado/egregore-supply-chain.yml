@@ -4,6 +4,7 @@ sbom-generate:
   extends:
     - .egregore_blocker
     - .egregore_workflow
+    - .registry_auth_env
   stage: supply-chain
   image:
     name: ${OSS_SYFT_IMAGE}
@@ -32,6 +33,7 @@ sbom-generate:
 
 trivy-sca:
   extends:
+    - .trivy_vulndb
     - .egregore_blocker
     - .egregore_workflow
     - .registry_auth_env
@@ -39,6 +41,9 @@ trivy-sca:
   image:
     name: ${OSS_TRIVY_IMAGE}
     entrypoint: [""]
+  before_script:
+    - !reference [.trivy_vulndb, before_script]
+    - !reference [.registry_auth_env, before_script]
   needs:
     - job: build:egregore
       artifacts: true
@@ -51,9 +56,9 @@ trivy-sca:
     - |
       TAG="${IMAGE_TAG:-${CXADO_IMAGE_TAG}}"
       trivy image --scanners vuln --severity CRITICAL,HIGH --format sarif \
-        --output sca.sarif "${CXADO_IMAGE_REPO}:${TAG}" || true
-    - |
-      [ -f sca.sarif ] || echo '{"runs":[{"results":[]}]}' > sca.sarif
+        --output sca.sarif --cache-dir "${TRIVY_CACHE_DIR}" \
+        "${CXADO_IMAGE_REPO}:${TAG}"
+    - test -s sca.sarif
     - |
       if command -v python3 >/dev/null 2>&1; then
         python3 scripts/gate-check.py --control sca --report sca.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"

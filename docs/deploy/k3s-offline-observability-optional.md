@@ -53,6 +53,25 @@ For k3s, prefer implementing Langfuse as a separate “langfuse-offline” direc
 - a `create-secrets.sh` script (keeps secrets out of git)
 - a dedicated image-bundle script similar to `k3s-offline-bundle-min.sh`
 
+## Prometheus RBAC + veil worker scrape (k3s offline)
+
+Additional manifests (apply after core obs stack):
+
+| File | Purpose |
+|------|---------|
+| `deploy/k8s/obs-offline/09-prometheus-rbac.yaml` | Prometheus ServiceAccount + RBAC for pod SD |
+| `deploy/k8s/obs-offline/prometheus-k3s-veil-workers-scrape.yaml` | Veil worker scrape overlay |
+| `deploy/observability/prometheus/rules/gpu-alerts.yml` | GPU host alert rules |
+
+Veil offline profiles: [deploy/k8s/veil-offline/README.md](../../deploy/k8s/veil-offline/README.md) — `graph-only` vs `workers-obs` controls whether worker scrape targets are active.
+
+Refresh configmaps after profile change:
+
+```bash
+CXADO_VEIL_PROFILE=workers-obs ./scripts/k8s/obs-create-configmaps.sh
+kubectl -n cxado-obs rollout restart deploy/prometheus
+```
+
 ## Full observability deploy (k3s offline)
 
 `scripts/k8s/k3s-deploy-cxado-offline.sh` applies Prometheus, Grafana, Tempo, Loki, Promtail and refreshes all observability ConfigMaps. Grafana dashboard **Egregore / Observability** (`egregore-observability.json`) combines metrics, logs, and traces.

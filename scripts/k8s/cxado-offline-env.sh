@@ -25,3 +25,7 @@ export CXADO_NODE_HOSTNAME="${CXADO_NODE_HOSTNAME:-bbv-p30-k44}"
 # Corp NAT IP — include in TLS SAN when LAN IP is WiFi (both URLs must work in browser).
 export CXADO_TLS_SAN_IP_EXTRA="${CXADO_TLS_SAN_IP_EXTRA:-10.8.185.15}"
 export CXADO_OBS_NS="${CXADO_OBS_NS:-cxado-obs}"
+# k3s kubectl reads /etc/rancher/k3s/config.yaml (root:root 600) and logs permission denied
+# three times per invocation when run as bbv. Cluster access uses ~/.kube/config — safe to skip.
+export K3S_CONFIG_FILE="${K3S_CONFIG_FILE:-/dev/null}"
+export CXADO_K3S_KUBECTL="${CXADO_K3S_KUBECTL:-K3S_CONFIG_FILE=${K3S_CONFIG_FILE} KUBECONFIG=/home/bbv/.kube/config k3s kubectl}"

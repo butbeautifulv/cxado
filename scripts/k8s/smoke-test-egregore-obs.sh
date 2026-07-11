@@ -9,7 +9,12 @@
 #     ./scripts/k8s/smoke-test-egregore-obs.sh
 set -euo pipefail
 
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=scripts/k8s/cxado-offline-env.sh
+source "${ROOT}/scripts/k8s/cxado-offline-env.sh"
+
 SSH_HOST="${CXADO_OFFLINE_SSH_HOST:-}"
+PROMETHEUS_URL="${PROMETHEUS_URL:-https://${CXADO_NODE_IP}:30091}"
 SSH_PORT="${CXADO_OFFLINE_SSH_PORT}"
 NS_APP="${CXADO_APP_NS:-cxado-app}"
 NS_OBS="${CXADO_OBS_NS:-cxado-obs}"
@@ -22,7 +27,9 @@ bad() { printf 'FAIL %s\n' "$1"; fail=1; }
 
 kubectl_cmd() {
   if [[ -n "${SSH_HOST}" ]]; then
-    ssh -p "${SSH_PORT}" "${SSH_HOST}" "KUBECONFIG=/home/bbv/.kube/config k3s kubectl $*"
+    # shellcheck disable=SC2029
+    ssh -p "${SSH_PORT}" "${SSH_HOST}" \
+      "K3S_CONFIG_FILE=/dev/null KUBECONFIG=/home/bbv/.kube/config k3s kubectl $(printf '%q ' "$@")"
   else
     kubectl "$@"
   fi
@@ -34,7 +41,9 @@ curl_pod() {
   local port="$3"
   local path="$4"
   local name="curl-smoke-$(date +%s)-$RANDOM"
-  kubectl_cmd run "${name}" --rm -i --restart=Never -n "${ns}" --image="${SMOKE_IMAGE}" -- \
+  local overrides="{\"spec\":{\"nodeSelector\":{\"kubernetes.io/hostname\":\"${CXADO_NODE_HOSTNAME}\"}}}"
+  kubectl_cmd run "${name}" --rm -i --restart=Never -n "${ns}" \
+    --overrides="${overrides}" --image="${SMOKE_IMAGE}" -- \
     curl -fsS -m 15 "http://${svc}:${port}${path}"
 }
 
@@ -52,10 +61,46 @@ else
   bad "egregore-worker rollout"
 fi
 
-if curl_pod "${NS_APP}" egregore-api 8080 /health >/dev/null 2>&1; then
-  pass "egregore-api /health"
+if kubectl_cmd -n "${NS_APP}" get pods -l app=egregore-api -o name >/dev/null 2>&1; then
+  API_POD="$(kubectl_cmd -n "${NS_APP}" get pods -l app=egregore-api --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
+  if [[ -n "${API_POD}" ]] && kubectl_cmd -n "${NS_APP}" exec "${API_POD}" -- python3 -c \
+    "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=5).read().decode())" \
+    2>/dev/null | grep -q ok; then
+    pass "egregore-api /health"
+  else
+    bad "egregore-api /health"
+  fi
 else
-  bad "egregore-api /health"
+  bad "egregore-api pod not found"
+fi
+
+WORKER_POD="$(kubectl_cmd -n "${NS_APP}" get pod -l app=egregore-worker --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
+if [[ -n "${WORKER_POD}" ]]; then
+  scrape_ann="$(kubectl_cmd -n "${NS_APP}" get pod "${WORKER_POD}" -o jsonpath='{.metadata.annotations.prometheus\.io/scrape}' 2>/dev/null || true)"
+  if [[ "${scrape_ann}" == "true" ]]; then
+    pass "egregore-worker prometheus.io/scrape annotation"
+  else
+    bad "egregore-worker prometheus.io/scrape annotation (pod=${WORKER_POD} ann=${scrape_ann:-empty})"
+  fi
+  if kubectl_cmd -n "${NS_APP}" exec "${WORKER_POD}" -- /app/.venv/bin/python -c \
+    "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8081/health', timeout=5).read().decode())" \
+    2>/dev/null | grep -q ok; then
+    pass "egregore-worker /health on metrics port"
+  else
+    bad "egregore-worker /health on metrics port"
+  fi
+else
+  bad "egregore-worker pod not found"
+fi
+
+PROM_QUERY='up{job="egregore-worker"}'
+CURL_OPTS=(-fsS)
+[[ "${PROMETHEUS_URL}" == https://* ]] && CURL_OPTS+=(-k)
+prom_out="$(curl "${CURL_OPTS[@]}" -G "${PROMETHEUS_URL%/}/api/v1/query" --data-urlencode "query=${PROM_QUERY}" 2>/dev/null || true)"
+if echo "${prom_out}" | grep -q '"status":"success"' && echo "${prom_out}" | grep -q '"value":\[.*,"1"\]'; then
+  pass "prometheus up{job=egregore-worker}"
+else
+  bad "prometheus up{job=egregore-worker}"
 fi
 
 for job in prometheus tempo loki grafana; do
@@ -87,11 +132,13 @@ else
 fi
 
 echo ""
-if kubectl_cmd -n "${NS_OBS}" get deploy tempo >/dev/null 2>&1; then
+if kubectl_cmd -n cxado-langfuse get deploy langfuse-web >/dev/null 2>&1; then
   LANGFUSE_PUBLIC_KEY="${LANGFUSE_PUBLIC_KEY:-pk-lf-egregore-dev-local}"
   LANGFUSE_SECRET_KEY="${LANGFUSE_SECRET_KEY:-sk-lf-egregore-dev-local}"
   trace_check_name="curl-langfuse-$(date +%s)-$RANDOM"
-  trace_out="$(kubectl_cmd run "${trace_check_name}" --rm -i --restart=Never -n cxado-langfuse --image="${SMOKE_IMAGE}" -- \
+  overrides="{\"spec\":{\"nodeSelector\":{\"kubernetes.io/hostname\":\"${CXADO_NODE_HOSTNAME}\"}}}"
+  trace_out="$(timeout 45 kubectl_cmd run "${trace_check_name}" --rm -i --restart=Never -n cxado-langfuse \
+    --overrides="${overrides}" --image="${SMOKE_IMAGE}" -- \
     curl -fsS -m 20 -u "${LANGFUSE_PUBLIC_KEY}:${LANGFUSE_SECRET_KEY}" \
     "http://langfuse-web:3000/api/public/traces?limit=5" 2>/dev/null || true)"
   if echo "${trace_out}" | grep -q '"data"'; then

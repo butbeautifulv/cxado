@@ -1,0 +1,285 @@
+{
+  "collected_at": "2026-07-09T11:04:26.603090+00:00",
+  "prometheus_url": "https://REDACTED_NODE_IP:30091",
+  "cxado_node_ip": "REDACTED",
+  "query_count": 27,
+  "errors": 0,
+  "results": [
+    {
+      "id": "scrape_down",
+      "group": "scrape_health",
+      "status": "success",
+      "data": {
+        "resultType": "vector",
+        "result": [
+          {
+            "metric": {
+              "__name__": "up",
+              "component": "gpu-host",
+              "instance": "phy-gpu-host01",
+              "job": "proxmox-gpu-node",
+              "platform": "proxmox",
+              "service": "node-exporter"
+            },
+            "value": [
+              1783595528.795,
+              "0"
+            ]
+          },
+          {
+            "metric": {
+              "__name__": "up",
+              "component": "gpu-telemetry",
+              "instance": "phy-gpu-host01",
+              "job": "proxmox-gpu-dcgm",
+              "platform": "proxmox",
+              "service": "dcgm-exporter"
+            },
+            "value": [
+              1783595528.795,
+              "0"
+            ]
+          },
+          {
+            "metric": {
+              "__name__": "up",
+              "component": "engage-events",
+              "instance": "veil-veil-engage-events-worker-metrics.veil.svc.cluster.local:9090",
+              "job": "veil-engage-events-worker",
+              "platform": "veil",
+              "service": "veil-engage-events-worker"
+            },
+            "value": [
+              1783595528.795,
+              "0"
+            ]
+          },
+          {
+            "metric": {
+              "__name__": "up",
+              "component": "pipeline-worker",
+              "instance": "veil-veil-pipeline-worker-metrics.veil.svc.cluster.local:9090",
+              "job": "veil-pipeline-worker",
+              "platform": "veil",
+              "service": "veil-pipeline-worker"
+            },
+            "value": [
+              1783595528.795,
+              "0"
+            ]
+          },
+          {
+            "metric": {
+              "__name__": "up",
+              "component": "ingest-worker",
+              "instance": "veil-veil-ingest-worker-metrics.veil.svc.cluster.local:9090",
+              "job": "veil-ingest-worker",
+              "platform": "veil",
+              "service": "veil-ingest-worker"
+            },
+            "value": [
+              1783595528.795,
+              "0"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "egregore_worker_scrape_up",
+      "group": "scrape_health",
+      "status": "success",
+      "data": {
+        "resultType": "vector",
+        "result": []
+      }
+    },
+    {
+      "id": "worker_p95_7d",
+      "group": "worker_jobs",
+      "status": "success",
+      "data": {
+        "resultType": "vector",
+        "result": [
+          {
+            "metric": {
+              "persona": "identity"
+            },
+            "value": [
+              1783595529.145,
+              "300"
+            ]
+          },
+          {
+            "metric": {
+              "persona": "network"
+            },
+            "value": [
+              1783595529.145,
+              "277.5"
+            ]
+          },
+          {
+            "metric": {
+              "persona": "redteam"
+            },
+            "value": [
+              1783595529.145,
+              "NaN"
+            ]
+          },
+          {
+            "metric": {
+              "persona": "soc"
+            },
+            "value": [
+              1783595529.145,
+              "600"
+            ]
+          },
+          {
+            "metric": {
+              "persona": "conductor"
+            },
+            "value": [
+              1783595529.145,
+              "NaN"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "worker_error_ratio_7d",
+      "group": "worker_jobs",
+      "status": "success",
+      "data": {
+        "resultType": "vector",
+        "result": [
+          {
+            "metric": {
+              "persona": "conductor"
+            },
+            "value": [
+              1783595529.545,
+              "NaN"
+            ]
+          },
+          {
+            "metric": {
+              "persona": "consultant"
+            },
+            "value": [
+              1783595529.545,
+              "75.75760465499309"
+            ]
+          },
+          {
+            "metric": {
+              "persona": "dfir"
+            },
+            "value": [
+              1783595529.545,
+              "100"
+            ]
+          },
+          {
+            "metric": {
+              "persona": "identity"
+            },
+            "value": [
+              1783595529.545,
+              "100"
+            ]
+          },
+          {
+            "metric": {
+              "persona": "intel"
+            },
+            "value": [
+              1783595529.545,
+              "100"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ti_search_errors_7d",
+      "group": "tools",
+      "status": "success",
+      "data": {
+        "resultType": "vector",
+        "result": [
+          {
+            "metric": {},
+            "value": [
+              1783595529.848,
+              "72.13259668508289"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ti_search_success_7d",
+      "group": "tools",
+      "status": "success",
+      "data": {
+        "resultType": "vector",
+        "result": [
+          {
+            "metric": {},
+            "value": [
+              1783595529.974,
+              "0"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "vllm_e2e_p95_1h",
+      "group": "llm",
+      "status": "success",
+      "data": {
+        "resultType": "vector",
+        "result": [
+          {
+            "metric": {},
+            "value": [
+              1783595530.718,
+              "162"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "veil_mcp_p95_7d",
+      "group": "veil_http",
+      "status": "success",
+      "data": {
+        "resultType": "vector",
+        "result": [
+          {
+            "metric": {},
+            "value": [
+              1783595530.895,
+              "0.004750869380338865"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "pending_egregore",
+      "group": "k8s",
+      "status": "success",
+      "data": {
+        "resultType": "vector",
+        "result": []
+      }
+    }
+  ]
+}

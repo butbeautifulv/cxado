@@ -32,6 +32,12 @@ spec:
       enableServiceLinks: false
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: node-exporter
           image: docker.io/prom/node-exporter:v1.9.1

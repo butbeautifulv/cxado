@@ -31,28 +31,29 @@ done
 
 [[ -n "${PAT}" ]] || die "missing GITLAB_PAT_RUNNER in ${SECRETS}"
 
-# key|masked|protected|type (env|file)
+# key|masked|protected|type (env_var|file)
 VARS=(
-  "POSTGRES_PASSWORD|true|false|env"
-  "REDIS_PASSWORD|true|false|env"
-  "BUS_SIGNING_KEY|true|false|env"
-  "CXADO_OFFLINE_SUDO_PW|true|false|env"
-  "NEXUS_USER|true|false|env"
-  "NEXUS_PASSWORD|true|false|env"
-  "VM_01_PWD|true|false|env"
-  "VM_02_PWD|true|false|env"
-  "REGISTRY_HOST|false|false|env"
-  "REGISTRY_REPOSITORY|false|false|env"
-  "REGISTRY_BACKEND|false|false|env"
-  "NEXUS_DOCKER_REGISTRY|false|false|env"
-  "NEXUS_CXADO_DOCKER_REPO|false|false|env"
-  "NEXUS_PYPI_HOST|false|false|env"
-  "NEXUS_PYPI_REPO|false|false|env"
-  "GITLAB_RUNNER_TOKEN|true|false|env"
-  "DEFECTDOJO_URL|false|false|env"
-  "DEFECTDOJO_API_TOKEN|true|false|env"
-  "DEFECTDOJO_PRODUCT_NAME|false|false|env"
-  "DEFECTDOJO_ENGAGEMENT|false|false|env"
+  "POSTGRES_PASSWORD|true|false|env_var"
+  "REDIS_PASSWORD|true|false|env_var"
+  "BUS_SIGNING_KEY|true|false|env_var"
+  "CXADO_OFFLINE_SUDO_PW|true|false|env_var"
+  "NEXUS_USER|true|false|env_var"
+  "NEXUS_PASSWORD|true|false|env_var"
+  "VM_01_PWD|true|false|env_var"
+  "VM_02_PWD|true|false|env_var"
+  "REGISTRY_HOST|false|false|env_var"
+  "REGISTRY_REPOSITORY|false|false|env_var"
+  "REGISTRY_BACKEND|false|false|env_var"
+  "NEXUS_DOCKER_REGISTRY|false|false|env_var"
+  "NEXUS_DOCKER_GROUP_REGISTRY|false|false|env_var"
+  "NEXUS_CXADO_DOCKER_REPO|false|false|env_var"
+  "NEXUS_PYPI_HOST|false|false|env_var"
+  "NEXUS_PYPI_REPO|false|false|env_var"
+  "GITLAB_RUNNER_TOKEN|true|false|env_var"
+  "DEFECTDOJO_URL|false|false|env_var"
+  "DEFECTDOJO_API_TOKEN|true|false|env_var"
+  "DEFECTDOJO_PRODUCT_NAME|false|false|env_var"
+  "DEFECTDOJO_ENGAGEMENT|false|false|env_var"
 )
 
 value_for() {
@@ -69,11 +70,12 @@ value_for() {
     REGISTRY_REPOSITORY) echo "${REGISTRY_REPOSITORY:-${NEXUS_CXADO_DOCKER_REPO:-}}" ;;
     REGISTRY_BACKEND) echo "${REGISTRY_BACKEND:-nexus}" ;;
     NEXUS_DOCKER_REGISTRY) echo "${NEXUS_DOCKER_REGISTRY:-}" ;;
+    NEXUS_DOCKER_GROUP_REGISTRY) echo "${NEXUS_DOCKER_GROUP_REGISTRY:-}" ;;
     NEXUS_CXADO_DOCKER_REPO) echo "${NEXUS_CXADO_DOCKER_REPO:-}" ;;
     NEXUS_PYPI_HOST) echo "${NEXUS_PYPI_HOST:-}" ;;
     NEXUS_PYPI_REPO) echo "${NEXUS_PYPI_REPO:-}" ;;
     GITLAB_RUNNER_TOKEN) echo "${GITLAB_RUNNER_TOKEN:-}" ;;
-    DEFECTDOJO_URL) echo "${DEFECTDOJO_URL:-http://${VM_01_IP:-10.20.16.195}:8080}" ;;
+    DEFECTDOJO_URL) echo "${DEFECTDOJO_URL:-http://defectdojo.cxado-aspm.svc.cluster.local:8080}" ;;
     DEFECTDOJO_API_TOKEN) echo "${DEFECTDOJO_API_TOKEN:-${VM_01_DEFECTDOJO_API_TOKEN:-}}" ;;
     DEFECTDOJO_PRODUCT_NAME) echo "${DEFECTDOJO_PRODUCT_NAME:-egregore}" ;;
     DEFECTDOJO_ENGAGEMENT) echo "${DEFECTDOJO_ENGAGEMENT:-CI/CD}" ;;
@@ -110,6 +112,12 @@ gitlab_api() {
 
 http_code() { echo "$1" | tail -1 | sed 's/HTTP://'; }
 
+api_body() { echo "$1" | sed '$d'; }
+
+urlencode_key() {
+  python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$1"
+}
+
 is_maskable() {
   [[ "$1" =~ ^[A-Za-z0-9+/=]+$ ]]
 }
@@ -118,7 +126,7 @@ fetch_defectdojo_token() {
   [[ -n "${VM_01_DEFECTDOJO_SU_PWD:-}" ]] || return 1
   USER="${VM_01_DEFECTDOJO_SU_NAME:-admin}" \
   PASS="${VM_01_DEFECTDOJO_SU_PWD}" \
-  URL="${DEFECTDOJO_URL:-http://${VM_01_IP:-10.20.16.195}:8080}" \
+  URL="${DEFECTDOJO_URL:-http://defectdojo.cxado-aspm.svc.cluster.local:8080}" \
   SSH_HOST="${SSH_HOST}" \
   python3 <<'PY'
 import json
@@ -162,8 +170,8 @@ upsert_var() {
     masked="false"
   fi
 
-  local body code out
-  body="$(KEY="${key}" VAL="${value}" MASKED="${masked}" PROTECTED="${protected}" VTYPE="${vtype}" python3 -c '
+  local body_create body_update code out
+  body_create="$(KEY="${key}" VAL="${value}" MASKED="${masked}" PROTECTED="${protected}" VTYPE="${vtype}" python3 -c '
 import json, os
 print(json.dumps({
   "key": os.environ["KEY"],
@@ -173,23 +181,70 @@ print(json.dumps({
   "variable_type": os.environ["VTYPE"],
 }))
 ')"
+  body_update="$(KEY="${key}" VAL="${value}" MASKED="${masked}" PROTECTED="${protected}" python3 -c '
+import json, os
+print(json.dumps({
+  "key": os.environ["KEY"],
+  "value": os.environ["VAL"],
+  "masked": os.environ["MASKED"] == "true",
+  "protected": os.environ["PROTECTED"] == "true",
+}))
+')"
 
   if [[ "${DRY_RUN}" == true ]]; then
     log "[dry-run] set ${key} type=${vtype} (masked=${masked})"
     return 0
   fi
 
-  out="$(gitlab_api GET "/api/v4/projects/${PROJECT_ID}/variables/${key}" 2>/dev/null || true)"
+  local enc_key
+  enc_key="$(urlencode_key "${key}")"
+
+  out="$(gitlab_api GET "/api/v4/projects/${PROJECT_ID}/variables/${enc_key}" 2>/dev/null || true)"
   code="$(http_code "${out}")"
   if [[ "${code}" == "200" ]]; then
-    out="$(gitlab_api PUT "/api/v4/projects/${PROJECT_ID}/variables/${key}" "${body}")"
+    out="$(gitlab_api PUT "/api/v4/projects/${PROJECT_ID}/variables/${enc_key}" "${body_update}")"
     code="$(http_code "${out}")"
-    [[ "${code}" == "200" ]] || { log "ERROR: update ${key} HTTP ${code}"; return 1; }
+    if [[ "${code}" != "200" ]]; then
+      log "ERROR: update ${key} HTTP ${code}: $(api_body "${out}")"
+      if [[ "${masked}" == "true" ]]; then
+        log "retry ${key} unmasked"
+        body_update="$(KEY="${key}" VAL="${value}" MASKED="false" PROTECTED="${protected}" python3 -c '
+import json, os
+print(json.dumps({
+  "key": os.environ["KEY"],
+  "value": os.environ["VAL"],
+  "masked": False,
+  "protected": os.environ["PROTECTED"] == "true",
+}))
+')"
+        out="$(gitlab_api PUT "/api/v4/projects/${PROJECT_ID}/variables/${enc_key}" "${body_update}")"
+        code="$(http_code "${out}")"
+      fi
+    fi
+    [[ "${code}" == "200" ]] || { log "ERROR: update ${key} HTTP ${code}: $(api_body "${out}")"; return 1; }
     log "updated ${key}"
   else
-    out="$(gitlab_api POST "/api/v4/projects/${PROJECT_ID}/variables" "${body}")"
+    out="$(gitlab_api POST "/api/v4/projects/${PROJECT_ID}/variables" "${body_create}")"
     code="$(http_code "${out}")"
-    [[ "${code}" == "201" ]] || { log "ERROR: create ${key} HTTP ${code}"; return 1; }
+    if [[ "${code}" != "201" ]]; then
+      log "ERROR: create ${key} HTTP ${code}: $(api_body "${out}")"
+      if [[ "${masked}" == "true" ]]; then
+        log "retry create ${key} unmasked"
+        body_create="$(KEY="${key}" VAL="${value}" MASKED="false" PROTECTED="${protected}" VTYPE="${vtype}" python3 -c '
+import json, os
+print(json.dumps({
+  "key": os.environ["KEY"],
+  "value": os.environ["VAL"],
+  "masked": False,
+  "protected": os.environ["PROTECTED"] == "true",
+  "variable_type": os.environ["VTYPE"],
+}))
+')"
+        out="$(gitlab_api POST "/api/v4/projects/${PROJECT_ID}/variables" "${body_create}")"
+        code="$(http_code "${out}")"
+      fi
+    fi
+    [[ "${code}" == "201" ]] || { log "ERROR: create ${key} HTTP ${code}: $(api_body "${out}")"; return 1; }
     log "created ${key}"
   fi
 }
@@ -220,6 +275,17 @@ main() {
   kc="$(kubeconfig_content)" || die "could not read kubeconfig for KUBECONFIG file variable"
   upsert_var "KUBECONFIG" "false" "false" "file" "${kc}"
   upsert_var "KUBE_INT_CONFIG" "false" "false" "file" "${kc}"
+
+  if [[ "${DRY_RUN}" != true ]]; then
+    local verify_out verify_code
+    verify_out="$(gitlab_api GET "/api/v4/projects/${PROJECT_ID}/variables/$(urlencode_key "NEXUS_USER")" 2>/dev/null || true)"
+    verify_code="$(http_code "${verify_out}")"
+    if [[ "${verify_code}" == "200" ]]; then
+      log "verified NEXUS_USER present in GitLab CI variables"
+    else
+      log "WARN: NEXUS_USER not readable via API (HTTP ${verify_code})"
+    fi
+  fi
   log "done"
 }
 

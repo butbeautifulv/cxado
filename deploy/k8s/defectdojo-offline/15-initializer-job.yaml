@@ -1,0 +1,70 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: defectdojo-initializer
+  namespace: cxado-aspm
+  labels:
+    app: defectdojo-initializer
+spec:
+  backoffLimit: 6
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: defectdojo-initializer
+    spec:
+      enableServiceLinks: false
+      restartPolicy: OnFailure
+      imagePullSecrets:
+        - name: nexus-registry
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: initializer
+          image: nexus.svo.aero:8345/cxado-docker/defectdojo-django:2.50.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              /wait-for-it.sh "${DD_DATABASE_HOST}:${DD_DATABASE_PORT}" -t 120 -- /entrypoint-initializer.sh
+          envFrom:
+            - configMapRef:
+                name: defectdojo-config
+          env:
+            - name: DD_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: defectdojo-secrets
+                  key: postgres-password
+            - name: DD_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: defectdojo-secrets
+                  key: database-url
+            - name: DD_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: defectdojo-secrets
+                  key: secret-key
+            - name: DD_CREDENTIAL_AES_256_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: defectdojo-secrets
+                  key: credential-aes-key
+            - name: DD_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: defectdojo-secrets
+                  key: admin-password
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi

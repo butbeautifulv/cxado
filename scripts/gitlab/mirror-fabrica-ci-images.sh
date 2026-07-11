@@ -24,6 +24,7 @@ NEXUS_USER="${NEXUS_USER:-admin-SEC}"
 NEXUS_PASSWORD="${NEXUS_PASSWORD:-}"
 KANIKO_VERSION="${KANIKO_EXECUTOR_VERSION:-v1.23.2}"
 RUNNER_HELPER_VERSION="${GITLAB_RUNNER_HELPER_VERSION:-x86_64-v19.1.1}"
+DEFECTDOJO_VERSION="${DEFECTDOJO_VERSION:-2.50.0}"
 CHECKOV_VERSION="${OSS_CHECKOV_VERSION:-3.2.449}"
 SSH_VIA=""
 DRY_RUN=false
@@ -62,6 +63,10 @@ IMAGES=(
   "${HUB}/alpine:3.20.3|alpine:3.20.3"
   "${HUB}/rancher/kubectl:v1.32.2|kubectl:1.32.2"
   "${GROUP}/projectsigstore/cosign:v2.4.0|cosign:v2.4.0"
+  "${HUB}/library/postgres:16|postgres:16"
+  "${HUB}/library/redis:7|redis:7"
+  "${HUB}/defectdojo/defectdojo-django:${DEFECTDOJO_VERSION}|defectdojo-django:${DEFECTDOJO_VERSION}"
+  "${HUB}/defectdojo/defectdojo-nginx:${DEFECTDOJO_VERSION}|defectdojo-nginx:${DEFECTDOJO_VERSION}"
 )
 
 # Not cached in Nexus gitlab-hub proxy — verify-only if already imported to containerd
@@ -184,6 +189,42 @@ exit 1
 EOS
 }
 
+verify_trivy_vulndb() {
+  log "verify Trivy vulndb via Nexus ${GROUP}/aquasecurity/trivy-db"
+  if [[ "${DRY_RUN}" == true ]]; then
+    return 0
+  fi
+  if ! ssh "${SSH_VIA}" env \
+    "NEXUS_PASSWORD=${NEXUS_PASSWORD}" \
+    "NEXUS_USER=${NEXUS_USER}" \
+    "MIRROR_HUB=${HUB}" \
+    "MIRROR_GROUP=${GROUP}" \
+    "TRIVY_IMAGE=${HUB}/${CXADO_REPO}/trivy:0.63.0" \
+  bash -s <<'EOS'
+set -euo pipefail
+printf '%s\n' "${NEXUS_PASSWORD}" | docker login "${MIRROR_HUB}" -u "${NEXUS_USER}" --password-stdin
+printf '%s\n' "${NEXUS_PASSWORD}" | docker login "${MIRROR_GROUP}" -u "${NEXUS_USER}" --password-stdin
+CACHE="/tmp/trivy-vulndb-verify-$$"
+mkdir -p "${CACHE}"
+export TRIVY_DB_REPOSITORY="${MIRROR_GROUP}/aquasecurity/trivy-db"
+export TRIVY_JAVA_DB_REPOSITORY="${MIRROR_GROUP}/aquasecurity/trivy-java-db"
+if [ -f /etc/docker/certs.d/"${MIRROR_GROUP}"/ca.crt ]; then
+  export SSL_CERT_FILE="/etc/docker/certs.d/${MIRROR_GROUP}/ca.crt"
+fi
+docker run --rm \
+  -e TRIVY_DB_REPOSITORY -e TRIVY_JAVA_DB_REPOSITORY -e SSL_CERT_FILE \
+  -v "${CACHE}:/tmp/trivy-cache" \
+  "${TRIVY_IMAGE}" \
+  trivy image --download-db-only --cache-dir /tmp/trivy-cache
+rm -rf "${CACHE}"
+echo "ok: trivy vulndb via ${TRIVY_DB_REPOSITORY}"
+EOS
+  then
+    warn "Trivy vulndb download failed — check Nexus 8374 proxy for ghcr.io/aquasecurity/trivy-db"
+    return 1
+  fi
+}
+
 main() {
   if [[ "${VERIFY_ONLY}" != true ]]; then
     log "ensure cxado-docker repo exists"
@@ -215,6 +256,7 @@ main() {
     warn "${failed} image(s) missing — run ansible playbooks/ci-images.yml on all nodes"
     exit 1
   fi
+  verify_trivy_vulndb || warn "trivy vulndb verify failed (CI jobs need TRIVY_DB_REPOSITORY)"
   log "done — ${HUB}/${CXADO_REPO}/... available in containerd"
 }
 

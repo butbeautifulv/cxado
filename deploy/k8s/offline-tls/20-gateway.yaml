@@ -22,6 +22,12 @@ spec:
         app: cxado-tls-gateway
     spec:
       enableServiceLinks: false
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: nginx
           image: docker.io/nginx:1.27-alpine
@@ -29,6 +35,8 @@ spec:
           ports:
             - name: egregore-ui
               containerPort: 30300
+            - name: eg-ui-next
+              containerPort: 30301
             - name: egregore-api
               containerPort: 30880
             - name: veil-api
@@ -41,6 +49,8 @@ spec:
               containerPort: 30002
             - name: arch-docs
               containerPort: 30080
+            - name: defectdojo
+              containerPort: 30808
             - name: prometheus
               containerPort: 30091
             - name: langfuse
@@ -94,6 +104,10 @@ spec:
       port: 30300
       targetPort: 30300
       nodePort: 30300
+    - name: eg-ui-next
+      port: 30301
+      targetPort: 30301
+      nodePort: 30301
     - name: egregore-api
       port: 30880
       targetPort: 30880
@@ -126,3 +140,7 @@ spec:
       port: 30080
       targetPort: 30080
       nodePort: 30080
+    - name: defectdojo
+      port: 30808
+      targetPort: 30808
+      nodePort: 30808

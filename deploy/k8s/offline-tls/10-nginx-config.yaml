@@ -84,6 +84,15 @@ data:
       }
 
       server {
+        listen 30301 ssl;
+        error_page 497 =301 https://$http_host$request_uri;
+
+        location / {
+          proxy_pass http://egregore-ui.cxado-app.svc.cluster.local:3000;
+        }
+      }
+
+      server {
         listen 30880 ssl;
         error_page 497 =301 https://$http_host$request_uri;
         location / {
@@ -120,6 +129,14 @@ data:
         error_page 497 =301 https://$http_host$request_uri;
         location / {
           proxy_pass http://cxado-arch-docs.cxado-edge.svc.cluster.local:80;
+        }
+      }
+
+      server {
+        listen 30808 ssl;
+        error_page 497 =301 https://$http_host$request_uri;
+        location / {
+          proxy_pass http://defectdojo.cxado-aspm.svc.cluster.local:8080;
         }
       }
 

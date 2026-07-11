@@ -15,7 +15,15 @@ k3s_ci_image_map:
   - { dest: "python:3.11.11-slim-bookworm", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/python:3.11.11-slim-bookworm" }
   - { dest: "alpine:3.20.3", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/alpine:3.20.3" }
   - { dest: "kubectl:1.32.2", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/rancher/kubectl:v1.32.2" }
-  - { dest: "cosign:v2.4.0", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_GROUP_REGISTRY') | default('nexus.svo.aero:8374', true) }}/projectsigstore/cosign:v2.4.0" }
+  - { dest: "cosign:v2.4.0", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/projectsigstore/cosign:v2.4.0" }
+  - { dest: "postgres:16", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/library/postgres:16" }
+  - { dest: "redis:7", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/library/redis:7" }
+  - { dest: "defectdojo-django:{{ lookup('env', 'DEFECTDOJO_VERSION') | default('2.50.0', true) }}", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/defectdojo/defectdojo-django:{{ lookup('env', 'DEFECTDOJO_VERSION') | default('2.50.0', true) }}" }
+  - { dest: "defectdojo-nginx:{{ lookup('env', 'DEFECTDOJO_VERSION') | default('2.50.0', true) }}", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/defectdojo/defectdojo-nginx:{{ lookup('env', 'DEFECTDOJO_VERSION') | default('2.50.0', true) }}" }
+  - { dest: "postgres:16", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/library/postgres:16" }
+  - { dest: "redis:7", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/library/redis:7" }
+  - { dest: "defectdojo-django:{{ lookup('env', 'DEFECTDOJO_VERSION') | default('2.50.0', true) }}", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/defectdojo/defectdojo-django:{{ lookup('env', 'DEFECTDOJO_VERSION') | default('2.50.0', true) }}" }
+  - { dest: "defectdojo-nginx:{{ lookup('env', 'DEFECTDOJO_VERSION') | default('2.50.0', true) }}", nexus_src: "{{ lookup('env', 'NEXUS_DOCKER_REGISTRY') | default('nexus.svo.aero:8345', true) }}/defectdojo/defectdojo-nginx:{{ lookup('env', 'DEFECTDOJO_VERSION') | default('2.50.0', true) }}" }
 
 k3s_ci_optional_verify:
   - "gitlab-runner-helper:{{ lookup('env', 'GITLAB_RUNNER_HELPER_VERSION') | default('x86_64-v19.1.1', true) }}"

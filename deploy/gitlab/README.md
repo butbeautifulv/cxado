@@ -16,8 +16,10 @@ Secrets: `deploy/.secrets/cxado-k3s.env` (`GITLAB_*`, `NEXUS_*`).
 | Node | Role | IP |
 |------|------|-----|
 | P30 (`bbv-p30-wifi`) | control-plane | `10.8.185.15` |
-| VM_01 | worker | `10.20.16.195` |
+| VM_01 | worker (legacy DefectDojo host — **decommissioned** after in-cluster ASPM) | `10.20.16.195` |
 | VM_02 | worker | `10.20.16.185` |
+
+DefectDojo runs in-cluster on TLS gateway `:30808` — see [deploy/k8s/defectdojo-offline/README.md](../k8s/defectdojo-offline/README.md). VM_01 cutover: `scripts/k8s/defectdojo-vm01-decommission.sh`.
 
 ## GitLab Runner (kubernetes executor)
 

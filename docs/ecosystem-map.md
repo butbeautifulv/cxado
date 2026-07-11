@@ -219,6 +219,8 @@ Domain docs: [docs/domains/](domains/README.md).
 | `make auth-broker-test` | Unit tests for `shared/go/auth-broker` |
 | `make cxado-up` | Default local stack: Veil graph + egregore infra + observability |
 | `make cxado-up-lite` | Lite profile: no Tempo, 1 worker, Langfuse |
+| `make k3s-baseline` | Collect k3s Prometheus baseline snapshot |
+| `make k3s-validation-gate` | Phase 9 offline validation gate |
 | `make cxado-down` | Stop obs + egregore infra (optional veil/langfuse) |
 | `make cxado-status` | Health checks (veil, egregore API, Grafana, Prometheus) |
 
@@ -230,6 +232,19 @@ make -C projects/egregore dev
 ```
 
 See [deploy/cxado-default-stack.md](deploy/cxado-default-stack.md) and [deploy/ports.md](../deploy/ports.md).
+
+## k3s offline (P30)
+
+| Path | Role |
+|------|------|
+| `deploy/k8s/cxado-offline/` | Egregore Helm values + offline bundle |
+| `deploy/k8s/veil-offline/` | Veil graph-only / workers-obs profiles |
+| `deploy/k8s/obs-offline/` | Prometheus, Grafana, Loki, Tempo |
+| `deploy/k8s/defectdojo-offline/` | DefectDojo ASPM in-cluster (`:30808`) |
+| `deploy/k8s/offline-tls/` | TLS gateway NodePorts |
+| `docs/observability/` | Runbooks, SLO, validation matrix |
+
+Runbook: [deploy/k3s-offline-baseline.md](deploy/k3s-offline-baseline.md) · observability index: [observability/README.md](observability/README.md).
 
 
 ## Agent MCP tooling (Cursor IDE)

@@ -53,6 +53,11 @@ if [[ ! -f .gitmodules ]]; then
   exit 1
 fi
 
+if ! command -v git >/dev/null 2>&1; then
+  echo "[ci-submodule] git not found — install git in job image or .egregore_prepare" >&2
+  exit 2
+fi
+
 block_github
 
 for path in ${SUBMODULES}; do

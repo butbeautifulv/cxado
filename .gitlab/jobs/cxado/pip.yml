@@ -9,12 +9,6 @@
         chmod 600 ~/.netrc
       fi
 
-.aspm_upload_static:
-  extends: .cxado_pip
-
-.aspm_upload_image:
-  extends: .cxado_pip
-
 lint:
   extends: .cxado_pip
 

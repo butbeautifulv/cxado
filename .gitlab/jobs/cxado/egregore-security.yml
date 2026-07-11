@@ -43,23 +43,46 @@ semgrep-sast:
       - semgrep.sarif
     expire_in: 30 days
 
-.trivy_job:
-  image:
-    name: ${OSS_TRIVY_IMAGE}
-    entrypoint: [""]
-  before_script: []
+.trivy_vulndb:
+  variables:
+    TRIVY_DB_REPOSITORY: "${NEXUS_DOCKER_GROUP_REGISTRY}/aquasecurity/trivy-db"
+    TRIVY_JAVA_DB_REPOSITORY: "${NEXUS_DOCKER_GROUP_REGISTRY}/aquasecurity/trivy-java-db"
+    TRIVY_CACHE_DIR: "/tmp/trivy-cache"
+  before_script:
+    - mkdir -p "${TRIVY_CACHE_DIR}"
+    - |
+      if [ -f /etc/ssl/certs/nexus/ca.crt ]; then
+        export SSL_CERT_FILE=/etc/ssl/certs/nexus/ca.crt
+      fi
+    - trivy image --download-db-only --cache-dir "${TRIVY_CACHE_DIR}"
+
+.trivy_offline:
+  before_script:
+    - !reference [.egregore_prepare, before_script]
+    - !reference [.trivy_vulndb, before_script]
+
+.egregore_security_rules:
+  rules:
+    - if: $SAST_DISABLED == 'true' || $SAST_DISABLED == '1' || $SECURITY_DISABLED == 'true' || $SECURITY_DISABLED == '1'
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 trivy-osa:
   extends:
-    - .egregore_prepare
+    - .trivy_vulndb
+    - .trivy_offline
     - .egregore_blocker
     - .egregore_workflow
-    - .trivy_job
   stage: security
+  image:
+    name: ${OSS_TRIVY_IMAGE}
+    entrypoint: [""]
   script:
-    - trivy fs "${EGREGORE_ROOT}" --scanners vuln --severity CRITICAL,HIGH --format sarif --output osa.sarif || true
     - |
-      [ -f osa.sarif ] || echo '{"runs":[{"results":[]}]}' > osa.sarif
+      trivy fs "${EGREGORE_ROOT}" --scanners vuln --severity CRITICAL,HIGH \
+        --format sarif --output osa.sarif --cache-dir "${TRIVY_CACHE_DIR}"
+    - test -s osa.sarif
     - |
       if command -v python3 >/dev/null 2>&1; then
         python3 scripts/gate-check.py --control osa --report osa.sarif --policy "${SECURITY_POLICY:-config/security-gate-policy.yaml}"
@@ -80,6 +103,11 @@ checkov-iac:
   image:
     name: ${OSS_CHECKOV_IMAGE}
     entrypoint: [""]
+  rules:
+    - if: $SAST_DISABLED == 'true' || $SAST_DISABLED == '1' || $SECURITY_DISABLED == 'true' || $SECURITY_DISABLED == '1'
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   variables:
     ASPM_REPORT: reports/checkov-report.json
   script:
@@ -111,6 +139,11 @@ dockerfile-lint:
   image:
     name: ${OSS_HADOLINT_IMAGE}
     entrypoint: [""]
+  rules:
+    - if: $SAST_DISABLED == 'true' || $SAST_DISABLED == '1' || $SECURITY_DISABLED == 'true' || $SECURITY_DISABLED == '1'
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
     - |
       echo '{"version":"2.1.0","runs":[{"tool":{"driver":{"name":"hadolint"}},"results":[]}]}' > hadolint.sarif
@@ -218,15 +251,16 @@ skill-scanner:
 lint:
   extends:
     - .egregore_prepare
+    - .egregore_blocker
     - .egregore_workflow
   stage: validate
   image: ${OSS_PYTHON_IMAGE}
   variables:
     ENABLE_REAL_LINTERS: "true"
-  allow_failure: true
   script:
     - |
       cd "${EGREGORE_ROOT}"
       pip install -q --index-url "${PIP_INDEX_URL}" --trusted-host "${PIP_TRUSTED_HOST}" uv
       uv sync
       uv run ruff check .
+      uv run ty check cys_core bootstrap interfaces connectors --output-format gitlab

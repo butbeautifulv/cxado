@@ -1,0 +1,28 @@
+# Fragment: append to scrape_configs when CXADO_VEIL_PROFILE=workers-obs
+# DNS must match Helm Services: {{ release }}-veil-*-worker-metrics.veil.svc
+- job_name: veil-ingest-worker
+  metrics_path: /metrics
+  static_configs:
+    - targets: ["veil-veil-ingest-worker-metrics.veil.svc.cluster.local:9090"]
+      labels:
+        service: veil-ingest-worker
+        platform: veil
+        component: ingest-worker
+
+- job_name: veil-pipeline-worker
+  metrics_path: /metrics
+  static_configs:
+    - targets: ["veil-veil-pipeline-worker-metrics.veil.svc.cluster.local:9090"]
+      labels:
+        service: veil-pipeline-worker
+        platform: veil
+        component: pipeline-worker
+
+- job_name: veil-engage-events-worker
+  metrics_path: /metrics
+  static_configs:
+    - targets: ["veil-veil-engage-events-worker-metrics.veil.svc.cluster.local:9090"]
+      labels:
+        service: veil-engage-events-worker
+        platform: veil
+        component: engage-events

@@ -58,14 +58,14 @@ Helm values (`deploy/k8s/cxado-offline/values-egregore-offline.yaml`):
 llm:
   provider: litellm
   model: openai/<model-id-from-v1-models>
-  baseUrl: http://10.8.185.186:11612/v1
+  baseUrl: http://10.8.185.185:11611/v1
   temperature: "0.1"
 ```
 
 Discover model id:
 
 ```bash
-curl -fsS http://10.8.185.186:11612/v1/models | jq .
+curl -fsS http://10.8.185.185:11611/v1/models | jq .
 ```
 
 Smoke from api pod (after helm upgrade):
@@ -87,20 +87,27 @@ vLLM runs on the Proxmox GPU VM, not inside k3s. Prometheus on the k3s node (`10
 
 | Job | Target | What |
 |-----|--------|------|
-| `vllm` | `10.8.185.186:11612/metrics` | vLLM inference metrics (`vllm:*`) |
-| `proxmox-gpu-node` | `10.8.185.186:9100` | Host CPU/RAM/disk (node-exporter on GPU VM) |
-| `proxmox-gpu-dcgm` | `10.8.185.186:9400` | NVIDIA GPU util / VRAM (DCGM exporter) |
+| `vllm` | `10.8.185.185:11611/metrics` | vLLM inference metrics (`vllm:*`) |
+| `proxmox-gpu-node` | `10.8.185.185:9100` | Host CPU/RAM/disk (node-exporter on GPU VM) |
+| `proxmox-gpu-dcgm` | `10.8.185.185:9400` | NVIDIA GPU util / VRAM (DCGM exporter) |
 
 Config: `deploy/k8s/obs-offline/prometheus-k3s.yml`  
-Grafana dashboard: `deploy/observability/grafana/dashboards/infra/vllm-monitoring.json`
+Grafana dashboard: `deploy/observability/grafana/dashboards/infra/vllm-monitoring.json`  
+SSOT: `docs/observability/gpu-host-ssot.md`
 
-On the GPU VM (`10.8.185.186`), install exporters (see `scripts/obs/proxmox-gpu-exporters.example.sh`):
+On the GPU VM (`10.8.185.185`), install exporters:
 
 ```bash
-# After network is up — verify from k3s node:
-curl -fsS http://10.8.185.186:11612/metrics | head
-curl -fsS http://10.8.185.186:9100/metrics | head
-curl -fsS http://10.8.185.186:9400/metrics | head
+sudo ./scripts/obs/install-gpu-host-exporters.sh
+```
+
+Verify from k3s node (P30):
+
+```bash
+./scripts/k8s/diagnose-gpu-telemetry.sh
+curl -fsS http://10.8.185.185:11611/metrics | head
+curl -fsS http://10.8.185.185:9100/metrics | head
+curl -fsS http://10.8.185.185:9400/metrics | head
 ```
 
 Refresh Prometheus config on k3s:

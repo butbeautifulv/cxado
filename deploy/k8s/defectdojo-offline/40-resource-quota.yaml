@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: cxado-aspm-cap
+  namespace: cxado-aspm
+spec:
+  hard:
+    pods: "12"
+    requests.cpu: "2"
+    requests.memory: 4Gi
+    limits.cpu: "4"
+    limits.memory: 6Gi

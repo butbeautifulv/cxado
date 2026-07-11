@@ -68,7 +68,7 @@ make cxado-kind-down
 | veil-api CrashLoop | Build/load images: `make cxado-k8s-build-images`; Neo4j may need graph-bootstrap (compose runs it once) |
 | egregore ImagePullBackOff | Images must be loaded into kind (`kind load docker-image`) |
 | terraform/helm missing | Install terraform >= 1.5, helm 3.x |
-| UI build fails | Ensure `ui/next.config.ts` has `output: standalone` and run `npm ci` locally first |
+| UI build fails | Ensure `ui/next.config.ts` has `output: standalone` and run `bun install` locally first |
 
 Compose dev (`make cxado-up`) is unchanged — K8s is an alternate profile.
 

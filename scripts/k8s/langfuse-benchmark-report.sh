@@ -70,8 +70,11 @@ log "- search: ${SEARCH}"
 log ""
 
 log "## ERROR observations (recent)"
-ERR_JSON="$(lf_curl "/api/public/observations?limit=100&level=ERROR" | strip_kubectl_trailer)"
-printf '%s' "${ERR_JSON}" | python3 -c "
+ERR_JSON="$(lf_curl "/api/public/observations?limit=100&level=ERROR" | strip_kubectl_trailer || true)"
+if [[ -z "${ERR_JSON}" || "${ERR_JSON}" != "{"* ]]; then
+  log "(no data or auth failed — set LANGFUSE_BASE_URL or check keys)"
+else
+  printf '%s' "${ERR_JSON}" | python3 -c "
 import json, sys
 from collections import Counter
 raw = sys.stdin.read().strip()
@@ -92,6 +95,7 @@ for o in obs[:15]:
     if sm:
         print(f'  status: {sm[:120]}')
 " | tee -a "${OUT_FILE}"
+fi
 
 log ""
 log "## Egregore traces (name filter)"

@@ -42,6 +42,12 @@ spec:
     spec:
       serviceAccountName: promtail
       enableServiceLinks: false
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: promtail
           image: docker.io/grafana/promtail:3.4.2

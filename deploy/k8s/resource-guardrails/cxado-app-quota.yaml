@@ -8,9 +8,9 @@ metadata:
 spec:
   hard:
     pods: "25"
-    requests.cpu: "3500m"
+    requests.cpu: "3750m"
     requests.memory: 7Gi
-    limits.cpu: "5500m"
+    limits.cpu: "6000m"
     limits.memory: 9Gi
 ---
 apiVersion: v1

@@ -1,0 +1,330 @@
+# K3s bottleneck baseline PromQL catalog (Phase 0 SSOT).
+# Consumed by: scripts/k8s/collect-k3s-baseline.sh
+# Human SLO: docs/observability/k3s-bottleneck-slo.md
+
+version: 1
+owner: platform
+cluster: cxado-k3s
+
+groups:
+  - id: scrape_health
+    owner_phase: 0
+    critical: true
+    queries:
+      - id: scrape_up
+        expr: up
+        window: instant
+        expected_shape: vector
+        description: All scrape targets and their up/down state.
+
+      - id: scrape_down
+        expr: up == 0
+        window: instant
+        expected_shape: vector
+        description: Targets currently down (empty vector is healthy).
+
+      - id: egregore_worker_scrape_up
+        expr: up{job="egregore-worker"}
+        window: instant
+        expected_shape: vector
+        owner_phase: 1
+        description: Worker per-pod scrape (one target per Running worker).
+
+      - id: worker_scrape_up_count
+        expr: count(up{job="egregore-worker"} == 1)
+        window: instant
+        expected_shape: scalar
+        owner_phase: 1
+        description: Number of healthy egregore-worker scrape targets.
+
+      - id: worker_pod_count
+        expr: count(kube_pod_status_phase{namespace="cxado-app",pod=~"egregore-worker-.*",phase="Running"} == 1)
+        window: instant
+        expected_shape: scalar
+        owner_phase: 1
+        description: Running egregore-worker pods.
+
+      - id: worker_series_by_job
+        expr: count by (job) (cys_worker_job_duration_seconds_count)
+        window: instant
+        expected_shape: vector
+        owner_phase: 1
+        description: Worker duration series attribution by scrape job.
+
+  - id: worker_jobs
+    owner_phase: 1
+    critical: true
+    queries:
+      - id: worker_p95_7d
+        expr: histogram_quantile(0.95, sum(rate(cys_worker_job_duration_seconds_bucket[7d])) by (le, persona))
+        window: 7d
+        expected_shape: vector
+        description: Worker job p95 latency by persona.
+
+      - id: worker_avg_7d
+        expr: sum(increase(cys_worker_job_duration_seconds_sum[7d])) by (persona) / sum(increase(cys_worker_job_duration_seconds_count[7d])) by (persona)
+        window: 7d
+        expected_shape: vector
+        description: Worker job average duration by persona.
+
+      - id: worker_errors_7d
+        expr: sum(increase(cys_worker_job_duration_seconds_count{status="error"}[7d])) by (persona)
+        window: 7d
+        expected_shape: vector
+        description: Worker job error count by persona (7d).
+
+      - id: worker_total_7d
+        expr: sum(increase(cys_worker_job_duration_seconds_count[7d])) by (persona)
+        window: 7d
+        expected_shape: vector
+        description: Total worker jobs by persona (7d).
+
+      - id: worker_error_ratio_7d
+        expr: 100 * sum(increase(cys_worker_job_duration_seconds_count{status="error"}[7d])) by (persona) / sum(increase(cys_worker_job_duration_seconds_count[7d])) by (persona)
+        window: 7d
+        expected_shape: vector
+        description: Worker error percentage by persona (7d).
+
+  - id: worker_failures
+    owner_phase: 3
+    critical: true
+    queries:
+      - id: worker_failures_by_reason_1h
+        expr: topk(10, sum(increase(cys_worker_job_failures_total{job="egregore-worker"}[1h])) by (reason))
+        window: 1h
+        expected_shape: vector
+        description: Top worker failure reasons (1h).
+
+      - id: worker_failures_by_persona_reason_7d
+        expr: sum(increase(cys_worker_job_failures_total{job="egregore-worker"}[7d])) by (persona, reason)
+        window: 7d
+        expected_shape: vector
+        description: Worker failures by persona and reason (7d).
+
+      - id: worker_timeout_ratio
+        expr: 100 * sum(increase(cys_worker_job_failures_total{job="egregore-worker",reason="timeout"}[7d])) / sum(increase(cys_worker_job_failures_total{job="egregore-worker"}[7d]))
+        window: 7d
+        expected_shape: scalar
+        description: Share of worker failures that are timeouts (7d).
+
+      - id: worker_tool_error_ratio
+        expr: 100 * sum(increase(cys_worker_job_failures_total{job="egregore-worker",reason=~"tool_error|tool_invalid_args"}[7d])) / sum(increase(cys_worker_job_failures_total{job="egregore-worker"}[7d]))
+        window: 7d
+        expected_shape: scalar
+        description: Share of worker failures that are tool-related (7d).
+
+      - id: worker_salvaged_1h
+        expr: sum(increase(cys_worker_job_salvaged_total{job="egregore-worker"}[1h])) by (persona, reason)
+        window: 1h
+        expected_shape: vector
+        owner_phase: 4
+        description: Salvaged partial findings by persona and reason (1h).
+
+  - id: tools
+    owner_phase: 2
+    critical: true
+    queries:
+      - id: tool_errors_7d
+        expr: topk(20, sum(increase(cys_tool_invocations_total{result="error"}[7d])) by (tool))
+        window: 7d
+        expected_shape: vector
+        description: Top tools by error count (7d).
+
+      - id: tool_success_7d
+        expr: topk(20, sum(increase(cys_tool_invocations_total{result="success"}[7d])) by (tool))
+        window: 7d
+        expected_shape: vector
+        description: Top tools by success count (7d).
+
+      - id: ti_search_errors_7d
+        expr: sum(increase(cys_tool_invocations_total{tool="ti_search_in_category",result="error"}[7d]))
+        window: 7d
+        expected_shape: scalar
+        owner_phase: 2
+        description: ti_search_in_category errors (7d).
+
+      - id: ti_search_success_7d
+        expr: sum(increase(cys_tool_invocations_total{tool="ti_search_in_category",result="success"}[7d]))
+        window: 7d
+        expected_shape: scalar
+        owner_phase: 2
+        description: ti_search_in_category successes (7d).
+
+  - id: platform_kpis
+    owner_phase: 0
+    critical: false
+    queries:
+      - id: hitl_pending
+        expr: cys_hitl_pending_total
+        window: instant
+        expected_shape: vector
+        description: HITL backlog gauge.
+
+      - id: investigations_active
+        expr: cys_investigations_active
+        window: instant
+        expected_shape: vector
+        description: Active investigations gauge.
+
+      - id: events_ingested_rate_1h
+        expr: sum(rate(cys_events_ingested_total[1h])) by (event_type)
+        window: 1h
+        expected_shape: vector
+        description: Event ingest rate by type.
+
+  - id: sanitizer_rag
+    owner_phase: 0
+    critical: false
+    queries:
+      - id: sanitizer_blocks_7d
+        expr: sum(increase(cys_sanitizer_blocks_total[7d])) by (source, verdict)
+        window: 7d
+        expected_shape: vector
+        description: Sanitizer blocks by source and verdict.
+
+      - id: rag_retrievals_7d
+        expr: sum(increase(cys_rag_retrievals_total[7d])) by (tenant, denied)
+        window: 7d
+        expected_shape: vector
+        description: RAG retrieval counts.
+
+  - id: tokens
+    owner_phase: 8
+    critical: false
+    queries:
+      - id: tokens_7d
+        expr: sum(increase(cys_job_tokens_total[7d])) by (persona)
+        window: 7d
+        expected_shape: vector
+        description: Token usage by persona (7d).
+
+  - id: llm
+    owner_phase: 8
+    critical: true
+    queries:
+      - id: vllm_e2e_avg_1h
+        expr: sum(rate(vllm:e2e_request_latency_seconds_sum[1h])) / sum(rate(vllm:e2e_request_latency_seconds_count[1h]))
+        window: 1h
+        expected_shape: scalar
+        description: vLLM end-to-end request latency average (1h).
+
+      - id: vllm_e2e_p95_1h
+        expr: histogram_quantile(0.95, sum(rate(vllm:e2e_request_latency_seconds_bucket[1h])) by (le))
+        window: 1h
+        expected_shape: scalar
+        description: vLLM end-to-end request latency p95 (1h).
+
+      - id: vllm_ttft_p95_1h
+        expr: histogram_quantile(0.95, sum(rate(vllm:time_to_first_token_seconds_bucket[1h])) by (le))
+        window: 1h
+        expected_shape: scalar
+        description: vLLM time-to-first-token p95 (1h).
+
+  - id: veil_http
+    owner_phase: 2
+    critical: false
+    queries:
+      - id: veil_mcp_p95_7d
+        expr: histogram_quantile(0.95, sum(rate(veil_http_request_duration_seconds_bucket{service="veil-mcp"}[7d])) by (le))
+        window: 7d
+        expected_shape: scalar
+        description: Veil MCP HTTP p95 (7d) — latency control, not bottleneck.
+
+      - id: veil_api_p95_7d
+        expr: histogram_quantile(0.95, sum(rate(veil_http_request_duration_seconds_bucket{service="veil-api"}[7d])) by (le))
+        window: 7d
+        expected_shape: scalar
+        description: Veil API HTTP p95 (7d).
+
+  - id: veil_workers
+    owner_phase: 6
+    critical: false
+    queries:
+      - id: veil_worker_scrape_up
+        expr: up{job=~"veil-(ingest|pipeline|engage-events)-worker"}
+        window: instant
+        expected_shape: vector
+        description: Veil worker scrape targets (empty in graph-only profile).
+
+      - id: veil_worker_scrape_count
+        expr: count(up{job=~"veil-(ingest|pipeline|engage-events)-worker"})
+        window: instant
+        expected_shape: scalar
+        description: "graph-only: 0; workers-obs: 3 when healthy."
+
+      - id: veil_graph_plane_up
+        expr: up{job=~"veil-api|veil-mcp"}
+        window: instant
+        expected_shape: vector
+        description: Veil graph read plane scrape health.
+
+  - id: gpu_telemetry
+    owner_phase: 7
+    critical: true
+    queries:
+      - id: gpu_node_up
+        expr: up{job="proxmox-gpu-node"}
+        window: instant
+        expected_shape: vector
+        description: GPU host node-exporter scrape health.
+
+      - id: gpu_dcgm_up
+        expr: up{job="proxmox-gpu-dcgm"}
+        window: instant
+        expected_shape: vector
+        description: GPU host DCGM exporter scrape health.
+
+      - id: gpu_util
+        expr: DCGM_FI_DEV_GPU_UTIL{instance="phy-gpu-host01"}
+        window: instant
+        expected_shape: vector
+        description: GPU utilization percent from DCGM.
+
+      - id: gpu_vram_pct
+        expr: 100 * DCGM_FI_DEV_FB_USED{instance="phy-gpu-host01"} / (DCGM_FI_DEV_FB_USED{instance="phy-gpu-host01"} + DCGM_FI_DEV_FB_FREE{instance="phy-gpu-host01"})
+        window: instant
+        expected_shape: vector
+        description: GPU VRAM utilization percent.
+
+      - id: vllm_gpu_correlation
+        expr: histogram_quantile(0.95, sum(rate(vllm:e2e_request_latency_seconds_bucket[5m])) by (le))
+        window: 5m
+        expected_shape: scalar
+        description: vLLM e2e p95 for correlation with DCGM_FI_DEV_GPU_UTIL.
+
+  - id: k8s
+    owner_phase: 5
+    critical: true
+    queries:
+      - id: pending_egregore
+        expr: kube_pod_status_phase{namespace="cxado-app",phase="Pending",pod=~"egregore-.*"} == 1
+        window: instant
+        expected_shape: vector
+        description: Pending egregore pods.
+
+      - id: egregore_ready_replicas_drift
+        expr: |
+          kube_deployment_status_replicas_available{namespace="cxado-app",deployment=~"egregore-api|egregore-worker"}
+          <
+          kube_deployment_spec_replicas{namespace="cxado-app",deployment=~"egregore-api|egregore-worker"}
+        window: instant
+        expected_shape: vector
+        description: Deployment available replicas below spec (rollout stuck or Pending).
+
+      - id: egregore_restarts_24h
+        expr: sum(increase(kube_pod_container_status_restarts_total{namespace="cxado-app",pod=~"egregore-.*"}[24h])) by (pod)
+        window: 24h
+        expected_shape: vector
+        description: Egregore pod restarts (24h).
+
+      - id: cpu_throttle_1h
+        expr: sum(increase(container_cpu_cfs_throttled_seconds_total{namespace="cxado-app",pod=~"egregore-.*"}[1h])) by (pod)
+        window: 1h
+        expected_shape: vector
+        description: CPU throttling for egregore pods (1h).
+
+      - id: node_mem_pct
+        expr: 100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
+        window: instant
+        expected_shape: vector
+        description: Node memory utilization percent.

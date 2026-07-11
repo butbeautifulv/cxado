@@ -29,6 +29,7 @@ spec:
         app: prometheus
     spec:
       enableServiceLinks: false
+      serviceAccountName: prometheus
       containers:
         - name: prometheus
           image: docker.io/prom/prometheus:v3.2.1

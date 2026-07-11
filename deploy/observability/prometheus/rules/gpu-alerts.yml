@@ -1,0 +1,51 @@
+groups:
+  - name: gpu-host
+    rules:
+      - alert: GPUHostNodeExporterDown
+        expr: up{job="proxmox-gpu-node"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          platform: gpu
+        annotations:
+          summary: GPU host node-exporter is down
+          description: Run scripts/obs/install-gpu-host-exporters.sh on phy-gpu-host01 (10.8.185.185)
+
+      - alert: GPUHostDCGMDown
+        expr: up{job="proxmox-gpu-dcgm"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          platform: gpu
+        annotations:
+          summary: GPU host DCGM exporter is down
+          description: Run scripts/obs/install-gpu-host-exporters.sh on phy-gpu-host01
+
+      - alert: VLLMUpButGPUTelemetryDown
+        expr: |
+          up{job="vllm"} == 1
+          and (
+            up{job="proxmox-gpu-dcgm"} == 0
+            or up{job="proxmox-gpu-node"} == 0
+          )
+        for: 10m
+        labels:
+          severity: warning
+          platform: gpu
+        annotations:
+          summary: vLLM metrics up but GPU host telemetry is down
+          description: See docs/observability/gpu-host-ssot.md
+
+      - alert: GPUVRAMHigh
+        expr: |
+          (
+            DCGM_FI_DEV_FB_USED{instance="phy-gpu-host01"}
+            /
+            (DCGM_FI_DEV_FB_USED{instance="phy-gpu-host01"} + DCGM_FI_DEV_FB_FREE{instance="phy-gpu-host01"})
+          ) > 0.9
+        for: 15m
+        labels:
+          severity: warning
+          platform: gpu
+        annotations:
+          summary: GPU VRAM utilization above 90%

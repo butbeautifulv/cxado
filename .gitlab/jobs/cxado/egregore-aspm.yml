@@ -9,10 +9,28 @@ variables:
     - !reference [.cxado_pip, before_script]
     - pip install -q --index-url "${PIP_INDEX_URL}" --trusted-host "${PIP_TRUSTED_HOST}" pyyaml
 
+.aspm_upload_script:
+  script:
+    - |
+      REPORT="${ASPM_REPORT:?}"
+      CONTROL="${ASPM_CONTROL:?}"
+      if [ ! -f "$REPORT" ]; then
+        echo "[aspm] skip — artifact $REPORT not found (scan job skipped)"
+        exit 0
+      fi
+      if [ ! -s "$REPORT" ]; then
+        echo "[aspm] skip — artifact $REPORT is empty"
+        exit 0
+      fi
+      python3 scripts/aspm-export.py --control "$CONTROL" --report "$REPORT" --skip-empty
+
 .aspm_upload_static:
+  stage: static-security-upload
   extends:
-    - .cxado_pip
+    - .defectdojo_skip_rules
     - .security_job_defaults
+    - .cxado_pip
+    - .aspm_upload_script
   image: ${OSS_PYTHON_IMAGE}
   variables:
     DEFECTDOJO_PRODUCT_NAME: "egregore"
@@ -21,13 +39,61 @@ variables:
     - !reference [.cxado_aspm_pip, before_script]
 
 .aspm_upload_image:
+  stage: image-security-upload
   extends:
-    - .cxado_pip
+    - .defectdojo_skip_rules
     - .security_job_defaults
+    - .cxado_pip
+    - .aspm_upload_script
   image: ${OSS_PYTHON_IMAGE}
   variables:
     DEFECTDOJO_PRODUCT_NAME: "egregore"
     DEFECTDOJO_FAIL_ON_ERROR: "true"
+  before_script:
+    - !reference [.cxado_aspm_pip, before_script]
+
+upload-gitleaks-to-dojo:
+  extends: .aspm_upload_static
+  before_script:
+    - !reference [.cxado_aspm_pip, before_script]
+
+upload-semgrep-to-dojo:
+  extends: .aspm_upload_static
+  before_script:
+    - !reference [.cxado_aspm_pip, before_script]
+
+upload-trivy-osa-to-dojo:
+  extends: .aspm_upload_static
+  before_script:
+    - !reference [.cxado_aspm_pip, before_script]
+
+upload-checkov-to-dojo:
+  extends: .aspm_upload_static
+  before_script:
+    - !reference [.cxado_aspm_pip, before_script]
+
+upload-hadolint-to-dojo:
+  extends: .aspm_upload_static
+  before_script:
+    - !reference [.cxado_aspm_pip, before_script]
+
+upload-linters-to-dojo:
+  extends: .aspm_upload_static
+  before_script:
+    - !reference [.cxado_aspm_pip, before_script]
+
+upload-forbidden-files-to-dojo:
+  extends: .aspm_upload_static
+  before_script:
+    - !reference [.cxado_aspm_pip, before_script]
+
+upload-sca-to-dojo:
+  extends: .aspm_upload_image
+  before_script:
+    - !reference [.cxado_aspm_pip, before_script]
+
+upload-sbom-to-dojo:
+  extends: .aspm_upload_image
   before_script:
     - !reference [.cxado_aspm_pip, before_script]
 
@@ -36,6 +102,8 @@ upload-skill-scan-to-dojo:
   variables:
     ASPM_CONTROL: skill_scan
     ASPM_REPORT: skill-scan.sarif
+  before_script:
+    - !reference [.cxado_aspm_pip, before_script]
   needs:
     - job: skill-scanner
       artifacts: true

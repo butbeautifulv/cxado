@@ -92,3 +92,21 @@ make cxado-k8s-status
 ```
 
 Runbook: [docs/deploy/cxado-kubernetes-kind.md](../docs/deploy/cxado-kubernetes-kind.md).
+
+## k3s offline (P30 corp)
+
+Production-like offline profile on bare-metal k3s (not kind):
+
+```bash
+source ./scripts/k8s/cxado-offline-env.sh
+./scripts/k8s/k3s-deploy-cxado-offline.sh
+./scripts/k8s/k3s-deploy-veil-offline.sh          # optional --with-workers-obs
+./scripts/k8s/k3s-deploy-defectdojo.sh            # ASPM :30808
+make k3s-validation-gate                          # Phase 9 gate
+```
+
+- Baseline: [docs/deploy/k3s-offline-baseline.md](../docs/deploy/k3s-offline-baseline.md)
+- Observability: [docs/observability/README.md](../docs/observability/README.md)
+- DefectDojo: [deploy/k8s/defectdojo-offline/README.md](k8s/defectdojo-offline/README.md)
+- Veil profiles: [deploy/k8s/veil-offline/README.md](k8s/veil-offline/README.md)
+- Ports: [ports.md](ports.md)

@@ -166,6 +166,7 @@ main() {
   run "ssh -p '${SSH_PORT}' '${SSH_HOST}' 'bash -lc \"cat >/tmp/obs-create-configmaps.sh\"' < '${ROOT}/scripts/k8s/obs-create-configmaps.sh'"
   run "ssh -p '${SSH_PORT}' '${SSH_HOST}' 'bash -lc \"chmod +x /tmp/obs-create-configmaps.sh\"'"
   run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"CXADO_OBS_SRC=/tmp/cxado-obs-bundle KUBECONFIG=/home/bbv/.kube/config KUBECTL='k3s kubectl' /tmp/obs-create-configmaps.sh\""
+  run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} apply -f -\" < '${ROOT}/deploy/k8s/obs-offline/09-prometheus-rbac.yaml'"
   run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} apply -f -\" < '${ROOT}/deploy/k8s/obs-offline/10-prometheus.yaml'"
   run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} apply -f -\" < '${ROOT}/deploy/k8s/obs-offline/20-grafana.yaml'"
   run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} apply -f -\" < '${ROOT}/deploy/k8s/obs-offline/30-tempo.yaml'"
@@ -173,14 +174,9 @@ main() {
   run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} apply -f -\" < '${ROOT}/deploy/k8s/obs-offline/32-promtail.yaml'"
   run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} -n cxado-obs rollout restart deploy/prometheus deploy/grafana deploy/tempo deploy/loki || true\""
 
-  log "install egregore via helm"
-  run "ssh -p '${SSH_PORT}' '${SSH_HOST}' 'cat >/tmp/values-egregore-offline.yaml' < '${ROOT}/deploy/k8s/cxado-offline/values-egregore-offline.yaml'"
-  run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"sed -i 's/__CXADO_OFFLINE_TAG__/${TAG}/g' /tmp/values-egregore-offline.yaml\""
-  run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} create ns cxado-app 2>/dev/null || true\""
-  run "rsync -a -e \"ssh -p ${SSH_PORT}\" \"${ROOT}/projects/egregore/deploy/helm/egregore\" \"${SSH_HOST}:/tmp/egregore-helm\""
-  run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${HELM} upgrade --install egregore /tmp/egregore-helm/egregore -n cxado-app -f /tmp/values-egregore-offline.yaml --set image.tag='${TAG}' --set ui.image.tag='${TAG}' --set postgres.password='${POSTGRES_PASSWORD}' --set redis.password='${REDIS_PASSWORD}' --set busSigningKey='${BUS_SIGNING_KEY:-}' --wait --timeout 10m\""
-  run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} -n cxado-app rollout status deploy/egregore-api --timeout=300s\""
-  run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} -n cxado-app rollout status deploy/egregore-worker --timeout=300s\""
+  log "install egregore via helm (backend-only; ui-minimal deployed below)"
+  run "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' POSTGRES_PASSWORD='***' REDIS_PASSWORD='***' '${ROOT}/scripts/k8s/egregore-helm-upgrade.sh'" \
+    "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' POSTGRES_PASSWORD='${POSTGRES_PASSWORD}' REDIS_PASSWORD='${REDIS_PASSWORD}' BUS_SIGNING_KEY='${BUS_SIGNING_KEY:-}' '${ROOT}/scripts/k8s/egregore-helm-upgrade.sh'"
 
   log "deploy ui-minimal static console (Next.js UI disabled)"
   run "CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' '${ROOT}/scripts/k8s/k3s-offline-bundle-ui-minimal.sh' --remote"
