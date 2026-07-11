@@ -4,7 +4,7 @@ flowchart TB
   end
 
   subgraph app [cxado-app]
-    UIM[egregore-ui-minimal :30300]
+    UIM[egregore-ui Next.js :30300/30301]
     EAPI[egregore-api :30880]
     Worker[egregore-worker]
     SIEM[siem-mcp :8094 ClusterIP]
@@ -33,7 +33,6 @@ flowchart TB
   end
 
   TLS -->|30300 UI+API same-origin| UIM
-  TLS -->|30300| EAPI
   TLS --> Arch
   TLS --> Graf
   TLS --> Prom

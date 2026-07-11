@@ -44,10 +44,6 @@ k3s_hostpaths:
     owner: bbv
     group: bbv
     mode: "0755"
-  - path: /home/bbv/cxado/ui-minimal
-    owner: bbv
-    group: bbv
-    mode: "0755"
   - path: /var/lib/cxado/prom-multiproc
     owner: root
     group: root

@@ -123,6 +123,10 @@ main() {
     "CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' CXADO_OFFLINE_SUDO_PW='***REDACTED***' ./scripts/k8s/k3s-offline-bundle-obs.sh" \
     "CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' CXADO_OFFLINE_SUDO_PW='${CXADO_OFFLINE_SUDO_PW:-$SUDO_PW}' ./scripts/k8s/k3s-offline-bundle-obs.sh"
 
+  run_public \
+    "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' CXADO_OFFLINE_SUDO_PW='***REDACTED***' ./scripts/k8s/k3s-offline-bundle-egregore-ui.sh" \
+    "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' CXADO_OFFLINE_SUDO_PW='${CXADO_OFFLINE_SUDO_PW:-$SUDO_PW}' ./scripts/k8s/k3s-offline-bundle-egregore-ui.sh"
+
   # One-time kubeconfig setup so we can run kubectl/helm without sudo afterwards.
   run_public \
     "ssh ... 'sudo install /home/bbv/.kube/config (redacted pw)'" \
@@ -174,13 +178,9 @@ main() {
   run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} apply -f -\" < '${ROOT}/deploy/k8s/obs-offline/32-promtail.yaml'"
   run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} -n cxado-obs rollout restart deploy/prometheus deploy/grafana deploy/tempo deploy/loki || true\""
 
-  log "install egregore via helm (backend-only; ui-minimal deployed below)"
+  log "install egregore via helm (api + worker + Next.js UI)"
   run "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' POSTGRES_PASSWORD='***' REDIS_PASSWORD='***' '${ROOT}/scripts/k8s/egregore-helm-upgrade.sh'" \
     "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' POSTGRES_PASSWORD='${POSTGRES_PASSWORD}' REDIS_PASSWORD='${REDIS_PASSWORD}' BUS_SIGNING_KEY='${BUS_SIGNING_KEY:-}' '${ROOT}/scripts/k8s/egregore-helm-upgrade.sh'"
-
-  log "deploy ui-minimal static console (Next.js UI disabled)"
-  run "CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' '${ROOT}/scripts/k8s/k3s-offline-bundle-ui-minimal.sh' --remote"
-  run "'${ROOT}/scripts/k8s/k3s-deploy-ui-minimal-offline.sh' --skip-bundle"
 
   log "apply tls gateway (https nodeports) and show status"
   run "'${ROOT}/scripts/k8s/offline-tls-apply.sh'"

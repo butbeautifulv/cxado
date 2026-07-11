@@ -44,7 +44,7 @@ Evidence pattern (not verbatim — pods deleted after rollback):
 
 | Symptom | Category | Notes |
 |---------|----------|-------|
-| `egregore-ui` ImagePullBackOff | `image_pull` | Next.js UI not bundled in default offline path — use `ui.replicas: 0` + ui-minimal, or bundle UI first |
+| `egregore-ui` ImagePullBackOff | `image_pull` | Bundle UI first: `k3s-offline-bundle-egregore-ui.sh`, then `egregore-helm-upgrade.sh` |
 
 ## Diagnosis workflow
 

@@ -11,8 +11,8 @@ Default node: `CXADO_NODE_IP=192.168.0.133` (USB WiFi). Corp NAT: `10.8.185.15` 
 | Prometheus | `https://${CXADO_NODE_IP}:30091` | TLS gateway (no basic auth) | API: `/api/v1/query`, UI: `/graph` |
 | Grafana | `https://${CXADO_NODE_IP}:30002` | `admin` + secret `grafana-auth` | Dashboards below |
 | Langfuse | `https://${CXADO_NODE_IP}:30001` | API keys in egregore secrets | Project `egregore-dev`; session = `engagement_id` |
-| Egregore UI | `https://${CXADO_NODE_IP}:30301` | Per deployment | Operator console |
-| Egregore API | `https://${CXADO_NODE_IP}:30300/v1/` | Per `AUTH_ENABLED` | Health: `/health` |
+| Egregore UI | `https://${CXADO_NODE_IP}:30300` or `:30301` | Per deployment | Operator console (Next.js) |
+| Egregore API | `https://${CXADO_NODE_IP}:30300/v1/` | Per `AUTH_ENABLED` | Same-origin on :30300; direct: `/health` |
 | Egregore metrics (gateway) | `https://${CXADO_NODE_IP}:30880/metrics` | None via gateway | Scraped in-cluster as `egregore-api:8080` |
 
 Port matrix: [deploy/ports.md](../../deploy/ports.md)

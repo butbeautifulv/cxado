@@ -2,7 +2,8 @@
 window.CXADO_SERVICES = {
   defaultHost: "10.8.185.15",
   external: [
-    { port: 30300, name: "Egregore minimal console", group: "app", path: "/", hint: "Static ui-minimal · same-origin /v1/ /catalog/" },
+    { port: 30300, name: "Egregore Operator UI", group: "app", path: "/", hint: "Next.js egregore-ui · same-origin /v1/ /catalog/" },
+    { port: 30301, name: "Egregore UI (direct)", group: "app", path: "/", hint: "Next.js egregore-ui proxy" },
     { port: 30880, name: "Egregore API", group: "app", path: "/health", hint: "FastAPI · /status · /metrics" },
     { port: 30990, name: "Veil API", group: "app", path: "/health", hint: "Graph HTTP API" },
     { port: 30991, name: "Veil MCP", group: "app", path: "/health", hint: "MCP Streamable HTTP" },

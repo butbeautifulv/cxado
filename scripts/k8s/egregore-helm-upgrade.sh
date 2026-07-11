@@ -2,12 +2,12 @@
 # Incremental egregore helm upgrade on k3s offline (no full redeploy).
 #
 # Production model:
-#   1. Preflight: backend image must exist in k3s containerd.
-#   2. helm upgrade WITHOUT --wait (never block on unrelated/broken UI).
-#   3. Blocking gate: verify-egregore-rollout.sh (api + worker only).
-#   4. UI: disabled by default in values-egregore-offline.yaml (ui.replicas=0).
-#      Operator console: ui-minimal on cxado-edge. Full Next.js UI is opt-in:
-#      bundle image first, then EGREGORE_UI_REPLICAS=2 ./scripts/k8s/egregore-helm-upgrade.sh
+#   1. Preflight: backend + egregore-ui images must exist in k3s containerd.
+#   2. helm upgrade WITHOUT --wait (never block on unrelated pods).
+#   3. Blocking gate: verify-egregore-rollout.sh (api + worker + ui).
+#
+# Bundle UI before upgrade:
+#   CXADO_OFFLINE_TAG=offline-YYYYMMDD ./scripts/k8s/k3s-offline-bundle-egregore-ui.sh
 #
 # Always passes postgres/redis/bus secrets so empty values cannot wipe secrets.
 #
@@ -86,7 +86,7 @@ if [[ "${UI_REPLICAS}" != "0" ]]; then
   fi
   log "preflight ok: ${UI_IMAGE} (ui.replicas=${UI_REPLICAS})"
 else
-  log "ui.replicas=0 — operator UI via cxado-edge ui-minimal (see k3s-offline-bundle-ui-minimal.sh)"
+  log "ui.replicas=0 — skip egregore-ui preflight"
 fi
 
 ssh -p "${SSH_PORT}" "${SSH_HOST}" \

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build egregore backend image and import into k3s containerd on the target.
-# Next.js UI (egregore-ui) is not built — use ui-minimal static console instead.
+# Bundle Next.js UI separately: k3s-offline-bundle-egregore-ui.sh
 #
 # Usage:
 #   CXADO_OFFLINE_TAG=offline-YYYYMMDD ./scripts/k8s/k3s-offline-bundle-egregore.sh

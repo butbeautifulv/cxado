@@ -4,8 +4,8 @@ Default profile `cxado-default`: Veil graph + egregore infra + observability. Eg
 
 | Port | Service | Stack | Notes | k8s (kind) |
 |------|---------|-------|-------|------------|
-| 3000 | egregore Operator UI (Next.js) | host only | `make -C projects/egregore dev` / local `npm run dev` | — |
-| 30300 | egregore API + ui-minimal | k3s offline | TLS gateway: API paths (`/v1/`, `/health`, `/metrics`) + static ui-minimal | egregore-ui-minimal SVC |
+| 3000 | egregore Operator UI (Next.js) | host only | `make -C projects/egregore dev` / local `bun run dev` | — |
+| 30300 | egregore API + Operator UI | k3s offline | TLS gateway: API paths (`/v1/`, `/health`, `/metrics`) + Next.js UI (`egregore-ui`) same-origin | egregore-api + egregore-ui |
 | 30301 | egregore Operator UI (Next.js) | k3s offline | Helm `egregore-ui`; API via in-cluster `/api/egregore` proxy | egregore-ui SVC |
 | 30001 | Langfuse UI | k3s offline | TLS gateway | langfuse SVC |
 | 30002 | Grafana | k3s offline | TLS gateway | grafana.cxado-obs |
