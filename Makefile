@@ -3,6 +3,9 @@
 	cxado-local-e2e \
 	cxado-kind-up cxado-kind-down cxado-k8s-build-images cxado-tf-init cxado-tf-apply cxado-tf-destroy \
 	cxado-k8s-up cxado-k8s-status cxado-k8s-smoke cxado-graph-bootstrap cxado-tf-validate agent-skills-install \
+	k3s-baseline k3s-baseline-critical k3s-cluster-snapshot \
+	k3s-validation-gate k3s-validation-infra \
+	egregore-typecheck egregore-typecheck-tests-core \
 	wshobson-skills-install help
 
 help:
@@ -30,6 +33,13 @@ help:
 	@echo "  cxado-k8s-smoke   Post-deploy smoke tests"
 	@echo "  cxado-graph-bootstrap  One-shot Neo4j seed (GRAPH_PACK_SKIP=0)"
 	@echo "  cxado-tf-validate terraform validate in deploy/terraform/cxado-kind"
+	@echo "  k3s-baseline           Collect full k3s Prometheus baseline snapshot"
+	@echo "  k3s-baseline-critical  Collect critical-query subset only"
+	@echo "  k3s-validation-gate     Phase 9 full validation (infra + scenarios + report)"
+	@echo "  k3s-validation-infra    Phase 9 infra-only gate (fast)"
+	@echo "  k3s-cluster-snapshot   SSH kubectl dump for cxado offline cluster"
+	@echo "  egregore-typecheck     ty check production paths (egregore)"
+	@echo "  egregore-typecheck-tests-core  ty check domain + core flow tests"
 	@echo "  skills-link     Symlink shared/skills into project .agents/skills/"
 	@echo "  skills-install  Symlink cxado-skills into ~/.cursor/skills/"
 	@echo "  refs-link       Symlink shared/references into project refs/"
@@ -116,6 +126,10 @@ cxado-smoke-veil-mcp:
 	@chmod +x projects/egregore/scripts/smoke_veil_mcp.sh
 	@./projects/egregore/scripts/smoke_veil_mcp.sh
 
+cxado-smoke-veil-mcp-k3s:
+	@chmod +x projects/egregore/scripts/smoke_veil_mcp.sh
+	@CXADO_OFFLINE_SSH_HOST="$(CXADO_OFFLINE_SSH_HOST)" ./projects/egregore/scripts/smoke_veil_mcp.sh
+
 .PHONY: cxado-up-veil cxado-up-siem-mcp cxado-up-tenable-mcp cxado-up-defectdojo-mcp cxado-smoke-veil-mcp cxado-smoke-tenable-mcp cxado-smoke-defectdojo-mcp
 
 cxado-validate-grafana:
@@ -179,3 +193,45 @@ cxado-graph-bootstrap:
 
 cxado-tf-validate:
 	@cd deploy/terraform/cxado-kind && terraform init -backend=false && terraform validate
+
+k3s-baseline:
+	@chmod +x scripts/k8s/collect-k3s-baseline.sh
+	@./scripts/k8s/collect-k3s-baseline.sh
+
+k3s-baseline-critical:
+	@chmod +x scripts/k8s/collect-k3s-baseline.sh
+	@BASELINE_CRITICAL_ONLY=1 ./scripts/k8s/collect-k3s-baseline.sh
+
+k3s-cluster-snapshot:
+	@chmod +x scripts/k8s/collect-k3s-cluster-snapshot.sh
+	@./scripts/k8s/collect-k3s-cluster-snapshot.sh
+
+k3s-validation-gate:
+	@chmod +x scripts/k8s/run-k3s-validation-gate.sh \
+		scripts/k8s/run-validation-scenarios.sh \
+		scripts/k8s/generate-k3s-after-report.sh
+	@./scripts/k8s/run-k3s-validation-gate.sh
+
+k3s-validation-infra:
+	@chmod +x scripts/k8s/run-k3s-validation-gate.sh \
+		scripts/k8s/generate-k3s-after-report.sh
+	@VALIDATION_SKIP_SCENARIOS=1 VALIDATION_SKIP_OBSERVE=1 VALIDATION_SKIP_BENCHMARK=1 \
+		./scripts/k8s/run-k3s-validation-gate.sh
+
+egregore-typecheck:
+	cd projects/egregore && uv run ty check cys_core bootstrap interfaces connectors
+
+egregore-typecheck-tests-core:
+	cd projects/egregore && uv run ty check tests/domain \
+	  tests/application/test_enqueue_worker_jobs.py \
+	  tests/application/test_route_and_enqueue.py \
+	  tests/application/test_plan_investigation_parallel.py \
+	  tests/application/test_plan_investigation_ports.py \
+	  tests/application/test_plan_investigation_catalog.py \
+	  tests/application/test_bus_loop_guard.py \
+	  tests/workers/test_orchestrator.py \
+	  tests/workers/test_orchestrator_branches.py \
+	  tests/worker/test_sequential_enqueue.py \
+	  tests/contracts/test_job_queue_port.py \
+	  tests/application/port_fakes.py \
+	  tests/application/workers/factory.py

@@ -11,18 +11,38 @@ groups:
           summary: Egregore API scrape target is down
           description: Prometheus cannot scrape egregore-api for more than 2 minutes.
 
+      - alert: EgregoreWorkerScrapeDown
+        expr: |
+          count(up{job="egregore-worker"} == 1)
+          <
+          count(kube_pod_status_phase{namespace="cxado-app",pod=~"egregore-worker-.*",phase="Running"} == 1)
+        for: 2m
+        labels:
+          severity: critical
+          platform: egregore
+        annotations:
+          summary: Egregore worker metrics scrape is incomplete
+          description: One or more Running egregore-worker pods are not being scraped.
+
       - alert: EgregoreWorkerJobErrors
-        expr: sum(rate(cys_worker_job_duration_seconds_count{status="error"}[5m])) > 0
-        for: 5m
+        expr: |
+          (
+            sum by (persona) (rate(cys_worker_job_duration_seconds_count{job="egregore-worker",status="error"}[15m]))
+            /
+            sum by (persona) (rate(cys_worker_job_duration_seconds_count{job="egregore-worker"}[15m]))
+          ) > 0.5
+          and
+          sum by (persona) (increase(cys_worker_job_duration_seconds_count{job="egregore-worker"}[1h])) >= 5
+        for: 15m
         labels:
           severity: warning
           platform: egregore
         annotations:
-          summary: Egregore worker jobs are failing
-          description: Worker job error rate is above zero for 5 minutes.
+          summary: Egregore worker error ratio is high
+          description: Worker job error ratio exceeded 50% for a persona with sufficient volume.
 
       - alert: EgregoreHITLBacklog
-        expr: cys_hitl_pending_total > 10
+        expr: cys_hitl_pending_total{job="egregore-api"} > 10
         for: 15m
         labels:
           severity: warning
@@ -35,15 +55,136 @@ groups:
         expr: |
           histogram_quantile(
             0.95,
-            sum(rate(cys_worker_job_duration_seconds_bucket[5m])) by (le)
-          ) > 120
+            sum(rate(cys_worker_job_duration_seconds_bucket{job="egregore-worker",persona!~"soc|conductor"}[10m])) by (le, persona)
+          ) > 300
         for: 10m
         labels:
           severity: warning
           platform: egregore
         annotations:
           summary: Worker p95 latency is high
-          description: Worker job p95 latency exceeded 120 seconds.
+          description: Worker job p95 latency exceeded 300 seconds for a non-soc persona.
+
+      - alert: EgregoreWorkerLatencyHighSoc
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(cys_worker_job_duration_seconds_bucket{job="egregore-worker",persona="soc"}[10m])) by (le)
+          ) > 480
+        for: 10m
+        labels:
+          severity: warning
+          platform: egregore
+        annotations:
+          summary: SOC worker p95 latency is high
+          description: SOC worker job p95 latency exceeded 480 seconds.
+
+      - alert: EgregoreWorkerMetricsStale
+        expr: |
+          (time() - max(cys_worker_job_duration_seconds_count{job="egregore-worker"})) > 600
+          and
+          max(cys_investigations_active{job="egregore-api"}) > 0
+        for: 10m
+        labels:
+          severity: warning
+          platform: egregore
+        annotations:
+          summary: Egregore worker metrics appear stale
+          description: No fresh worker job metrics while investigations are active.
+
+      - alert: EgregoreWorkerUnknownFailures
+        expr: increase(cys_worker_job_failures_total{job="egregore-worker",reason="unknown"}[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          platform: egregore
+        annotations:
+          summary: Unclassified worker job failures detected
+          description: Worker jobs failed with reason=unknown; check worker_job_failed logs and extend classifier.
+
+      - alert: EgregoreWorkerTimeoutSpike
+        expr: |
+          (
+            sum(rate(cys_worker_job_failures_total{job="egregore-worker",reason="timeout"}[15m]))
+            /
+            sum(rate(cys_worker_job_failures_total{job="egregore-worker"}[15m]))
+          ) > 0.5
+          and
+          sum(increase(cys_worker_job_failures_total{job="egregore-worker"}[1h])) >= 3
+        for: 15m
+        labels:
+          severity: warning
+          platform: egregore
+        annotations:
+          summary: Worker timeout failures dominate
+          description: More than half of worker failures are timeouts in the last 15 minutes.
+
+      - alert: EgregoreWorkerToolErrors
+        expr: |
+          sum(rate(cys_worker_job_failures_total{job="egregore-worker",reason=~"tool_error|tool_invalid_args"}[15m])) > 0.05
+          and
+          sum(increase(cys_worker_job_failures_total{job="egregore-worker"}[1h])) >= 3
+        for: 15m
+        labels:
+          severity: warning
+          platform: egregore
+        annotations:
+          summary: Worker tool-related failures elevated
+          description: tool_error or tool_invalid_args failures are increasing; check cys_tool_invocations_total and Veil MCP smoke.
+
+      - alert: EgregorePodsPending
+        expr: |
+          sum(kube_pod_status_phase{namespace="cxado-app",phase="Pending",pod=~"egregore-.*"}) > 0
+        for: 5m
+        labels:
+          severity: warning
+          platform: egregore
+        annotations:
+          summary: Egregore pods stuck Pending
+          description: Run scripts/k8s/diagnose-pending-pods.sh and see docs/observability/k3s-rollout-pending-diagnosis.md
+
+      - alert: EgregoreReplicaDrift
+        expr: |
+          kube_deployment_status_replicas_available{namespace="cxado-app",deployment=~"egregore-api|egregore-worker"}
+          <
+          kube_deployment_spec_replicas{namespace="cxado-app",deployment=~"egregore-api|egregore-worker"}
+        for: 10m
+        labels:
+          severity: warning
+          platform: egregore
+        annotations:
+          summary: Egregore deployment ready replicas below desired
+          description: Check rollout health with scripts/k8s/verify-egregore-rollout.sh
+
+      - alert: EgregoreIntelWorkerTimeout
+        expr: increase(cys_worker_job_timeout_total{job="egregore-worker",persona="intel"}[30m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          platform: egregore
+        annotations:
+          summary: Intel worker jobs timed out
+          description: Check Langfuse worker.agent.run duration and WORKER_JOB_TIMEOUT_INTEL.
+
+      - alert: EgregoreInvestigationsStuck
+        expr: cys_investigations_active{job="egregore-api"} > 5
+        for: 2h
+        labels:
+          severity: warning
+          platform: egregore
+        annotations:
+          summary: Many investigations remain active
+          description: Possible stuck running engagements; check reconcile loop and engagement API.
+
+      - alert: EgregoreVeilToolErrors
+        expr: increase(cys_tool_invocations_total{tool="ti_search_in_category",result="error"}[15m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          platform: egregore
+        annotations:
+          summary: Veil ti_search_in_category errors
+          description: Run make cxado-smoke-veil-mcp-k3s and inspect veil_mcp_tool_failed logs.
 
       - alert: TempoDown
         expr: up{job="tempo"} == 0

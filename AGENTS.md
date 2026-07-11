@@ -64,3 +64,6 @@ Full routing + pitfalls: [docs/agents/cursor-mcp-tooling.md](docs/agents/cursor-
 - [docs/integration/egregore-veil-mcp.md](docs/integration/egregore-veil-mcp.md) — egregore ↔ veil-mcp (wired, read-only graph tools)
 - [docs/integration/egregore-siem-mcp.md](docs/integration/egregore-siem-mcp.md) — egregore ↔ maxpatrol-siem-mcp (SOC SIEM tools)
 - [docs/integration/egregore-tenable-mcp.md](docs/integration/egregore-tenable-mcp.md) — egregore ↔ tenable-mcp (Nessus vulnerability inventory)
+- [docs/observability/README.md](docs/observability/README.md) — k3s offline observability, validation gate, worker telemetry
+- [docs/deploy/k3s-offline-baseline.md](docs/deploy/k3s-offline-baseline.md) — offline lab k3s deploy baseline
+- [deploy/k8s/defectdojo-offline/README.md](deploy/k8s/defectdojo-offline/README.md) — DefectDojo in-cluster ASPM (`:30808`)

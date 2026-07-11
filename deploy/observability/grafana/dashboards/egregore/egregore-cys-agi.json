@@ -64,14 +64,14 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(cys_worker_job_duration_seconds_count, persona)",
+        "definition": "label_values(cys_worker_job_duration_seconds_count{job=\"egregore-worker\"}, persona)",
         "hide": 0,
         "includeAll": true,
         "label": "Persona",
         "multi": true,
         "name": "persona",
         "query": {
-          "query": "label_values(cys_worker_job_duration_seconds_count, persona)",
+          "query": "label_values(cys_worker_job_duration_seconds_count{job=\"egregore-worker\"}, persona)",
           "refId": "Prometheus-persona"
         },
         "refresh": 2,
@@ -449,7 +449,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(cys_events_ingested_total[$__rate_interval])) by (event_type)",
+          "expr": "sum(rate(cys_events_ingested_total{job=\"egregore-api\"}[$__rate_interval])) by (event_type)",
           "refId": "A",
           "range": true,
           "legendFormat": "{{event_type}}"
@@ -508,7 +508,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(cys_worker_job_duration_seconds_bucket{persona=~\"$persona\"}[$__rate_interval])) by (le, persona))",
+          "expr": "histogram_quantile(0.95, sum(rate(cys_worker_job_duration_seconds_bucket{job=\"egregore-worker\",persona=~\"$persona\"}[$__rate_interval])) by (le, persona))",
           "refId": "A",
           "range": true,
           "legendFormat": "{{persona}}"
@@ -567,7 +567,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(cys_worker_job_duration_seconds_count{persona=~\"$persona\"}[$__rate_interval])) by (persona, status)",
+          "expr": "sum(rate(cys_worker_job_duration_seconds_count{job=\"egregore-worker\",persona=~\"$persona\"}[$__rate_interval])) by (persona, status)",
           "refId": "A",
           "range": true,
           "legendFormat": "{{persona}} {{status}}"
@@ -638,7 +638,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(cys_sanitizer_blocks_total[$__rate_interval])) by (source, verdict)",
+          "expr": "sum(rate(cys_sanitizer_blocks_total{job=\"egregore-worker\"}[$__rate_interval])) by (source, verdict)",
           "refId": "A",
           "range": true,
           "legendFormat": "{{source}} {{verdict}}"
@@ -713,7 +713,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(cys_approval_bypass_attempts_total[$__rate_interval])) by (reason)",
+          "expr": "sum(rate(cys_approval_bypass_attempts_total{job=\"egregore-worker\"}[$__rate_interval])) by (reason)",
           "refId": "A",
           "range": true,
           "legendFormat": "{{reason}}"
@@ -784,7 +784,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(cys_rag_retrievals_total[$__rate_interval])) by (tenant, denied)",
+          "expr": "sum(rate(cys_rag_retrievals_total{job=\"egregore-worker\"}[$__rate_interval])) by (tenant, denied)",
           "refId": "A",
           "range": true,
           "legendFormat": "{{tenant}} denied={{denied}}"
@@ -843,7 +843,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(cys_tool_invocations_total[$__rate_interval])) by (tool, result)",
+          "expr": "sum(rate(cys_tool_invocations_total{job=\"egregore-worker\"}[$__rate_interval])) by (tool, result)",
           "refId": "A",
           "range": true,
           "legendFormat": "{{tool}} {{result}}"
@@ -914,7 +914,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(cys_job_tokens_total{persona=~\"$persona\"}[$__rate_interval])) by (persona)",
+          "expr": "sum(rate(cys_job_tokens_total{job=\"egregore-worker\",persona=~\"$persona\"}[$__rate_interval])) by (persona)",
           "refId": "A",
           "range": true,
           "legendFormat": "{{persona}}"
@@ -973,7 +973,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(cys_job_cost_usd_total{persona=~\"$persona\"}[$__rate_interval])) by (persona)",
+          "expr": "sum(rate(cys_job_cost_usd_total{job=\"egregore-worker\",persona=~\"$persona\"}[$__rate_interval])) by (persona)",
           "refId": "A",
           "range": true,
           "legendFormat": "{{persona}}"
@@ -1032,7 +1032,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "cys_agent_trust_score{persona=~\"$persona\"}",
+          "expr": "cys_agent_trust_score{job=\"egregore-worker\",persona=~\"$persona\"}",
           "refId": "A",
           "range": true,
           "legendFormat": "{{persona}}"
@@ -1103,7 +1103,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "cys_catalog_version",
+          "expr": "cys_catalog_version{job=\"egregore-api\"}",
           "refId": "A",
           "range": true,
           "legendFormat": "{{profile_id}}"

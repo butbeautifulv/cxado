@@ -124,8 +124,13 @@ Agent entry points per project: [AGENTS.md](AGENTS.md).
 | `make gui-link` | Symlink `@cxado/gui` into consumer `node_modules` |
 | `make agent-skills-install` | Fetch infra/agent skills into `.agents/skills/` |
 | `make cxado-up` | Veil graph + egregore infra + observability (Docker) |
-| `make cxado-up-lite` | Lite profile: no Tempo, Langfuse, 1 worker |
+| `make cxado-up-lite` | Lite profile: no Tempo, **with** Langfuse, 1 worker |
 | `make cxado-status` | Health checks for default stack |
+| `make k3s-baseline` | Collect full k3s Prometheus baseline snapshot |
+| `make k3s-baseline-critical` | Collect critical-query baseline subset |
+| `make k3s-cluster-snapshot` | Capture k3s cluster state snapshot |
+| `make k3s-validation-gate` | Phase 9 full validation (infra + scenarios) |
+| `make k3s-validation-infra` | Phase 9 infra-only gate (fast) |
 | `make test-contracts` | Cross-repo `engage.events` wire smoke |
 
 ## Agent development & MCP
@@ -174,6 +179,9 @@ Local artifact: `.codebase-memory/graph.db.zst` (gitignored; optional team share
 | [docs/ecosystem-map.md](docs/ecosystem-map.md) | Public catalog, rules/skills layers, project matrix |
 | [docs/adr/cxado-architecture.md](docs/adr/cxado-architecture.md) | Architecture ADR |
 | [docs/deploy/cxado-default-stack.md](docs/deploy/cxado-default-stack.md) | Local dev stack runbook |
+| [docs/observability/README.md](docs/observability/README.md) | k3s observability runbooks, validation gate, SLO |
+| [docs/deploy/k3s-offline-baseline.md](docs/deploy/k3s-offline-baseline.md) | offline lab k3s baseline |
+| [deploy/k8s/defectdojo-offline/README.md](deploy/k8s/defectdojo-offline/README.md) | DefectDojo in-cluster ASPM |
 | [deploy/README.md](deploy/README.md) | Compose layout and profiles |
 | [docs/bootstrap-smoke-test.md](docs/bootstrap-smoke-test.md) | Post-clone checklist |
 | [docs/legacy-cleanup.md](docs/legacy-cleanup.md) | Migration from `.external/` |

@@ -32,7 +32,9 @@ groups:
           description: Veil graph API/MCP 5xx responses exceed threshold.
 
       - alert: VeilIngestWorkerErrors
-        expr: sum(rate(veil_nats_messages_total{worker="ingest",status="error"}[5m])) > 0
+        expr: |
+          sum(rate(veil_nats_messages_total{worker="ingest",status="error"}[5m])) > 0
+          and count(up{job="veil-ingest-worker"}) > 0
         for: 5m
         labels:
           severity: warning
