@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Minimal local stack: postgres + redis + Langfuse + Prometheus/Grafana (no veil/kafka/qdrant).
+# Minimal local stack: veil (graph-lite) + postgres + redis + Langfuse + Prometheus/Grafana (no kafka/qdrant).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -9,6 +9,7 @@ COMPOSE_DIR="$ROOT/deploy/compose"
 NETWORK="${CXADO_NETWORK:-cxado-net}"
 PROFILE="${CXADO_PROFILE:-minimal}"
 SECRETS_FILE="$ROOT/deploy/.secrets/egregore-local.env"
+VEIL_COMPOSE="$COMPOSE_DIR/veil-graph-lite.yml"
 
 if [[ -f "$ROOT/deploy/profiles/${PROFILE}.env" ]]; then
   set -a
@@ -32,6 +33,13 @@ fi
 if ! docker network inspect "$NETWORK" >/dev/null 2>&1; then
   log "creating network $NETWORK"
   docker network create "$NETWORK" >/dev/null
+fi
+
+log "starting veil graph (neo4j + api + mcp)..."
+if curl -sf -m 3 "http://localhost:8090/health" >/dev/null 2>&1; then
+  log "veil-api already healthy on :8090 — skipping veil compose"
+else
+  docker compose -f "$VEIL_COMPOSE" --profile mcp up -d --build
 fi
 
 log "starting egregore infra (postgres + redis)..."
@@ -58,6 +66,8 @@ wait_http() {
   log "$name ok ($url)"
 }
 
+wait_http "veil-api" "http://localhost:8090/health" 120 || true
+wait_http "veil-mcp" "http://localhost:8091/health" 120 || true
 wait_http "grafana" "http://localhost:3002/api/health" 30 || true
 wait_http "prometheus" "http://localhost:9091/-/healthy" 30 || true
 wait_http "langfuse" "http://localhost:3001/api/public/health" 90 || true
@@ -69,7 +79,9 @@ else
 fi
 
 echo ""
-echo "cxado-minimal stack is up (no veil, no kafka, no qdrant)."
+echo "cxado-minimal stack is up (veil graph-lite, no kafka, no qdrant)."
+echo "  veil-api:    http://localhost:8090/health"
+echo "  veil-mcp:    http://localhost:8091/health"
 echo "  langfuse:    http://localhost:3001"
 if [[ -f "$ROOT/projects/egregore/deploy/langfuse/.env" ]]; then
   pk=$(grep -E '^LANGFUSE_INIT_PROJECT_PUBLIC_KEY=' "$ROOT/projects/egregore/deploy/langfuse/.env" | cut -d= -f2- || true)
@@ -82,8 +94,12 @@ echo "  prometheus:  http://localhost:9091/targets"
 echo "  egregore:    http://localhost:8080/health  (after dev)"
 echo ""
 echo "Next:"
-echo "  make cxado-up-veil                    # veil graph + MCP for tool enrichment"
 echo "  WORKER_REPLICAS=1 make -C projects/egregore dev"
 echo ""
+echo "Veil MCP in projects/egregore/.env:"
+echo "  VEIL_MCP_URL=http://localhost:8091/mcp"
+echo "  VEIL_MCP_ENABLED=true"
+echo ""
 echo "Smoke:"
+echo "  make cxado-smoke-veil-mcp"
 echo "  cd projects/egregore && uv run egregore agent consultant -i 'ping'"

@@ -199,6 +199,12 @@
       "skillPath": "plugins/frontend-mobile-development/skills/nextjs-app-router-patterns/SKILL.md",
       "computedHash": "b4fea42eecf1f803155ef7fa133d5286ee8f2dbba3e616954e9e43c6f0ffc144"
     },
+    "oauth2-authentication": {
+      "source": "manutej/luxor-claude-marketplace",
+      "sourceType": "github",
+      "skillPath": "plugins/luxor-backend-toolkit/skills/oauth2-authentication/SKILL.md",
+      "computedHash": "0929973e5ba2c440a843b01b906a0f9b9ac8e8ca724c7de6e02950c8bd3db853"
+    },
     "openapi-spec-generation": {
       "source": "wshobson/agents",
       "sourceType": "github",
