@@ -13,7 +13,7 @@ help:
 	@echo "  bootstrap       Initialize and update git submodules"
 	@echo "  cxado-up        Full stack: veil + egregore infra + obs (Tempo, Qdrant)"
 	@echo "  cxado-up-lite   Lite profile: no Tempo, 1 worker; includes Qdrant + Langfuse"
-	@echo "  cxado-up-minimal  Agents-only: postgres+redis+langfuse+grafana (no veil/kafka)"
+	@echo "  cxado-up-minimal  Agents-only: veil-lite + postgres+redis+langfuse+grafana (no kafka/qdrant)"
 	@echo "  cxado-up-veil     Veil graph-only (neo4j+api+mcp) on cxado-net"
 	@echo "  cxado-up-siem-mcp MaxPatrol SIEM MCP HTTP on :8094 (host process)"
 	@echo "  cxado-up-tenable-mcp Nessus MCP HTTP on :8095 (host process)"

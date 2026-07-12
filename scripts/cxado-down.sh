@@ -10,6 +10,7 @@ PROFILE="${CXADO_PROFILE:-default}"
 
 case "$PROFILE" in
   minimal)
+    VEIL_COMPOSE="$COMPOSE_DIR/veil-graph-lite.yml"
     EGRESSORE_COMPOSE="$COMPOSE_DIR/egregore-minimal.yml"
     OBS_COMPOSE="$COMPOSE_DIR/observability-lite.yml"
     ;;

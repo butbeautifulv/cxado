@@ -49,6 +49,20 @@ services:
     networks:
       - cxado-net
 
+  openfga:
+    image: openfga/openfga:latest
+    profiles: ["fga"]
+    command: ["run"]
+    environment:
+      OPENFGA_DATASTORE_ENGINE: memory
+      OPENFGA_LOG_FORMAT: json
+    ports:
+      - "8088:8080"
+      - "8089:8081"
+      - "3008:3000"
+    networks:
+      - cxado-net
+
 networks:
   cxado-net:
     external: true

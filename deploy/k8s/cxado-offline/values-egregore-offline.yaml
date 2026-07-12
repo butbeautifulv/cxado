@@ -62,6 +62,14 @@ env:
   kafkaBootstrapServers: "redpanda.cxado-data.svc.cluster.local:9092"
   useQdrant: "true"
   authEnabled: "false"
+  authzMode: "off"
+
+# Prod profile (enable via helm -f values-egregore-prod-auth.yaml):
+#   authEnabled: "true"
+#   authzMode: "shadow"
+  openfgaApiUrl: ""
+  openfgaStoreId: ""
+  openfgaModelId: ""
   otelEnabled: "true"
   logLevel: "INFO"
   logFormat: "json"
@@ -134,6 +142,7 @@ langfuse:
   secretKey: "sk-lf-egregore-dev-local"
 
 busSigningKey: ""
+openfgaApiToken: ""
 
 llm:
   provider: litellm

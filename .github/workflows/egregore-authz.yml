@@ -1,0 +1,26 @@
+name: Egregore AuthZ
+
+on:
+  push:
+    paths:
+      - "projects/egregore/**"
+      - ".github/workflows/egregore-authz.yml"
+  pull_request:
+    paths:
+      - "projects/egregore/**"
+
+jobs:
+  authz-gate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/egregore
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install deps
+        run: uv sync
+      - name: FGA validate
+        run: make fga-validate
+      - name: API + authz tests
+        run: USE_MEMORY_FALLBACK=true STAGE=test uv run pytest tests/api/ tests/authz/ tests/adversarial/test_authz_enforce.py -q
