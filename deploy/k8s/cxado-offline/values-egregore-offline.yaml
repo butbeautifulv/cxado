@@ -8,52 +8,35 @@ ui:
     repository: "__CXADO_UI_IMAGE_REPO__"
     tag: "__CXADO_OFFLINE_TAG__"
     pullPolicy: IfNotPresent
-  # Operator UI (Next.js) in cxado-app; bundle: k3s-offline-bundle-egregore-ui.sh
-  replicas: 1
-  # Offline images are imported via ctr on the control-plane only.
-  nodeSelector:
-    node-role.kubernetes.io/control-plane: "true"
-  tolerations:
-    - key: node-role.kubernetes.io/control-plane
-      operator: Exists
-      effect: NoSchedule
+  replicas: 2
 
 api:
-  replicas: 1
+  replicas: 4
   port: 8080
-  nodeSelector:
-    node-role.kubernetes.io/control-plane: "true"
-  tolerations:
-    - key: node-role.kubernetes.io/control-plane
-      operator: Exists
-      effect: NoSchedule
+  uvicornWorkers: 3
 
 worker:
-  # P30 single-node: steady 2 workers, HPA max 3 — see k3s-capacity-budget.md
-  replicas: 2
+  replicas: 8
   idleTimeout: 0
   metricsPort: 8081
-  # Offline images imported via ctr on control-plane only; avoid ImagePullBackOff on corp workers.
-  nodeSelector:
-    node-role.kubernetes.io/control-plane: "true"
-  tolerations:
-    - key: node-role.kubernetes.io/control-plane
-      operator: Exists
-      effect: NoSchedule
   hpa:
     enabled: true
-    minReplicas: 2
-    maxReplicas: 3
+    minReplicas: 8
+    maxReplicas: 8
     targetCPUUtilization: 65
+
+topologySpread:
+  enabled: true
+  maxSkew: 1
+  whenUnsatisfiable: DoNotSchedule
 
 rollout:
   api:
-    maxSurge: 1
-    maxUnavailable: 0
-  worker:
-    # P30: no surge pod — replace one worker at a time to avoid quota/scheduling spikes
-    maxSurge: 0
+    maxSurge: 2
     maxUnavailable: 1
+  worker:
+    maxSurge: 1
+    maxUnavailable: 2
 
 env:
   stage: prod
@@ -78,7 +61,7 @@ env:
   llmRequestTimeout: "120"
   workerJobTimeout: "300"
   workerJobTimeoutIntel: "420"
-  workerJobTimeoutSynth: "180"
+  workerJobTimeoutSynth: "300"
   defaultJobRecursionLimit: "35"
   triageRecursionLimit: "22"
   maxPlannerPersonas: "2"
@@ -89,6 +72,27 @@ env:
   streamAgentTools: "true"
   streamAgentTokenStreaming: "true"
   controlMode: "inprocess"
+
+  # 2ENV operator tunables (optional; defaults in bootstrap/settings.py)
+  jobCostPer1kTokensUsd: "0.003"
+  defaultPersonaMaxToolCalls: "50"
+  criticTrustThreshold: "0.5"
+  criticDefaultConfidence: "0.5"
+  reconcileSynthesisStaleMultiplier: "2.0"
+  reconcileScanLimit: "50"
+  workerTriageMaxAttempts: "2"
+  workerMaxAttempts: "3"
+  busSeenTtlSeconds: "300"
+  kafkaConsumeTimeoutS: "1.0"
+  httpConnectTimeoutS: "10"
+  httpReadTimeoutS: "120"
+  apiGaugeRefreshIntervalS: "30"
+  apiReconcileIntervalS: "300"
+  apiReconcileLeaderTtlS: "280"
+  followUpMergeQueryLimit: "30"
+  followUpMergeSummaryMax: "400"
+  waybackApiTimeoutS: "20"
+  egregoreMetricsPort: "9091"
 
 obs:
   traceBackend: "composite"
@@ -152,15 +156,15 @@ llm:
   reasoningModel: ""
   reasoningTemperature: "0.0"
 
-# Per-pod caps; HPA max 3 workers × limits ≈ 3.6 CPU / 4.5Gi for egregore workers alone.
+# Per-pod caps; 8 workers × limits ≈ 9.6 CPU / 12Gi for egregore workers alone.
 resources:
   api:
     requests:
-      cpu: 150m
-      memory: 512Mi
+      cpu: 300m
+      memory: 768Mi
     limits:
-      cpu: 500m
-      memory: 1Gi
+      cpu: 1500m
+      memory: 1536Mi
   worker:
     requests:
       cpu: 200m
