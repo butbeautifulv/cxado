@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-TENABLE_DIR="$ROOT/projects/tenable-mcp"
+TENABLE_DIR="$ROOT/projects/precursor/tenable-mcp"
 PORT="${TENABLE_MCP_PORT:-8095}"
 PID_FILE="${TMPDIR:-/tmp}/cxado-tenable-mcp.pid"
 LOG_FILE="${TMPDIR:-/tmp}/cxado-tenable-mcp.log"

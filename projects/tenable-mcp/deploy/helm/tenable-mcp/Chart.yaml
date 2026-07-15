@@ -1,6 +1,0 @@
-apiVersion: v2
-name: tenable-mcp
-description: Nessus MCP server for egregore vulnerability inventory
-type: application
-version: 0.1.0
-appVersion: "0.1.0"

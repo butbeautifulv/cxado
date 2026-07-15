@@ -2,7 +2,7 @@
 repos:
   - slug: butbeautifulv/cxado
     path: .
-    description: "cxado meta-repo — Veil, Egregore, Veneno, Fabrica, shared hubs, deploy"
+    description: "cxado meta-repo — Veil, Egregore, Veneno, Fabrica, precursor MCP, shared hubs, deploy"
   - slug: butbeautifulv/veil
     path: projects/veil
     description: "Neo4j TI graph — discovery, pipeline, knowledge; veil-api + veil-mcp"
@@ -15,12 +15,15 @@ repos:
   - slug: butbeautifulv/veneno
     path: projects/veneno
     description: "Pentest execution layer — veneno-api + veneno-mcp"
-  - slug: butbeautifulv/maxpatrol-siem-mcp
-    path: projects/maxpatrol-siem-mcp
-    description: "MaxPatrol SIEM MCP server for egregore SOC tools"
-  - slug: butbeautifulv/tenable-mcp
-    path: projects/tenable-mcp
-    description: "Tenable Nessus vulnerability inventory MCP"
-  - slug: butbeautifulv/defectdojo-mcp
-    path: projects/defectdojo-mcp
-    description: "DefectDojo ASPM findings MCP for egregore"
+  - slug: butbeautifulv/precursor
+    path: projects/precursor
+    description: "Private MCP monorepo — MaxPatrol SIEM, Tenable Nessus, DefectDojo for egregore"
+  - slug: butbeautifulv/tabula
+    path: ~/Desktop/tabula
+    description: "Compliance domain umbrella — fstec module, measures and reporting"
+  - slug: butbeautifulv/fstec
+    path: ~/Desktop/tabula/fstec
+    description: "FSTEC security measures control — orgs, orders, compliance reporting"
+  - slug: butbeautifulv/hexenhammer
+    path: ~/Desktop/hexenhammer
+    description: "Security awareness — phishing simulation, campaigns, SMTP delivery (module 1)"

@@ -4,7 +4,8 @@
     { "path": "projects/veil", "name": "Veil (knowledge)" },
     { "path": "projects/veneno", "name": "Veneno (pentest)" },
     { "path": "projects/egregore", "name": "Egregore" },
-    { "path": "projects/fabrica", "name": "Fabrica" }
+    { "path": "projects/fabrica", "name": "Fabrica" },
+    { "path": "projects/precursor", "name": "Precursor (MCP)" }
   ],
   "settings": {
     "git.detectSubmodules": false,
@@ -17,6 +18,7 @@
       "/home/bbv/Desktop/cys_framework/projects/veneno",
       "/home/bbv/Desktop/cys_framework/projects/egregore",
       "/home/bbv/Desktop/cys_framework/projects/fabrica",
+      "/home/bbv/Desktop/cys_framework/projects/precursor",
       "/home/bbv/Desktop/cys_framework"
     ],
     "git.repositoryScanIgnoredFolders": [

@@ -97,27 +97,27 @@ cxado-up-veil:
 	@./scripts/cxado-up-veil.sh
 
 cxado-up-siem-mcp:
-	@chmod +x scripts/cxado-up-siem-mcp.sh projects/maxpatrol-siem-mcp/scripts/smoke_mcp.sh
+	@chmod +x scripts/cxado-up-siem-mcp.sh projects/precursor/maxpatrol-siem-mcp/scripts/smoke_mcp.sh
 	@./scripts/cxado-up-siem-mcp.sh
 
 cxado-up-tenable-mcp:
-	@chmod +x scripts/cxado-up-tenable-mcp.sh projects/tenable-mcp/scripts/smoke_mcp.sh
+	@chmod +x scripts/cxado-up-tenable-mcp.sh projects/precursor/tenable-mcp/scripts/smoke_mcp.sh
 	@./scripts/cxado-up-tenable-mcp.sh
 
 cxado-smoke-tenable-mcp:
-	@chmod +x projects/tenable-mcp/scripts/smoke_mcp.sh
-	@./projects/tenable-mcp/scripts/smoke_mcp.sh
+	@chmod +x projects/precursor/tenable-mcp/scripts/smoke_mcp.sh
+	@./projects/precursor/tenable-mcp/scripts/smoke_mcp.sh
 
 cxado-up-defectdojo-mcp:
-	@chmod +x scripts/cxado-up-defectdojo-mcp.sh projects/defectdojo-mcp/scripts/smoke_mcp.sh
+	@chmod +x scripts/cxado-up-defectdojo-mcp.sh projects/precursor/defectdojo-mcp/scripts/smoke_mcp.sh
 	@./scripts/cxado-up-defectdojo-mcp.sh
 
 cxado-smoke-defectdojo-mcp:
-	@chmod +x projects/defectdojo-mcp/scripts/smoke_mcp.sh
-	@./projects/defectdojo-mcp/scripts/smoke_mcp.sh
+	@chmod +x projects/precursor/defectdojo-mcp/scripts/smoke_mcp.sh
+	@./projects/precursor/defectdojo-mcp/scripts/smoke_mcp.sh
 
 siem-mcp-scrape-docs:
-	@cd projects/maxpatrol-siem-mcp && uv sync --all-groups && uv run python scripts/scrape_api_docs.py
+	@cd projects/precursor/maxpatrol-siem-mcp && uv sync --all-groups && uv run python scripts/scrape_api_docs.py
 
 cxado-smoke-veil-mcp:
 	@chmod +x projects/egregore/scripts/smoke_veil_mcp.sh

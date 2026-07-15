@@ -32,8 +32,8 @@ export DOCKER_BUILDKIT=1
 log "docker build cxado/defectdojo-mcp:${TAG}"
 docker build \
   -t "cxado/defectdojo-mcp:${TAG}" \
-  -f "${ROOT}/projects/defectdojo-mcp/Dockerfile" \
-  "${ROOT}/projects/defectdojo-mcp"
+  -f "${ROOT}/projects/precursor/defectdojo-mcp/Dockerfile" \
+  "${ROOT}/projects/precursor/defectdojo-mcp"
 
 OUT_TAR="/tmp/cxado_offline_defectdojo_mcp_${TAG}.tar"
 log "docker save -> ${OUT_TAR}"
@@ -54,7 +54,7 @@ else
 fi
 
 rsync -a -e "ssh -p ${SSH_PORT}" \
-  "${ROOT}/projects/defectdojo-mcp/deploy/helm/defectdojo-mcp" \
+  "${ROOT}/projects/precursor/defectdojo-mcp/deploy/helm/defectdojo-mcp" \
   "${SSH_HOST}:/tmp/defectdojo-mcp-helm"
 
 ssh -p "${SSH_PORT}" "${SSH_HOST}" "${KCTL} create ns ${NS_APP} 2>/dev/null || true"

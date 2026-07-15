@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-DD_DIR="$ROOT/projects/defectdojo-mcp"
+DD_DIR="$ROOT/projects/precursor/defectdojo-mcp"
 PORT="${DEFECTDOJO_MCP_PORT:-8096}"
 PID_FILE="${TMPDIR:-/tmp}/cxado-defectdojo-mcp.pid"
 LOG_FILE="${TMPDIR:-/tmp}/cxado-defectdojo-mcp.log"

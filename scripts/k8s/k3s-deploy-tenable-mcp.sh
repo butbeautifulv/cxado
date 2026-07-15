@@ -32,8 +32,8 @@ export DOCKER_BUILDKIT=1
 log "docker build cxado/tenable-mcp:${TAG}"
 docker build \
   -t "cxado/tenable-mcp:${TAG}" \
-  -f "${ROOT}/projects/tenable-mcp/Dockerfile" \
-  "${ROOT}/projects/tenable-mcp"
+  -f "${ROOT}/projects/precursor/tenable-mcp/Dockerfile" \
+  "${ROOT}/projects/precursor/tenable-mcp"
 
 OUT_TAR="/tmp/cxado_offline_tenable_mcp_${TAG}.tar"
 log "docker save -> ${OUT_TAR}"
@@ -54,7 +54,7 @@ else
 fi
 
 rsync -a -e "ssh -p ${SSH_PORT}" \
-  "${ROOT}/projects/tenable-mcp/deploy/helm/tenable-mcp" \
+  "${ROOT}/projects/precursor/tenable-mcp/deploy/helm/tenable-mcp" \
   "${SSH_HOST}:/tmp/tenable-mcp-helm"
 
 ssh -p "${SSH_PORT}" "${SSH_HOST}" "${KCTL} create ns ${NS_APP} 2>/dev/null || true"

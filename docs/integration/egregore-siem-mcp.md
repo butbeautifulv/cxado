@@ -18,7 +18,7 @@ make bootstrap
 For local dev without k8s:
 
 ```bash
-# Configure projects/maxpatrol-siem-mcp/.env
+# Configure projects/precursor/maxpatrol-siem-mcp/.env
 make cxado-up-siem-mcp
 make -C projects/egregore dev
 ```
@@ -60,10 +60,10 @@ SIEM_MCP_TIMEOUT=180
 
 See [`projects/egregore/docs/trace-audit-checklist.md`](../../projects/egregore/docs/trace-audit-checklist.md) — SIEM MCP section.
 
-Smoke: `projects/maxpatrol-siem-mcp/scripts/smoke_mcp.sh`
+Smoke: `projects/precursor/maxpatrol-siem-mcp/scripts/smoke_mcp.sh`
 
 ## References
 
 - [deploy/ports.md](../../deploy/ports.md) — port **8094**
-- [maxpatrol-siem-mcp README](../../projects/maxpatrol-siem-mcp/README.md)
+- [maxpatrol-siem-mcp README](../../projects/precursor/maxpatrol-siem-mcp/README.md)
 - [egregore-veil-mcp.md](egregore-veil-mcp.md) — parallel pattern

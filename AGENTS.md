@@ -8,6 +8,7 @@ Meta-repo umbrella. Load project-specific rules from each submodule:
 | Veneno | `projects/veneno/` | [AGENTS.md](projects/veneno/AGENTS.md) — pentest execution |
 | Egregore | `projects/egregore/` (API root + `ui/`) | [AGENTS.md](projects/egregore/AGENTS.md) |
 | Fabrica | `projects/fabrica/` | [AGENTS.md](projects/fabrica/AGENTS.md) |
+| Precursor | `projects/precursor/` | MCP adapters (SIEM, Nessus, DefectDojo) — [README](projects/precursor/README.md) |
 
 ## MCP-first (mandatory)
 
@@ -45,7 +46,7 @@ Full routing + pitfalls: [docs/agents/cursor-mcp-tooling.md](docs/agents/cursor-
 |--------|-------|
 | `cys-agi` (repo) | `projects/egregore` |
 | `ci-cd-template` | `projects/fabrica` |
-| hexenhammer / tabula / fstec / asoc-api | **Out of scope** — `~/Desktop/` |
+| hexenhammer / tabula / fstec / asoc-api | **Out of scope** — standalone on `~/Desktop/` |
 | cxado-agent-rules / cxado-skills / cxado-references / cxado-gui | merged into `shared/*` in cxado meta-repo |
 
 ## Shared hubs

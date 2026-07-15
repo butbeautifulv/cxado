@@ -22,7 +22,7 @@ HELM="KUBECONFIG=/home/bbv/.kube/config helm"
 log() { printf '[k3s-deploy-siem-mcp] %s\n' "$*"; }
 
 if [[ ! -f "${SECRETS_ENV}" ]]; then
-  echo "missing ${SECRETS_ENV} — copy from projects/maxpatrol-siem-mcp/.env" >&2
+  echo "missing ${SECRETS_ENV} — copy from projects/precursor/maxpatrol-siem-mcp/.env" >&2
   exit 2
 fi
 
@@ -32,8 +32,8 @@ export DOCKER_BUILDKIT=1
 log "docker build cxado/siem-mcp:${TAG}"
 docker build \
   -t "cxado/siem-mcp:${TAG}" \
-  -f "${ROOT}/projects/maxpatrol-siem-mcp/Dockerfile" \
-  "${ROOT}/projects/maxpatrol-siem-mcp"
+  -f "${ROOT}/projects/precursor/maxpatrol-siem-mcp/Dockerfile" \
+  "${ROOT}/projects/precursor/maxpatrol-siem-mcp"
 
 OUT_TAR="/tmp/cxado_offline_siem_mcp_${TAG}.tar"
 log "docker save -> ${OUT_TAR}"
@@ -54,7 +54,7 @@ else
 fi
 
 rsync -a -e "ssh -p ${SSH_PORT}" \
-  "${ROOT}/projects/maxpatrol-siem-mcp/deploy/helm/siem-mcp" \
+  "${ROOT}/projects/precursor/maxpatrol-siem-mcp/deploy/helm/siem-mcp" \
   "${SSH_HOST}:/tmp/siem-mcp-helm"
 
 ssh -p "${SSH_PORT}" "${SSH_HOST}" "${KCTL} create ns ${NS_APP} 2>/dev/null || true"
