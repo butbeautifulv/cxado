@@ -23,9 +23,15 @@ All repositories under [butbeautifulv](https://github.com/butbeautifulv) that fo
 | `projects/egregore` | [egregore](https://github.com/butbeautifulv/egregore) | Event-driven multi-agent SOC + Operator UI (`ui/`) | Python, FastAPI, Next.js |
 | `projects/fabrica` | [fabrica](https://github.com/butbeautifulv/fabrica) | DevSecOps CI/CD reference (`adopt.sh`) | YAML, scripts |
 
-### Out of cxado scope (removed submodules)
+### Out of cxado scope (standalone on ~/Desktop/)
 
-Local clones on `~/Desktop/`: hexenhammer, tabula, asoc-api.
+hexenhammer (awareness), tabula (compliance + fstec submodule), asoc-api.
+
+### Integration MCP (submodule)
+
+| Path | Repository | Role |
+|------|------------|------|
+| `projects/precursor` | [precursor](https://github.com/butbeautifulv/precursor) | Private monorepo: maxpatrol-siem-mcp, tenable-mcp, defectdojo-mcp |
 
 ### Shared hubs (in meta-repo)
 
@@ -37,9 +43,6 @@ Local clones on `~/Desktop/`: hexenhammer, tabula, asoc-api.
 | `shared/gui/` | `@cxado/gui` UI kit (`make gui-link`) |
 | `shared/contracts/` | Wire schemas — `make test-contracts` |
 | `shared/go/auth-broker/` | OAuth2 M2M token broker |
-| `projects/maxpatrol-siem-mcp/` | MaxPatrol SIEM MCP server for egregore |
-| `projects/tenable-mcp/` | Tenable Nessus MCP server |
-| `projects/defectdojo-mcp/` | DefectDojo ASPM MCP server |
 | `deploy/` | Unified Docker Compose (`make cxado-up`) |
 | `docs/` | ADR, ecosystem map, integration runbooks |
 | `docs/architecture-site/` | Visual architecture landing — k3s port **30080** |

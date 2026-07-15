@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SIEM_DIR="$ROOT/projects/maxpatrol-siem-mcp"
+SIEM_DIR="$ROOT/projects/precursor/maxpatrol-siem-mcp"
 PORT="${SIEM_MCP_PORT:-8094}"
 PID_FILE="${TMPDIR:-/tmp}/cxado-siem-mcp.pid"
 LOG_FILE="${TMPDIR:-/tmp}/cxado-siem-mcp.log"

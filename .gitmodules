@@ -10,3 +10,6 @@
 [submodule "projects/veneno"]
 	path = projects/veneno
 	url = https://github.com/butbeautifulv/veneno.git
+[submodule "projects/precursor"]
+	path = projects/precursor
+	url = https://github.com/butbeautifulv/precursor.git

@@ -18,7 +18,7 @@ make bootstrap
 For local dev without k8s:
 
 ```bash
-# Configure projects/tenable-mcp/.env
+# Configure projects/precursor/tenable-mcp/.env
 make cxado-up-tenable-mcp
 make -C projects/egregore dev
 ```
@@ -58,10 +58,10 @@ NESSUS_MCP_TIMEOUT=180
 
 ## Verification
 
-Smoke: `projects/tenable-mcp/scripts/smoke_mcp.sh` or `make cxado-smoke-tenable-mcp`
+Smoke: `projects/precursor/tenable-mcp/scripts/smoke_mcp.sh` or `make cxado-smoke-tenable-mcp`
 
 ## References
 
 - [deploy/ports.md](../../deploy/ports.md) — port **8095**
-- [tenable-mcp README](../../projects/tenable-mcp/README.md)
+- [tenable-mcp README](../../projects/precursor/tenable-mcp/README.md)
 - [egregore-siem-mcp.md](egregore-siem-mcp.md) — parallel pattern

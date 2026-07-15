@@ -34,7 +34,7 @@ embed_one() {
 }
 
 if [[ $# -eq 0 ]]; then
-  set -- projects/veil projects/veneno projects/egregore projects/fabrica
+  set -- projects/veil projects/veneno projects/egregore projects/fabrica projects/precursor
 fi
 
 for path in "$@"; do
