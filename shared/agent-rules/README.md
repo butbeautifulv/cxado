@@ -18,4 +18,4 @@ Project-specific overlays stay in each submodule (e.g. `projects/egregore/.agent
 | `agent-critic.mdc` | Orchestrator review gate |
 | `kaizen.mdc` | 5 Whys on failures |
 | `agent-documentation.mdc` | Post-merge doc actualization |
-| `agent-mcp-tooling.mdc` | MCP-first: codebase-memory, Serena, Context7 |
+| `agent-mcp-tooling.mdc` | Context7 + scoped search for internal code |

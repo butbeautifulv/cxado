@@ -12,7 +12,7 @@ cd cxado
 make bootstrap
 ```
 
-`make bootstrap` runs: `git submodule update --init --recursive`, then `refs-link`, `skills-link`, `skills-install`, `gui-link`. Shared hubs (`shared/*`) are **in-tree** in cxado — not submodules. Core Cursor rules: `shared/agent-rules/core/` + `.cursor/rules/` at meta root.
+`make bootstrap` runs: `git submodule update --init --recursive`, then `skills-link`, `skills-install`, `gui-link`, and cleanup of legacy symlinks. Shared hubs (`shared/*`) are **in-tree** in cxado — not submodules. Reference corpora live in **`refs/`** at meta root (gitignored, ~1 GB local). Core Cursor rules: `shared/agent-rules/core/` + `.cursor/rules/` at meta root.
 
 ### Default local stack
 
@@ -45,7 +45,7 @@ Open multi-root workspace: **`cxado.code-workspace`**
 
 ## Architecture (from codebase index)
 
-Indexed graph (codebase-memory-mcp, 2026-06): **~57k nodes**, **~151k edges**. Canonical write-up: [docs/adr/cxado-architecture.md](docs/adr/cxado-architecture.md) · visual map: [docs/ecosystem-map.md](docs/ecosystem-map.md).
+Indexed architecture (2026-06 baseline): **~57k nodes**, **~151k edges** (historical graph index; **codebase-memory-mcp removed 2026-07**). Canonical write-up: [docs/adr/cxado-architecture.md](docs/adr/cxado-architecture.md) · visual map: [docs/ecosystem-map.md](docs/ecosystem-map.md).
 
 ```mermaid
 flowchart LR
@@ -95,7 +95,7 @@ Agent entry points per project: [AGENTS.md](AGENTS.md).
 |------|---------|
 | `shared/agent-rules/` | Core Cursor rules — `.cursor/rules/` at cxado root |
 | `shared/skills/` | DevSecOps + agent skills (`make skills-install`) |
-| `shared/references/` | JCSF, DAF, OWASP extracts — **gitignored**, local populate + `make refs-link` |
+| `refs/` | JCSF, DAF, OWASP extracts — **gitignored**, local populate (see `refs/README.md`) |
 | `shared/gui/` | `@cxado/gui` UI kit (`make gui-link`) |
 | `shared/contracts/` | Wire schemas (`make test-contracts`) |
 
@@ -103,10 +103,10 @@ Agent entry points per project: [AGENTS.md](AGENTS.md).
 
 | Target | What it does |
 |--------|----------------|
-| `make bootstrap` | Submodules + refs/skills/gui link + skills install |
+| `make bootstrap` | Submodules + skills/gui link + skills install + legacy symlink cleanup |
 | `make skills-install` | Symlink `shared/skills` → `~/.cursor/skills/` |
 | `make skills-link` | Symlink devsecops skills into fabrica |
-| `make refs-link` | Symlink `shared/references` → project `refs/` |
+| `make refs-cleanup` | Remove legacy `projects/*/refs` symlinks (SSOT: `refs/` at meta root) |
 | `make gui-link` | Symlink `@cxado/gui` into consumer `node_modules` |
 | `make agent-skills-install` | Fetch infra/agent skills into `.agents/skills/` |
 | `make cxado-up` | Veil graph + egregore infra + observability (Docker) |
@@ -121,32 +121,15 @@ Agent entry points per project: [AGENTS.md](AGENTS.md).
 
 ## Agent development & MCP
 
-Cursor agents in this workspace use an **MCP-first** workflow — explore with codebase-memory and Serena before blind grep.
+Cursor agents: **Context7** for third-party library docs; **scoped Grep/Read** for internal code.
 
-| MCP | Use for |
-|-----|---------|
-| **codebase-memory-mcp** | Architecture, `search_code`, `trace_path` — always scope with `path_filter` |
-| **Serena** | `find_symbol`, renames — always set `relative_path` to the submodule |
-| **Context7** | Third-party library docs (shadcn, Next.js, Tailwind) |
+| Tool | Use for |
+|------|---------|
+| **Context7** | Third-party library docs (shadcn, Next.js, Tailwind, FastAPI) |
 | **cursor-ide-browser** | UI smoke tests |
-
-```text
-# Example: find auth code in egregore
-search_code(pattern="KeycloakJwtVerifier",
-  project="home-bbv-Desktop-cys_framework",
-  path_filter="projects/egregore", file_pattern="*.py")
-```
+| **Grep / Read / Glob** | Internal code — always scope to `projects/<submodule>/` |
 
 Docs: [docs/agents/cursor-mcp-tooling.md](docs/agents/cursor-mcp-tooling.md) · enforcement rule: `shared/agent-rules/core/agent-mcp-tooling.mdc`
-
-**Re-index** after large structural changes:
-
-```bash
-./scripts/reindex-post-merge.sh
-# then via MCP: index_repository(repo_path="...", mode="full", persistence=true)
-```
-
-Local artifact: `.codebase-memory/graph.db.zst` (gitignored; optional team share).
 
 ## Data flows (partial / planned)
 
@@ -175,7 +158,7 @@ More: [observability](docs/observability/README.md) · [k3s baseline](docs/deplo
 |-----|-----|
 | Copy repos into `.external/` by hand | `git clone cxado && make bootstrap` |
 | Per-project skills copies | `make skills-install` |
-| JCSF/DAF in multiple trees | `shared/references/` + `make refs-link` |
+| JCSF/DAF in multiple trees | `refs/` at cxado meta root (no per-project symlinks) |
 | Local `projects/fstec` clone | removed — use `~/Desktop/tabula` if needed |
 
 Legacy `.external/` at workspace root is **removed**.
