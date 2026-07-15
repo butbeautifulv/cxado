@@ -4,10 +4,10 @@
 |-------|-------|
 | Status | accepted |
 | Date | 2026-06-24 |
-| Source | codebase-memory-mcp (`get_architecture` + `manage_adr`) |
-| Index | `.codebase-memory/graph.db.zst` (~57k nodes, ~151k edges, re-indexed 2026-06-24) |
+| Source | docs/adr + ecosystem-map (git SSOT) |
+| Index | historical graph (~57k nodes, ~151k edges, 2026-06); codebase-memory-mcp **removed** 2026-07 |
 
-Canonical copy for git and human review. Agents can also load this via MCP `manage_adr(mode='get', project='home-bbv-Desktop-cys_framework')`. After major structural changes, re-index with `index_repository` and update this file if the ADR drifts.
+Canonical copy for git and human review. Update this file when architecture changes.
 
 See also: [ecosystem-map.md](../ecosystem-map.md), [AGENTS.md](../../AGENTS.md).
 
@@ -25,7 +25,7 @@ cxado (cys_framework) is a meta-repository umbrella for cybersecurity products: 
 - **Veil / Veneno:** Go, Neo4j/NATS where applicable
 - **Egregore:** Python, event-driven multi-agent SOC; optional Keycloak JWT on API and tool gateway (`AUTH_ENABLED`)
 - **Fabrica:** YAML CI/CD templates, DevSecOps scripts
-- **Bootstrap:** `make bootstrap` → submodules, skills-link, refs-link, gui-link
+- **Bootstrap:** `make bootstrap` → submodules, skills-link, gui-link, legacy symlink cleanup
 
 ## ARCHITECTURE
 
@@ -82,12 +82,11 @@ flowchart TB
 ## TRADEOFFS
 
 - **Monorepo workspace vs submodule autonomy:** core platform products are submodules; out-of-scope repos live on `~/Desktop/`
-- **MCP cross-repo boundaries** are partly similarity/import artifacts — validate with `trace_path` before trusting fan-in counts
+- **MCP cross-repo boundaries** in historical graph indexes were partly similarity artifacts — validate with code review and scoped grep
 
 ## PHILOSOPHY
 
 - **Hubs over copies:** one canonical place for rules, skills, references, GUI primitives
 - **Domains over monolith:** separate product lines may leave the meta-repo when out of scope
 - **Agent-native docs:** AGENTS.md per project + ecosystem-map + this ADR for session continuity
-- **Agent MCP (Cursor):** mandatory routing via `core-agent-mcp-tooling.mdc` — codebase-memory-mcp + Serena + Context7 — see [docs/agents/cursor-mcp-tooling.md](../agents/cursor-mcp-tooling.md)
-- **Index artifact:** `.codebase-memory/graph.db.zst` for team bootstrap; re-index after major structural changes
+- **Agent MCP (Cursor):** Context7 for library docs; scoped grep/read for internal code — see [docs/agents/cursor-mcp-tooling.md](../agents/cursor-mcp-tooling.md)
