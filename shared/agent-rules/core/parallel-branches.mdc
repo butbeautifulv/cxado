@@ -1,0 +1,37 @@
+---
+description: Parallel phase work — one git branch per stream, merge via PR after critic
+alwaysApply: true
+---
+
+# Parallel branches (cxado core)
+
+Use **separate git branches** so multiple agents can work different phases concurrently. Phase rhythm: [core-workflow-chain.mdc](core-workflow-chain.mdc).
+
+## Branch naming
+
+Use the prefix defined in project overlay (e.g. `cys-agi/phase-<NN>-<slug>`, `engage/phase-<NN>-<slug>`).
+
+- `<NN>` = phase number from master plan.
+- `<slug>` = short kebab-case from phase title.
+
+## Starting a phase
+
+From up-to-date `main`, create the branch and record it in the status table. Push and open a PR; **do not merge** unless critic APPROVE or the user explicitly asked.
+
+## Concurrency
+
+- Independent phases: separate branches OK.
+- Serial dependencies: wait for merge, then `git rebase origin/main`.
+- **One branch = one phase.**
+
+## Merge discipline
+
+| Rule | Action |
+|------|--------|
+| Merge soon | After critic APPROVE, merge within the same work wave |
+| One source of truth | New work from `git pull origin main` |
+| Before next parallel stream | Merge completed phases first |
+
+After merge: run project verify commands from overlay, then notify open branches to rebase.
+
+Git hygiene (secrets, `.gitignore`): [core-workflow-chain.mdc](core-workflow-chain.mdc).

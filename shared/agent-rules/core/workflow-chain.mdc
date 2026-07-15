@@ -1,0 +1,32 @@
+---
+description: Multi-phase agent workflow chain — plan, branch, implement, critic, document
+alwaysApply: true
+---
+
+# Workflow chain (cxado core)
+
+Generic phase rhythm. Stack-specific verify commands and architecture live in **project overlay** rules.
+
+## Chain
+
+1. **Master plan** — phase list, dependencies, status table (branch, owner).
+2. **Phase plan** — scope for the current phase only.
+3. **Branch** — from latest `main` per [core-parallel-branches.mdc](core-parallel-branches.mdc).
+4. **Implement** — one phase per branch; commit on branch; open PR.
+5. **Critic** — [core-agent-critic.mdc](core-agent-critic.mdc); APPROVE → merge `main`.
+6. **Master plan** — mark `done` with merge SHA.
+7. **Documentation** — [core-agent-documentation.mdc](core-agent-documentation.mdc).
+
+Do not stack unrelated phases on one branch unless the user explicitly requests a batch.
+
+## Before finishing a task
+
+1. Run verify commands from phase plan and project overlay.
+2. **Commit** with clear message (per phase when phased).
+3. **`git push origin HEAD`** unless the user forbade push.
+4. **Docs** — update plans and README/AGENTS if behavior changed.
+
+## Git hygiene
+
+- Never commit secrets, `.env`, or local runtime data.
+- Prefer focused `git add` over blind `git add -A` when large untracked trees exist.

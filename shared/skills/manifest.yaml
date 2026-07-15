@@ -1,0 +1,38 @@
+version: "1.0"
+skills:
+  - name: devsecops-template
+    path: devsecops/devsecops-template
+  - name: devsecops-phase-impl
+    path: devsecops/devsecops-phase-impl
+  - name: devsecops-reference-lookup
+    path: devsecops/devsecops-reference-lookup
+  - name: devsecops-secure-sdlc
+    path: devsecops/devsecops-secure-sdlc
+  - name: devsecops-daf
+    path: devsecops/devsecops-daf
+  - name: devsecops-gost
+    path: devsecops/devsecops-gost
+  - name: devsecops-jcsf
+    path: devsecops/devsecops-jcsf
+  - name: devsecops-fintech-sdlc
+    path: devsecops/devsecops-fintech-sdlc
+  - name: devsecops-tooling
+    path: devsecops/devsecops-tooling
+  - name: devsecops-governance
+    path: devsecops/devsecops-governance
+  - name: devsecops-mlsecops
+    path: devsecops/devsecops-mlsecops
+  - name: devsecops-ai-security
+    path: devsecops/devsecops-ai-security
+  - name: veil-karpathy-guidelines
+    path: veil/veil-karpathy-guidelines
+  - name: karpathy-guidelines
+    path: agent/karpathy-guidelines
+  - name: ai-agent-security
+    path: agent/ai-agent-security
+  - name: prompt-injection-defense
+    path: agent/prompt-injection-defense
+  - name: rag-security
+    path: agent/rag-security
+  - name: skill-supply-chain
+    path: agent/skill-supply-chain

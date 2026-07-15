@@ -1,6 +1,6 @@
 # cxado
 
-Meta-repository umbrella for the cxado cybersecurity product line: knowledge (Veil), pentest (Veneno), SOC agents (Egregore), DevSecOps reference (Fabrica), scan aggregation (ASOC API), plus domain products — compliance (Tabula/fstec) and awareness (Hexenhammer).
+Meta-repository umbrella for the cxado cybersecurity product line: knowledge (Veil), pentest (Veneno), SOC agents (Egregore), DevSecOps reference (Fabrica).
 
 Shared hubs DRY agent rules, skills, references, wire contracts, and UI (`@cxado/gui`).
 
@@ -12,7 +12,7 @@ cd cxado
 make bootstrap
 ```
 
-`make bootstrap` runs: `git submodule update --init --recursive`, then `refs-link`, `rules-link`, `skills-link`, `skills-install`, `gui-link`.
+`make bootstrap` runs: `git submodule update --init --recursive`, then `refs-link`, `skills-link`, `skills-install`, `gui-link`. Shared hubs (`shared/*`) are **in-tree** in cxado — not submodules. Core Cursor rules: `shared/agent-rules/core/` + `.cursor/rules/` at meta root.
 
 ### Default local stack
 
@@ -49,32 +49,21 @@ Indexed graph (codebase-memory-mcp, 2026-06): **~57k nodes**, **~151k edges**. C
 
 ```mermaid
 flowchart LR
-  subgraph entry [Entry / UI]
-    HEX[hexenhammer]
-    GUI["@cxado/gui"]
-  end
-
   subgraph core [Core hubs]
     EGG[egregore]
     VEN[veneno]
     REF[references]
+    GUI["@cxado/gui"]
   end
 
   subgraph knowledge [Knowledge]
     VEIL[veil]
   end
 
-  subgraph domains [Domains]
-    TAB[tabula]
-    FST[fstec]
-  end
-
   VEN -->|engage.events| VEIL
   VEIL --> EGG
   VEIL --> VEN
-  TAB --> FST
-  GUI -.-> FST
-  HEX -.-> VEIL
+  GUI -.-> VEIL
   REF --> EGG
   REF --> VEN
 ```
@@ -84,8 +73,8 @@ flowchart LR
 | Layer (MCP) | Module | Role |
 |-------------|--------|------|
 | core | egregore, veneno, references | High fan-in shared logic |
-| internal | veil, fabrica, asoc-api | Product backends / templates |
-| entry | hexenhammer, gui | Outbound UI and campaign surfaces |
+| internal | veil, fabrica | Product backends / templates |
+| entry | gui | Shared UI kit (`@cxado/gui`) |
 
 ## Projects
 
@@ -95,30 +84,27 @@ flowchart LR
 | `projects/veneno` | [veneno](https://github.com/butbeautifulv/veneno) | Pentest execution, tool catalog | Go |
 | `projects/egregore` | [egregore](https://github.com/butbeautifulv/egregore) | Event-driven multi-agent SOC | Python, FastAPI |
 | `projects/fabrica` | [fabrica](https://github.com/butbeautifulv/fabrica) | DevSecOps CI/CD reference | YAML, scripts |
-| `projects/asoc-api` | [asoc-api](https://github.com/butbeautifulv/asoc-api) | Scan aggregation → NATS | Go |
-| `projects/tabula` | [tabula](https://github.com/butbeautifulv/tabula) | Compliance domain umbrella | meta |
-| `projects/tabula/fstec` | [fstec](https://github.com/butbeautifulv/fstec) | FSTEC measures, orders, reporting | Next.js, Prisma |
-| `projects/hexenhammer` | [hexenhammer](https://github.com/butbeautifulv/hexenhammer) | Phishing simulation, campaigns | Next.js, Drizzle |
 
 Agent entry points per project: [AGENTS.md](AGENTS.md).
 
-## Shared hubs
+**Out of cxado scope** (removed from monorepo, local clones on `~/Desktop/`): hexenhammer, tabula, fstec, asoc-api.
 
-| Path | Repository | Purpose |
-|------|------------|---------|
-| `shared/agent-rules` | [cxado-agent-rules](https://github.com/butbeautifulv/cxado-agent-rules) | 7 core Cursor rules (`make rules-link`) |
-| `shared/skills` | [cxado-skills](https://github.com/butbeautifulv/cxado-skills) | DevSecOps + agent skills (`make skills-install`) |
-| `shared/references` | [cxado-references](https://github.com/butbeautifulv/cxado-references) | JCSF, DAF, OWASP, hexstrike extracts |
-| `shared/gui` | [cxado-gui](https://github.com/butbeautifulv/cxado-gui) | Compliance UI kit (`@cxado/gui`, `make gui-link`) |
-| `shared/contracts` | in meta-repo | Wire contracts (`make test-contracts`) |
+# Shared hubs (in meta-repo)
+
+| Path | Purpose |
+|------|---------|
+| `shared/agent-rules/` | Core Cursor rules — `.cursor/rules/` at cxado root |
+| `shared/skills/` | DevSecOps + agent skills (`make skills-install`) |
+| `shared/references/` | JCSF, DAF, OWASP extracts — **gitignored**, local populate + `make refs-link` |
+| `shared/gui/` | `@cxado/gui` UI kit (`make gui-link`) |
+| `shared/contracts/` | Wire schemas (`make test-contracts`) |
 
 ## Make targets
 
 | Target | What it does |
 |--------|----------------|
-| `make bootstrap` | Submodules + all link/install steps |
-| `make rules-link` | Symlink `shared/agent-rules/core/` → project `.cursor`/`.agents/rules` + meta-repo `.cursor/rules` |
-| `make skills-install` | Symlink cxado-skills → `~/.cursor/skills/` |
+| `make bootstrap` | Submodules + refs/skills/gui link + skills install |
+| `make skills-install` | Symlink `shared/skills` → `~/.cursor/skills/` |
 | `make skills-link` | Symlink devsecops skills into fabrica |
 | `make refs-link` | Symlink `shared/references` → project `refs/` |
 | `make gui-link` | Symlink `@cxado/gui` into consumer `node_modules` |
@@ -167,7 +153,6 @@ Local artifact: `.codebase-memory/graph.db.zst` (gitignored; optional team share
 | Flow | Mechanism | Status |
 |------|-----------|--------|
 | Veneno → Veil | `engage.events` (NATS) | wired; `make test-contracts` |
-| ASOC → Egregore | NATS | planned |
 | Fabrica → projects | `adopt.sh` CI templates | reference |
 | Egregore ↔ Veil | veil-mcp | [wired](docs/integration/egregore-veil-mcp.md) |
 
@@ -175,16 +160,14 @@ Local artifact: `.codebase-memory/graph.db.zst` (gitignored; optional team share
 
 | Doc | Contents |
 |-----|----------|
-| [AGENTS.md](AGENTS.md) | Agent index, MCP scoping cheat sheet |
-| [docs/ecosystem-map.md](docs/ecosystem-map.md) | Public catalog, rules/skills layers, project matrix |
-| [docs/adr/cxado-architecture.md](docs/adr/cxado-architecture.md) | Architecture ADR |
+| [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md) | **SSOT guide** — where to document what |
+| [docs/ecosystem-map.md](docs/ecosystem-map.md) | Public catalog, projects, data flows |
+| [docs/integration/README.md](docs/integration/README.md) | Cross-project wiring |
 | [docs/deploy/cxado-default-stack.md](docs/deploy/cxado-default-stack.md) | Local dev stack runbook |
-| [docs/observability/README.md](docs/observability/README.md) | k3s observability runbooks, validation gate, SLO |
-| [docs/deploy/k3s-offline-baseline.md](docs/deploy/k3s-offline-baseline.md) | offline lab k3s baseline |
-| [deploy/k8s/defectdojo-offline/README.md](deploy/k8s/defectdojo-offline/README.md) | DefectDojo in-cluster ASPM |
-| [deploy/README.md](deploy/README.md) | Compose layout and profiles |
-| [docs/bootstrap-smoke-test.md](docs/bootstrap-smoke-test.md) | Post-clone checklist |
-| [docs/legacy-cleanup.md](docs/legacy-cleanup.md) | Migration from `.external/` |
+| [AGENTS.md](AGENTS.md) | Agent index, MCP scoping |
+| [docs/adr/cxado-architecture.md](docs/adr/cxado-architecture.md) | Architecture ADR |
+
+More: [observability](docs/observability/README.md) · [k3s baseline](docs/deploy/k3s-offline-baseline.md) · [legacy cleanup](docs/legacy-cleanup.md)
 
 ## Migration from manual `.external/`
 
@@ -193,6 +176,6 @@ Local artifact: `.codebase-memory/graph.db.zst` (gitignored; optional team share
 | Copy repos into `.external/` by hand | `git clone cxado && make bootstrap` |
 | Per-project skills copies | `make skills-install` |
 | JCSF/DAF in multiple trees | `shared/references/` + `make refs-link` |
-| Local `projects/fstec` clone | `tabula/fstec` submodule |
+| Local `projects/fstec` clone | removed — use `~/Desktop/tabula` if needed |
 
 Legacy `.external/` at workspace root is **removed**.

@@ -1,20 +1,27 @@
 {
-  "git.detectSubmodules": true,
+  "git.detectSubmodules": false,
   "git.detectSubmodulesLimit": 20,
   "git.autoRepositoryDetection": true,
-  "git.repositoryScanMaxDepth": 3,
+  "git.openRepositoryInParentFolders": "never",
+  "git.repositoryScanMaxDepth": 6,
   "git.scanRepositories": [
-    "projects/egregore",
-    "projects/veil",
-    "projects/fabrica",
-    "projects/veneno",
-    "projects/asoc-api",
-    "projects/hexenhammer",
-    "projects/tabula",
-    "projects/tabula/fstec",
-    "shared/agent-rules",
-    "shared/skills",
-    "shared/references",
-    "shared/gui"
+    "/home/bbv/Desktop/cys_framework/projects/veil",
+    "/home/bbv/Desktop/cys_framework/projects/veneno",
+    "/home/bbv/Desktop/cys_framework/projects/egregore",
+    "/home/bbv/Desktop/cys_framework/projects/fabrica",
+    "/home/bbv/Desktop/cys_framework"
+  ],
+  "git.repositoryScanIgnoredFolders": [
+    "node_modules",
+    ".venv",
+    "venv",
+    "dist",
+    "build",
+    ".next",
+    "target",
+    "vendor",
+    "refs",
+    ".claude",
+    "shared/references"
   ]
 }

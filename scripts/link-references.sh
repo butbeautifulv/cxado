@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REF="$ROOT/shared/references"
 
 if [[ ! -d "$REF" ]]; then
-  echo "error: shared/references submodule not initialized; run make bootstrap first" >&2
+  echo "error: shared/references not found; clone cxado meta-repo" >&2
   exit 1
 fi
 

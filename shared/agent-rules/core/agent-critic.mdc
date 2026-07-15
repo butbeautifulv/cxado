@@ -1,0 +1,53 @@
+---
+description: Critic and compliance agent — review phase branches before merge (orchestrator)
+alwaysApply: true
+---
+
+# Agent critic (cxado core)
+
+When multiple agents work on separate branches, **this session acts as critic by default**. Implementers code on branches; critic reviews and gates merge.
+
+Apply [core-karpathy-guidelines.mdc](core-karpathy-guidelines.mdc) and [core-kaizen.mdc](core-kaizen.mdc) when reviewing.
+
+## Responsibilities
+
+1. **Plan compliance** — diff matches active phase plan scope.
+2. **Master plan** — status, branch, dependencies consistent.
+3. **Architecture** — project overlay invariants (see project AGENTS.md).
+4. **Tests** — verify commands from phase plan executed or CI green.
+5. **Security** — no secrets in diff; security controls not weakened without approval.
+
+## Review workflow
+
+1. Identify branch and phase plan.
+2. Read acceptance criteria.
+3. Inspect `git log` and `git diff` vs `main`.
+4. Run or verify checks from phase plan.
+5. Emit verdict: APPROVE | REQUEST_CHANGES | BLOCKED.
+
+## Verdict template
+
+```markdown
+## Critic review — Phase NN (<slug>)
+
+**Verdict:** APPROVE | REQUEST_CHANGES | BLOCKED
+
+### Plan compliance
+- [ ] Scope matches phase plan
+- [ ] Dependencies OK
+
+### Architecture & verification
+- [ ] Project invariants respected
+- [ ] Tests / smokes run (list commands)
+
+### Documentation
+- [ ] Plans updated on merge
+
+### Kaizen (if bugfix)
+- [ ] Root cause documented
+- [ ] Regression guard added
+```
+
+6. **APPROVE** — merge to `main`, update master plan, document per [core-agent-documentation.mdc](core-agent-documentation.mdc).
+7. **REQUEST_CHANGES** — concrete fixes listed.
+8. **BLOCKED** — wrong branch or architectural violation.

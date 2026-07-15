@@ -1,4 +1,4 @@
-.PHONY: bootstrap skills-install skills-link refs-link rules-link gui-link auth-broker-test test-contracts \
+.PHONY: bootstrap skills-install skills-link refs-link gui-link auth-broker-test test-contracts \
 	cxado-up cxado-up-lite cxado-up-minimal cxado-up-veil cxado-up-siem-mcp cxado-up-tenable-mcp cxado-up-defectdojo-mcp siem-mcp-scrape-docs cxado-down cxado-status cxado-obs-reload cxado-validate-grafana \
 	cxado-local-e2e \
 	cxado-kind-up cxado-kind-down cxado-k8s-build-images cxado-tf-init cxado-tf-apply cxado-tf-destroy \
@@ -6,6 +6,7 @@
 	k3s-baseline k3s-baseline-critical k3s-cluster-snapshot \
 	k3s-validation-gate k3s-validation-infra \
 	egregore-typecheck egregore-typecheck-tests-core \
+	sync-github-descriptions verify-doc-links \
 	wshobson-skills-install help
 
 help:
@@ -43,7 +44,6 @@ help:
 	@echo "  skills-link     Symlink shared/skills into project .agents/skills/"
 	@echo "  skills-install  Symlink cxado-skills into ~/.cursor/skills/"
 	@echo "  refs-link       Symlink shared/references into project refs/"
-	@echo "  rules-link      Symlink shared/agent-rules core into project rules/"
 	@echo "  gui-link        Symlink shared/gui into project node_modules/@cxado/gui"
 	@echo "  agent-skills-install  Fetch docker-expert + grafana-dashboards into .agents/skills/"
 	@echo "  wshobson-skills-install  Curated wshobson/agents skills (Python, LLM, k8s, UI, DevSecOps)"
@@ -61,9 +61,6 @@ skills-install:
 
 refs-link:
 	@./scripts/link-references.sh
-
-rules-link:
-	@./scripts/link-agent-rules.sh
 
 gui-link:
 	@./scripts/link-gui.sh
@@ -235,3 +232,11 @@ egregore-typecheck-tests-core:
 	  tests/contracts/test_job_queue_port.py \
 	  tests/application/port_fakes.py \
 	  tests/application/workers/factory.py
+
+sync-github-descriptions:
+	@chmod +x scripts/github/sync-descriptions.sh
+	@./scripts/github/sync-descriptions.sh
+
+verify-doc-links:
+	@chmod +x scripts/docs/verify-doc-links.sh
+	@./scripts/docs/verify-doc-links.sh

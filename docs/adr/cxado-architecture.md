@@ -15,16 +15,17 @@ See also: [ecosystem-map.md](../ecosystem-map.md), [AGENTS.md](../../AGENTS.md).
 
 ## PURPOSE
 
-cxado (cys_framework) is a meta-repository umbrella for cybersecurity products: knowledge (Veil), pentest execution (Veneno), SOC agents (Egregore), DevSecOps reference (Fabrica), scan aggregation (ASOC API), plus emerging domains — compliance/Tabula (fstec), awareness (hexenhammer). Shared hubs DRY agent rules, skills, references, contracts, and UI (`@cxado/gui`).
+cxado (cys_framework) is a meta-repository umbrella for cybersecurity products: knowledge (Veil), pentest execution (Veneno), SOC agents (Egregore), DevSecOps reference (Fabrica). Shared hubs DRY agent rules, skills, references, contracts, and UI (`@cxado/gui`).
+
+**Out of scope (2026-07):** tabula, fstec, hexenhammer, asoc-api — removed from submodules; clones on `~/Desktop/`.
 
 ## STACK
 
 - **Languages:** Python (~1295 files), TypeScript (~1160), Go (~779), YAML, Bash
-- **Veil / Veneno / ASOC:** Go, Neo4j/NATS where applicable
+- **Veil / Veneno:** Go, Neo4j/NATS where applicable
 - **Egregore:** Python, event-driven multi-agent SOC; optional Keycloak JWT on API and tool gateway (`AUTH_ENABLED`)
 - **Fabrica:** YAML CI/CD templates, DevSecOps scripts
-- **fstec / hexenhammer:** Next.js 16, React 19, Drizzle or Prisma, PostgreSQL
-- **Bootstrap:** `make bootstrap` → submodules, rules-link, skills-link, refs-link, gui-link
+- **Bootstrap:** `make bootstrap` → submodules, skills-link, refs-link, gui-link
 
 ## ARCHITECTURE
 
@@ -33,7 +34,7 @@ cxado (cys_framework) is a meta-repository umbrella for cybersecurity products: 
 **Indexed graph (~57k nodes, ~151k edges):**
 
 - **Core hubs (high fan-in):** egregore, references, veneno
-- **Outbound-heavy:** veil (fan-out ~4189), hexenhammer and gui (entry layer)
+- **Outbound-heavy:** veil (fan-out ~4189), gui (shared UI kit)
 - **Cross-project boundaries (call graph):** veil→egregore (~2528), veil→references (~1064), veil↔veneno (~600), references→egregore/veneno
 
 **Domains:**
@@ -44,12 +45,10 @@ cxado (cys_framework) is a meta-repository umbrella for cybersecurity products: 
 | Pentest | veneno | active submodule |
 | SOC | egregore | active submodule |
 | DevSecOps | fabrica | active submodule |
-| Compliance | tabula → fstec | submodule on `master`; `fstec/gui-detach-wip` abandoned |
-| Awareness | hexenhammer | submodule; module 1 (phishing); [domain doc](../domains/awareness.md) |
 
-**Data flows (planned/partial):** Veneno → Veil (engage.events); ASOC → NATS → Egregore; Fabrica `adopt.sh` → projects.
+**Data flows (planned/partial):** Veneno → Veil (engage.events); Fabrica `adopt.sh` → projects.
 
-**GUI:** `@cxado/gui` in `shared/gui` — compliance UI kit; fstec strangler migration WIP on separate branch; hexenhammer uses local shadcn until phase 05.
+**GUI:** `@cxado/gui` in `shared/gui` — shared UI kit; `make gui-link` into Veil pilot.
 
 ```mermaid
 flowchart TB
@@ -66,49 +65,29 @@ flowchart TB
     VENENO[veneno]
     EGG[egregore]
     FAB[fabrica]
-    ASOC[asoc-api]
-    HEX[hexenhammer]
-  end
-
-  subgraph domains [domain submodules]
-    TABULA[tabula]
-  end
-
-  subgraph tabula_mod [tabula/fstec]
-    FSTEC[fstec]
   end
 
   RULES --> VEIL
   RULES --> VENENO
   RULES --> EGG
-  RULES --> HEX
-  RULES --> TABULA
-  GUI -.-> FSTEC
-  TABULA --> FSTEC
   VENENO -->|engage.events| VEIL
 ```
 
 ## PATTERNS
 
 - **Submodule per product** with independent git lifecycle; meta-repo pins versions
-- **DRY agent layer:** `shared/agent-rules/core` symlinked via `make rules-link`; thin project overlays (1–4 `.mdc`)
-- **Strangler fig (fstec GUI):** re-export shims `@/components/ui` → `@cxado/gui/*`; domain logic stays in app `lib/`
-- **Domain extraction (hexenhammer):** org-agnostic env (`HEX_*`, `HEX_PUBLIC_*`)
-- **Three-context Next.js apps:** `(public)/`, `(admin)/` or `(platform)/`, `api/` — public never imports admin
+- **DRY agent layer:** `shared/agent-rules/core` at cxado root (`.cursor/rules/` symlinks); thin project overlays in submodules
 - **Phased plans:** `docs/plans/*_master.plan.md` with branch-per-phase workflow
 
 ## TRADEOFFS
 
-- **Monorepo workspace vs submodule autonomy:** tabula and hexenhammer are proper submodules; legacy local drop `projects/fstec/` removed — fstec via `tabula/fstec`
-- **Full codebase index includes references/corpus:** large graph (Veil 754 playbooks inflates nodes); use MCP filters or `moderate` mode for focused queries
-- **GUI detachment abandoned on fstec:** `fstec/gui-detach-wip` is dead (UI regression with `shared/gui`); `master` stays self-contained
+- **Monorepo workspace vs submodule autonomy:** core platform products are submodules; out-of-scope repos live on `~/Desktop/`
 - **MCP cross-repo boundaries** are partly similarity/import artifacts — validate with `trace_path` before trusting fan-in counts
 
 ## PHILOSOPHY
 
 - **Hubs over copies:** one canonical place for rules, skills, references, GUI primitives
-- **Domains over monolith:** Tabula (compliance) and Hexenhammer (awareness) are separate product lines under cxado
-- **Pause before merge:** GUI and domain migrations snapshot to branches; master stays green
+- **Domains over monolith:** separate product lines may leave the meta-repo when out of scope
 - **Agent-native docs:** AGENTS.md per project + ecosystem-map + this ADR for session continuity
 - **Agent MCP (Cursor):** mandatory routing via `core-agent-mcp-tooling.mdc` — codebase-memory-mcp + Serena + Context7 — see [docs/agents/cursor-mcp-tooling.md](../agents/cursor-mcp-tooling.md)
 - **Index artifact:** `.codebase-memory/graph.db.zst` for team bootstrap; re-index after major structural changes

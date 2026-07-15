@@ -6,7 +6,6 @@ cd "$ROOT"
 
 git submodule update --init --recursive
 "$ROOT/scripts/link-references.sh"
-"$ROOT/scripts/link-agent-rules.sh"
 "$ROOT/scripts/link-skills.sh"
 "$ROOT/scripts/install-skills.sh"
 "$ROOT/scripts/link-gui.sh"

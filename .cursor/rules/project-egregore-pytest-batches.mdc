@@ -1,0 +1,44 @@
+---
+description: Egregore pytest — run tests in batches via scripts/pytest_batches.sh (never monolithic full-suite pytest)
+globs: projects/egregore/**
+alwaysApply: false
+---
+
+# Egregore pytest batches
+
+When running or verifying tests in `projects/egregore/`, **always use batch mode** — do not run `uv run pytest` on the entire `tests/` tree in one process.
+
+## Command
+
+From `projects/egregore/`:
+
+```bash
+./scripts/pytest_batches.sh                              # full suite — pre-PR / cross-cutting changes
+./scripts/pytest_batches.sh tests/domain tests/application  # targeted — after a focused change
+./scripts/pytest_batches.sh tests/domain -- -k run_context  # extra pytest filters after --
+./scripts/pytest_batches.sh --cov --domain-gate           # coverage + domain gate
+FAIL_FAST=1 ./scripts/pytest_batches.sh                   # stop on first failure
+```
+
+A single directory/file via plain `uv run pytest tests/domain/runs/ -q` is fine — never the full tree.
+
+## Targeted batch by changed area
+
+| Changed area | Batch |
+|--------------|-------|
+| `cys_core/domain/runs/`, `domain/observability/`, `domain/catalog/` | `tests/domain` |
+| `cys_core/application/` | `tests/application` |
+| `cys_core/registry/`, `agents/` | `tests/registry` |
+| `interfaces/api/` | `tests/api` |
+| spawn / mode policy | `tests/adversarial` |
+| catalog / run state infra | `tests/infrastructure` |
+
+## Why
+
+- Frees memory between `tests/<dir>/` batches (separate pytest processes).
+- Avoids collection errors from module name collisions across batches.
+- Matches CI and [AGENTS.md](projects/egregore/AGENTS.md) verify workflow.
+
+## Env defaults
+
+`USE_MEMORY_FALLBACK=true STAGE=test` — set automatically by the script.

@@ -1,0 +1,35 @@
+---
+description: Agent chain — keep docs and plans in sync after each phase merge
+alwaysApply: true
+---
+
+# Documentation actualization (cxado core)
+
+Documentation is part of the agent chain ([core-workflow-chain.mdc](core-workflow-chain.mdc)) — its **Document** step, after critic APPROVE and merge, is this checklist.
+
+## Generic checklist
+
+| Artifact | When to update |
+|----------|----------------|
+| Master / phase plans | Phase `done`, merge SHA |
+| README.md | User-facing behavior, quick start, tests |
+| AGENTS.md | Workflow or verify checklist changes |
+| Project architecture docs | API, security, or runtime flow changes |
+
+Project overlay lists repo-specific paths.
+
+## Phase plan template
+
+```markdown
+## Scope
+## Out of scope
+## Files
+## Acceptance (commands)
+## Docs to touch on merge
+```
+
+## Reasoning quality
+
+- Constraint-first: state architecture bans before coding.
+- Few-shot: link one good prior phase as pattern.
+- Counterfactual: «What would fail in CI?» — list exact commands.

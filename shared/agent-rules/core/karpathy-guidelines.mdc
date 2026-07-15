@@ -1,0 +1,29 @@
+---
+description: Karpathy behavioral guidelines — phased plans, surgical diffs, verifiable DoD, critic gate
+alwaysApply: true
+---
+
+# Karpathy guidelines (cxado core)
+
+Follow project [AGENTS.md](../../AGENTS.md) and local **project overlay** rules. On errors: [core-kaizen.mdc](core-kaizen.mdc). Phase rhythm: [core-workflow-chain.mdc](core-workflow-chain.mdc).
+
+**Tradeoff:** Caution over speed on non-trivial work.
+
+## Four principles
+
+| # | Principle | Practice |
+|---|-----------|----------|
+| 1 | **Think before coding** | Read master + phase plan; state assumptions; ask if scope unclear |
+| 2 | **Simplicity first** | KISS; no speculative features beyond the phase |
+| 3 | **Surgical changes** | Diff ⊆ phase plan; no drive-by refactors; critic rejects scope creep |
+| 4 | **Goal-driven execution** | Phase DoD → named verify commands; loop until green |
+
+Implementers on feature branches; **orchestrator chat = critic by default** ([core-parallel-branches.mdc](core-parallel-branches.mdc)).
+
+## Before writing code
+
+- Phase plan and branch name identified.
+- Dependencies merged on `main`.
+- Success checks listed with concrete commands.
+
+Critic responsibilities and verdict format live in [core-agent-critic.mdc](core-agent-critic.mdc) — not restated here.
