@@ -20,7 +20,7 @@ All repositories under [butbeautifulv](https://github.com/butbeautifulv) that fo
 |------|------------|------|-------|
 | `projects/veil` | [veil](https://github.com/butbeautifulv/veil) | TI graph, ingest, veil-api, veil-mcp | Go, Neo4j |
 | `projects/veneno` | [veneno](https://github.com/butbeautifulv/veneno) | Pentest execution, veneno-api, veneno-mcp | Go |
-| `projects/egregore` | [egregore](https://github.com/butbeautifulv/egregore) | Event-driven multi-agent SOC + Operator UI (`ui/`) | Python, FastAPI, Next.js |
+| `projects/egregore` | [egregore](https://github.com/butbeautifulv/egregore) | Event-driven multi-agent SOC + Operator UI (`web_ui/`) | Python, FastAPI, Next.js |
 | `projects/fabrica` | [fabrica](https://github.com/butbeautifulv/fabrica) | DevSecOps CI/CD reference (`adopt.sh`) | YAML, scripts |
 
 ### Out of cxado scope (standalone on ~/Desktop/)

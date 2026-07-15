@@ -52,7 +52,7 @@ make cxado-validate-grafana
 make cxado-local-e2e
 ```
 
-- UI host-dev: `EGREGORE_API_UPSTREAM=http://127.0.0.1:8080` в `projects/egregore/ui/.env.local` (Next.js Operator UI :3000)
+- UI host-dev: `EGREGORE_API_UPSTREAM=http://127.0.0.1:8080` в `projects/egregore/web_ui/.env.local` (Next.js Operator UI :3000)
 - k3s offline UI: Next.js `egregore-ui` на :30300 (same-origin API) и :30301
 - Grafana compose datasources → `prometheus:9090` (не k8s DNS)
 - Runbook: [deploy/README.md](../../deploy/README.md), [OBSERVABILITY.md](../../projects/egregore/docs/OBSERVABILITY.md)

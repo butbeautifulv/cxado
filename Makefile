@@ -216,7 +216,7 @@ k3s-validation-infra:
 		./scripts/k8s/run-k3s-validation-gate.sh
 
 egregore-typecheck:
-	cd projects/egregore && uv run ty check cys_core bootstrap interfaces connectors
+	cd projects/egregore && uv run ty check src
 
 egregore-typecheck-tests-core:
 	cd projects/egregore && uv run ty check tests/domain \

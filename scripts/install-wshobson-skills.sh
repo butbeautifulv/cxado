@@ -54,7 +54,7 @@ SKILLS=(
   microservices-patterns
   workflow-orchestration-patterns
   api-design-principles
-  # Next.js UI (egregore/ui)
+  # Next.js UI (egregore/web_ui)
   nextjs-app-router-patterns
   typescript-advanced-types
   javascript-testing-patterns
