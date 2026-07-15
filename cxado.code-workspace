@@ -1,5 +1,6 @@
 {
   "folders": [
+    { "path": ".", "name": "cxado (meta)" },
     { "path": "projects/veil", "name": "Veil (knowledge)" },
     { "path": "projects/veneno", "name": "Veneno (pentest)" },
     { "path": "projects/egregore", "name": "Egregore" },
@@ -12,5 +13,24 @@
     { "path": "shared/references", "name": "References" },
     { "path": "shared/gui", "name": "GUI Hub" }
   ],
-  "settings": {}
+  "settings": {
+    "git.detectSubmodules": true,
+    "git.detectSubmodulesLimit": 20,
+    "git.autoRepositoryDetection": true,
+    "git.repositoryScanMaxDepth": 3,
+    "git.scanRepositories": [
+      "projects/egregore",
+      "projects/veil",
+      "projects/fabrica",
+      "projects/veneno",
+      "projects/asoc-api",
+      "projects/hexenhammer",
+      "projects/tabula",
+      "projects/tabula/fstec",
+      "shared/agent-rules",
+      "shared/skills",
+      "shared/references",
+      "shared/gui"
+    ]
+  }
 }
