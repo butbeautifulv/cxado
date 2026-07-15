@@ -118,7 +118,7 @@ After `site.yml` on a fresh node:
 4. `KUBECONFIG=~/.kube/config k3s kubectl get pods -A` as user `bbv`
 5. hostPath directories exist with correct ownership
 6. With workers: 2+ nodes Ready; worker labeled `node-role.kubernetes.io/worker=true`
-7. `./scripts/k8s/k3s-offline-bundle-min.sh` image import works without manual fixes
+7. `./scripts/k8s/k3s-offline-bundle-infra.sh` image import works without manual fixes
 
 ## Secrets
 

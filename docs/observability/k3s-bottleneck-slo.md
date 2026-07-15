@@ -16,7 +16,7 @@ make k3s-baseline            # full catalog
 make k3s-cluster-snapshot    # kubectl state via SSH
 ```
 
-Snapshots are written under `deploy_logs/k3s-baseline/` (gitignored). Commit only redacted examples under `docs/observability/examples/`.
+Snapshots are written under `deploy/.local/logs/k3s-baseline/` (gitignored). Commit only redacted examples under `docs/observability/examples/`.
 
 ## Phase SLO table
 

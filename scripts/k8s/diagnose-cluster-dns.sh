@@ -12,7 +12,7 @@ source "${ROOT}/scripts/k8s/cxado-offline-env.sh"
 
 SSH_HOST="${CXADO_OFFLINE_SSH_HOST:-bbv-p30-wifi}"
 SSH_PORT="${CXADO_OFFLINE_SSH_PORT}"
-LOG_DIR="${ROOT}/deploy_logs/k3s-baseline"
+LOG_DIR="${CXADO_ARTIFACTS_DIR}/k3s-baseline"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 LOG_FILE="${LOG_DIR}/dns-diagnosis-${STAMP}.log"
 DNS_TEST_NS="${CXADO_DNS_TEST_NS:-cxado-dns-test}"

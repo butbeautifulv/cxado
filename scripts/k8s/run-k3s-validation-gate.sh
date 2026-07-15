@@ -13,7 +13,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=scripts/k8s/cxado-offline-env.sh
 source "${ROOT}/scripts/k8s/cxado-offline-env.sh"
 
-LOG_DIR="${ROOT}/deploy_logs/k3s-validation"
+LOG_DIR="${CXADO_ARTIFACTS_DIR}/k3s-validation"
 STAMP="$(date +%Y%m%d_%H%M%S)"
 LOG="${LOG_DIR}/validation_${STAMP}.log"
 OBSERVE_SEC="${VALIDATION_OBSERVE_SEC:-300}"
@@ -101,7 +101,7 @@ fi
 # Pre snapshot for report if none exists
 BASELINE_JSON="${BASELINE_JSON:-}"
 if [[ -z "${BASELINE_JSON}" ]]; then
-  mapfile -t snaps < <(ls -t "${ROOT}"/deploy_logs/k3s-baseline/baseline-*.json 2>/dev/null || true)
+  mapfile -t snaps < <(ls -t "${CXADO_ARTIFACTS_DIR}"/k3s-baseline/baseline-*.json 2>/dev/null || true)
   if [[ "${#snaps[@]}" -ge 2 ]]; then
     BASELINE_JSON="${snaps[-1]}"
   elif [[ "${#snaps[@]}" -eq 1 ]]; then
@@ -114,8 +114,8 @@ if "${ROOT}/scripts/k8s/collect-k3s-baseline.sh" >>"${LOG}" 2>&1; then
 else
   warn "collect-k3s-baseline (some critical queries failed — see log)"
 fi
-AFTER_JSON="$(ls -t "${ROOT}"/deploy_logs/k3s-baseline/baseline-*.json | head -1)"
-SCENARIOS_JSON="$(ls -t "${ROOT}"/deploy_logs/k3s-validation/scenarios_*.json 2>/dev/null | head -1 || true)"
+AFTER_JSON="$(ls -t "${CXADO_ARTIFACTS_DIR}"/k3s-baseline/baseline-*.json | head -1)"
+SCENARIOS_JSON="$(ls -t "${CXADO_ARTIFACTS_DIR}"/k3s-validation/scenarios_*.json 2>/dev/null | head -1 || true)"
 
 if [[ "${VALIDATION_SKIP_BENCHMARK:-}" != "1" && -x "${ROOT}/scripts/k8s/benchmark-egregore-latency.sh" ]]; then
   if BENCHMARK_RUNS=1 "${ROOT}/scripts/k8s/benchmark-egregore-latency.sh" >>"${LOG}" 2>&1; then

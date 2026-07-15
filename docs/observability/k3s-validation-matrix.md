@@ -2,7 +2,7 @@
 
 Cross-phase SLO rollup for [`run-k3s-validation-gate.sh`](../../scripts/k8s/run-k3s-validation-gate.sh).
 
-**Baseline snapshot (before):** Phase 0 `deploy_logs/k3s-baseline/baseline-*.json` (gitignored)  
+**Baseline snapshot (before):** Phase 0 `deploy/.local/logs/k3s-baseline/baseline-*.json` (gitignored)  
 **After snapshot:** collected at end of validation run  
 **Report:** [k3s-bottleneck-after-report.md](k3s-bottleneck-after-report.md)
 

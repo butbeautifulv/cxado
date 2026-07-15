@@ -51,7 +51,7 @@ kctl() {
 if [[ "${SKIP_BUNDLE}" -eq 0 ]]; then
   BUNDLE_ARGS=()
   [[ "${LOCAL}" -eq 0 ]] && BUNDLE_ARGS+=(--remote)
-  "${ROOT}/scripts/k8s/k3s-offline-bundle-arch-docs.sh" "${BUNDLE_ARGS[@]}"
+  "${ROOT}/scripts/k8s/rsync-arch-docs-site.sh" "${BUNDLE_ARGS[@]}"
 fi
 
 log "apply arch-docs manifests"

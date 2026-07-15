@@ -51,14 +51,14 @@ make k3s-baseline            # Full catalog (27 queries)
 make k3s-cluster-snapshot    # kubectl pod dump via SSH
 ```
 
-Output: `deploy_logs/k3s-baseline/` (gitignored).
+Output: `deploy/.local/logs/k3s-baseline/` (gitignored).
 
 ## Langfuse drill-down (Phase 2)
 
 1. Open `https://${CXADO_NODE_IP}:30001`
 2. Project: `egregore-dev`
 3. Filter traces: tool name `ti_search_in_category`, status error
-4. Export one failed trace (redacted) to `deploy_logs/k3s-baseline/langfuse-failure-example.json` — **do not commit** raw production traces
+4. Export one failed trace (redacted) to `deploy/.local/logs/k3s-baseline/langfuse-failure-example.json` — **do not commit** raw production traces
 
 Correlation fields: `engagement_id`, `persona`, `correlation_id`, tool arguments as sent to veil-mcp.
 

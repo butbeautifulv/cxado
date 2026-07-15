@@ -75,11 +75,9 @@ Corp Dockerfiles: `projects/veil/deploy/knowledge/docker/api.Dockerfile.corp`, `
 
 ## Deprecated path
 
-Tar bundle for veil-api/mcp:
+Tar bundle for veil-api/mcp removed. Use `cxado-nexus-deploy-veil.sh`.
 
-- `k3s-offline-bundle-min.sh` (veil build section) — still used for nats/neo4j tar only
-
-Prefer `cxado-nexus-deploy-veil.sh`.
+Infra images (nats/neo4j): `k3s-offline-bundle-infra.sh`.
 
 ## Related
 

@@ -2,14 +2,16 @@
 # Generate Phase 9 before/after validation report (markdown).
 #
 # Usage:
-#   BASELINE_JSON=deploy_logs/k3s-baseline/baseline-20260709-pre.json \
-#   AFTER_JSON=deploy_logs/k3s-baseline/baseline-20260709-post.json \
-#   SCENARIOS_JSON=deploy_logs/k3s-validation/scenarios_*.json \
+#   BASELINE_JSON=deploy/.local/logs/k3s-baseline/baseline-20260709-pre.json \
+#   AFTER_JSON=deploy/.local/logs/k3s-baseline/baseline-20260709-post.json \
+#   SCENARIOS_JSON=deploy/.local/logs/k3s-validation/scenarios_*.json \
 #     ./scripts/k8s/generate-k3s-after-report.sh \
 #     > docs/observability/k3s-bottleneck-after-report.md
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=scripts/k8s/cxado-offline-env.sh
+source "${ROOT}/scripts/k8s/cxado-offline-env.sh"
 BASELINE_JSON="${BASELINE_JSON:-}"
 AFTER_JSON="${AFTER_JSON:-}"
 SCENARIOS_JSON="${SCENARIOS_JSON:-}"
@@ -17,13 +19,13 @@ PHASE8_DEFERRED="${PHASE8_DEFERRED:-1}"
 OUT_PATH="${REPORT_PATH:-}"
 
 if [[ -z "${AFTER_JSON}" ]]; then
-  AFTER_JSON="$(ls -t "${ROOT}"/deploy_logs/k3s-baseline/baseline-*.json 2>/dev/null | head -1 || true)"
+  AFTER_JSON="$(ls -t "${CXADO_ARTIFACTS_DIR}"/k3s-baseline/baseline-*.json 2>/dev/null | head -1 || true)"
 fi
 if [[ -z "${BASELINE_JSON}" ]]; then
-  BASELINE_JSON="$(ls -t "${ROOT}"/deploy_logs/k3s-baseline/baseline-*.json 2>/dev/null | tail -1 || true)"
+  BASELINE_JSON="$(ls -t "${CXADO_ARTIFACTS_DIR}"/k3s-baseline/baseline-*.json 2>/dev/null | tail -1 || true)"
 fi
 if [[ -z "${SCENARIOS_JSON}" ]]; then
-  SCENARIOS_JSON="$(ls -t "${ROOT}"/deploy_logs/k3s-validation/scenarios_*.json 2>/dev/null | head -1 || true)"
+  SCENARIOS_JSON="$(ls -t "${CXADO_ARTIFACTS_DIR}"/k3s-validation/scenarios_*.json 2>/dev/null | head -1 || true)"
 fi
 
 export ROOT BASELINE_JSON AFTER_JSON SCENARIOS_JSON PHASE8_DEFERRED
@@ -174,7 +176,7 @@ elif verdict == "CONDITIONAL":
 else:
     lines += [
         f"- Blocking failures: {', '.join(blocking_fails)}.",
-        "- See matrix and scenario logs under `deploy_logs/k3s-validation/`.",
+        "- See matrix and scenario logs under `deploy/.local/logs/k3s-validation/`.",
     ]
 
 lines += [

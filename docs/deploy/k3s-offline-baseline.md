@@ -129,7 +129,7 @@ Static architecture landing for architects: `docs/architecture-site/` → nginx 
 
 ```bash
 # On k3s node (or --remote via SSH forward):
-./scripts/k8s/k3s-offline-bundle-arch-docs.sh
+./scripts/k8s/rsync-arch-docs-site.sh
 ./scripts/k8s/k3s-deploy-arch-docs-offline.sh
 
 # Smoke:

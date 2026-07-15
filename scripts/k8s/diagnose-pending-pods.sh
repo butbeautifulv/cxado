@@ -13,7 +13,7 @@ source "${ROOT}/scripts/k8s/cxado-offline-env.sh"
 SSH_HOST="${CXADO_OFFLINE_SSH_HOST:-}"
 SSH_PORT="${CXADO_OFFLINE_SSH_PORT}"
 NS="${CXADO_APP_NS:-cxado-app}"
-LOG_DIR="${ROOT}/deploy_logs/k3s-baseline"
+LOG_DIR="${CXADO_ARTIFACTS_DIR}/k3s-baseline"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 LOG_FILE="${LOG_DIR}/pending-diagnosis-${STAMP}.log"
 

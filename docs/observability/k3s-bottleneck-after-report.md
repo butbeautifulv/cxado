@@ -15,8 +15,8 @@
 
 | Field | Value |
 |-------|-------|
-| Baseline JSON | `/home/bbv/Desktop/cys_framework/deploy_logs/k3s-baseline/baseline-20260709-110400.json` |
-| After JSON | `/home/bbv/Desktop/cys_framework/deploy_logs/k3s-baseline/baseline-20260709-135833.json` |
+| Baseline JSON | `/home/bbv/Desktop/cys_framework/deploy/.local/logs/k3s-baseline/baseline-20260709-110400.json` |
+| After JSON | `/home/bbv/Desktop/cys_framework/deploy/.local/logs/k3s-baseline/baseline-20260709-135833.json` |
 | Scenarios JSON | `n/a` |
 | Phase 8 | deferred |
 

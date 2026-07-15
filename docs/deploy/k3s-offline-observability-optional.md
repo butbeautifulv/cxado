@@ -27,7 +27,7 @@ Images (pre-import via bundle script):
 - `grafana/promtail:3.4.2`
 
 ```bash
-./scripts/k8s/k3s-offline-bundle-obs.sh
+# Fallback only — see scripts/k8s/deprecated/k3s-offline-bundle-obs.sh
 ./scripts/k8s/obs-create-configmaps.sh
 kubectl apply -f deploy/k8s/obs-offline/31-loki.yaml
 kubectl apply -f deploy/k8s/obs-offline/32-promtail.yaml
@@ -51,7 +51,7 @@ Offline considerations:
 For k3s, prefer implementing Langfuse as a separate “langfuse-offline” directory with:
 - manifests for each dependency
 - a `create-secrets.sh` script (keeps secrets out of git)
-- a dedicated image-bundle script similar to `k3s-offline-bundle-min.sh`
+- a dedicated image-bundle script: `scripts/k8s/deprecated/k3s-offline-bundle-langfuse.sh` (fallback)
 
 ## Prometheus RBAC + veil worker scrape (k3s offline)
 

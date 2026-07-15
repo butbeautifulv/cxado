@@ -1,6 +1,6 @@
 # K3s bottleneck baseline (before fixes)
 
-Human-readable snapshot taken **before** Phase 1–9 implementation. Machine-readable source: `deploy_logs/k3s-baseline/baseline-20260709-110423.json` (gitignored).
+Human-readable snapshot taken **before** Phase 1–9 implementation. Machine-readable source: `deploy/.local/logs/k3s-baseline/baseline-20260709-110423.json` (gitignored).
 
 Related: [k3s-bottleneck-slo.md](k3s-bottleneck-slo.md) | [k3s-cluster-snapshot.md](k3s-cluster-snapshot.md) | [k3s-obs-access.md](k3s-obs-access.md)
 
@@ -153,5 +153,5 @@ Queries: `sanitizer_blocks_7d`, `rag_retrievals_7d` — not a latency hotspot; s
 
 ```bash
 make k3s-baseline
-# Update this file from the latest deploy_logs/k3s-baseline/baseline-*.json
+# Update this file from the latest deploy/.local/logs/k3s-baseline/baseline-*.json
 ```

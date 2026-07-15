@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Rsync architecture-site to k3s node (no sudo).
 #
-#   ./scripts/k8s/k3s-offline-bundle-arch-docs.sh
-#   ./scripts/k8s/k3s-offline-bundle-arch-docs.sh --remote
+#   ./scripts/k8s/rsync-arch-docs-site.sh
+#   ./scripts/k8s/rsync-arch-docs-site.sh --remote
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"

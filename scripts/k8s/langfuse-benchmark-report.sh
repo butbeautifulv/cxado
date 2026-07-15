@@ -13,6 +13,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=scripts/k8s/cxado-offline-env.sh
+source "${ROOT}/scripts/k8s/cxado-offline-env.sh"
 SSH_HOST="${CXADO_OFFLINE_SSH_HOST:-}"
 SSH_PORT="${CXADO_OFFLINE_SSH_PORT:-22}"
 NS_LF="${CXADO_LANGFUSE_NS:-cxado-langfuse}"
@@ -23,7 +25,7 @@ LANGFUSE_PUBLIC_KEY="${LANGFUSE_PUBLIC_KEY:-pk-lf-egregore-dev-local}"
 LANGFUSE_SECRET_KEY="${LANGFUSE_SECRET_KEY:-sk-lf-egregore-dev-local}"
 SEARCH="${SEARCH:-Active Directory}"
 TRACE_LIMIT="${TRACE_LIMIT:-50}"
-OUT_DIR="${BENCHMARK_OUT_DIR:-${ROOT}/deploy_logs}"
+OUT_DIR="${BENCHMARK_OUT_DIR:-${CXADO_ARTIFACTS_DIR}}"
 OUT_FILE="${OUT_DIR}/langfuse_forensic_$(date +%Y%m%d_%H%M%S).txt"
 
 mkdir -p "${OUT_DIR}"

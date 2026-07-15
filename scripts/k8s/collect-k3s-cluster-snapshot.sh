@@ -9,7 +9,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=scripts/k8s/cxado-offline-env.sh
 source "${ROOT}/scripts/k8s/cxado-offline-env.sh"
 
-OUT_DIR="${ROOT}/deploy_logs/k3s-baseline"
+OUT_DIR="${CXADO_ARTIFACTS_DIR}/k3s-baseline"
 STAMP="$(date -u +%Y%m%d-%H%M%S)"
 OUT_FILE="${OUT_DIR}/cluster-${STAMP}.txt"
 

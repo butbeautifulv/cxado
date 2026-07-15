@@ -52,7 +52,7 @@ API: `maxSurge: 1` → transient +150m for one new api pod before old terminates
 | Steady (8 workers) | ~2700m | OK |
 | Rollout overlap | ~2850m | OK |
 
-Pods spread across 3 nodes (no control-plane nodeSelector). Images must be imported on all nodes via `k3s-distribute-image.sh`.
+Pods spread across 3 nodes (no control-plane nodeSelector). App images via Nexus; infra via `k3s-offline-bundle-infra.sh`.
 
 ## Tuning knobs
 

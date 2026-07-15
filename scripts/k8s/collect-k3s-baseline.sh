@@ -14,7 +14,7 @@ source "${ROOT}/scripts/k8s/cxado-offline-env.sh"
 PROMETHEUS_URL="${PROMETHEUS_URL:-https://${CXADO_NODE_IP}:30091}"
 QUERY_ENDPOINT="${PROMETHEUS_URL%/}/api/v1/query"
 CATALOG="${ROOT}/docs/observability/k3s-bottleneck-promql.yml"
-OUT_DIR="${ROOT}/deploy_logs/k3s-baseline"
+OUT_DIR="${CXADO_ARTIFACTS_DIR}/k3s-baseline"
 STAMP="$(date -u +%Y%m%d-%H%M%S)"
 OUT_FILE="${OUT_DIR}/baseline-${STAMP}.json"
 

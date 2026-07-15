@@ -53,7 +53,7 @@ Evidence pattern (not verbatim — pods deleted after rollback):
 ./scripts/k8s/diagnose-pending-pods.sh
 ```
 
-Logs: `deploy_logs/k3s-baseline/pending-diagnosis-*.log`
+Logs: `deploy/.local/logs/k3s-baseline/pending-diagnosis-*.log`
 
 ## Fixes applied (Phase 5)
 

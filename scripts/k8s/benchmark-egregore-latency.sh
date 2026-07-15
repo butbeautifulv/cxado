@@ -12,6 +12,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=scripts/k8s/cxado-offline-env.sh
+source "${ROOT}/scripts/k8s/cxado-offline-env.sh"
 SSH_HOST="${CXADO_OFFLINE_SSH_HOST:-}"
 SSH_PORT="${CXADO_OFFLINE_SSH_PORT:-22}"
 NS_APP="${CXADO_APP_NS:-cxado-app}"
@@ -21,7 +23,7 @@ RUNS="${BENCHMARK_RUNS:-1}"
 POLL_TIMEOUT="${INVESTIGATION_POLL_TIMEOUT:-600}"
 VLLM_URL="${VLLM_URL:-http://10.8.185.185:11611/v1/chat/completions}"
 VLLM_MODEL="${VLLM_MODEL:-Kbenkhaled/Qwen3.5-27B-NVFP4}"
-OUT_DIR="${BENCHMARK_OUT_DIR:-${ROOT}/deploy_logs}"
+OUT_DIR="${BENCHMARK_OUT_DIR:-${CXADO_ARTIFACTS_DIR}}"
 OUT_JSON="${OUT_DIR}/benchmark_$(date +%Y%m%d_%H%M%S).json"
 
 mkdir -p "${OUT_DIR}"

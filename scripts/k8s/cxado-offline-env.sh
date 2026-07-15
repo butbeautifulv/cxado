@@ -29,3 +29,7 @@ export CXADO_OBS_NS="${CXADO_OBS_NS:-cxado-obs}"
 # three times per invocation when run as bbv. Cluster access uses ~/.kube/config — safe to skip.
 export K3S_CONFIG_FILE="${K3S_CONFIG_FILE:-/dev/null}"
 export CXADO_K3S_KUBECTL="${CXADO_K3S_KUBECTL:-K3S_CONFIG_FILE=${K3S_CONFIG_FILE} KUBECONFIG=/home/bbv/.kube/config k3s kubectl}"
+
+# Local deploy/validation artifacts (gitignored under deploy/.local/)
+export CXADO_ARTIFACTS_DIR="${CXADO_ARTIFACTS_DIR:-${CXADO_OFFLINE_ENV_ROOT}/deploy/.local/logs}"
+mkdir -p "${CXADO_ARTIFACTS_DIR}"

@@ -29,7 +29,7 @@ POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-}"
 REDIS_PASSWORD="${REDIS_PASSWORD:-}"
 NEO4J_PASSWORD="${NEO4J_PASSWORD:-}"
 
-LOG_FILE="${CXADO_DEPLOY_LOG:-${ROOT}/deploy_logs/cxado_k3s_10.8.185.15_$(date +%Y-%m-%d).md}"
+LOG_FILE="${CXADO_DEPLOY_LOG:-${CXADO_ARTIFACTS_DIR}/cxado_k3s_10.8.185.15_$(date +%Y-%m-%d).md}"
 
 WITH_VEIL=0
 for arg in "$@"; do
@@ -84,7 +84,7 @@ remote() {
 }
 
 main() {
-  mkdir -p "${ROOT}/deploy_logs"
+  mkdir -p "${CXADO_ARTIFACTS_DIR}"
   {
     echo "# cxado k3s offline deploy log"
     echo ""
@@ -112,20 +112,8 @@ main() {
   fi
 
   run_public \
-    "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' CXADO_OFFLINE_SUDO_PW='***REDACTED***' ./scripts/k8s/k3s-offline-bundle-min.sh" \
-    "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' CXADO_OFFLINE_SUDO_PW='${CXADO_OFFLINE_SUDO_PW:-$SUDO_PW}' ./scripts/k8s/k3s-offline-bundle-min.sh"
-
-  run_public \
-    "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' CXADO_OFFLINE_SUDO_PW='***REDACTED***' ./scripts/k8s/k3s-offline-bundle-egregore.sh" \
-    "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' CXADO_OFFLINE_SUDO_PW='${CXADO_OFFLINE_SUDO_PW:-$SUDO_PW}' ./scripts/k8s/k3s-offline-bundle-egregore.sh"
-
-  run_public \
-    "CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' CXADO_OFFLINE_SUDO_PW='***REDACTED***' ./scripts/k8s/k3s-offline-bundle-obs.sh" \
-    "CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' CXADO_OFFLINE_SUDO_PW='${CXADO_OFFLINE_SUDO_PW:-$SUDO_PW}' ./scripts/k8s/k3s-offline-bundle-obs.sh"
-
-  run_public \
-    "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' CXADO_OFFLINE_SUDO_PW='***REDACTED***' ./scripts/k8s/k3s-offline-bundle-egregore-ui.sh" \
-    "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' CXADO_OFFLINE_SUDO_PW='${CXADO_OFFLINE_SUDO_PW:-$SUDO_PW}' ./scripts/k8s/k3s-offline-bundle-egregore-ui.sh"
+    "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' CXADO_OFFLINE_SUDO_PW='***REDACTED***' ./scripts/k8s/k3s-offline-bundle-infra.sh" \
+    "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' CXADO_OFFLINE_SUDO_PW='${CXADO_OFFLINE_SUDO_PW:-$SUDO_PW}' ./scripts/k8s/k3s-offline-bundle-infra.sh"
 
   # One-time kubeconfig setup so we can run kubectl/helm without sudo afterwards.
   run_public \
@@ -178,9 +166,10 @@ main() {
   run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} apply -f -\" < '${ROOT}/deploy/k8s/obs-offline/32-promtail.yaml'"
   run "ssh -p '${SSH_PORT}' '${SSH_HOST}' \"${KCTL} -n cxado-obs rollout restart deploy/prometheus deploy/grafana deploy/tempo deploy/loki || true\""
 
-  log "install egregore via helm (api + worker + Next.js UI)"
-  run "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' POSTGRES_PASSWORD='***' REDIS_PASSWORD='***' '${ROOT}/scripts/k8s/egregore-helm-upgrade.sh'" \
-    "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' POSTGRES_PASSWORD='${POSTGRES_PASSWORD}' REDIS_PASSWORD='${REDIS_PASSWORD}' BUS_SIGNING_KEY='${BUS_SIGNING_KEY:-}' '${ROOT}/scripts/k8s/egregore-helm-upgrade.sh'"
+  log "build + deploy egregore via Nexus (api + worker + ui)"
+  run_public \
+    "CXADO_OFFLINE_TAG='${TAG}' ./scripts/k8s/cxado-nexus-deploy.sh --build --tag '${TAG}'" \
+    "CXADO_OFFLINE_TAG='${TAG}' CXADO_OFFLINE_SSH_HOST='${SSH_HOST}' CXADO_OFFLINE_SSH_PORT='${SSH_PORT}' POSTGRES_PASSWORD='***' REDIS_PASSWORD='***' '${ROOT}/scripts/k8s/cxado-nexus-deploy.sh' --build --tag '${TAG}'"
 
   log "apply tls gateway (https nodeports) and show status"
   run "'${ROOT}/scripts/k8s/offline-tls-apply.sh'"

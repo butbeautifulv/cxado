@@ -11,8 +11,10 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=scripts/k8s/cxado-offline-env.sh
+source "${ROOT}/scripts/k8s/cxado-offline-env.sh"
 ABLATION="${ABLATION:-A0}"
-OUT_DIR="${BENCHMARK_OUT_DIR:-${ROOT}/deploy_logs}"
+OUT_DIR="${BENCHMARK_OUT_DIR:-${CXADO_ARTIFACTS_DIR}}"
 
 mkdir -p "${OUT_DIR}"
 LOG="${OUT_DIR}/ablation_${ABLATION}_$(date +%Y%m%d_%H%M%S).md"

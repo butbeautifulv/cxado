@@ -13,7 +13,7 @@ SSH_HOST="${CXADO_OFFLINE_SSH_HOST:-}"
 SSH_PORT="${CXADO_OFFLINE_SSH_PORT}"
 NS_VEIL="${VEIL_NS:-veil}"
 NS_OBS="${CXADO_OBS_NS:-cxado-obs}"
-LOG_DIR="${ROOT}/deploy_logs/k3s-baseline"
+LOG_DIR="${CXADO_ARTIFACTS_DIR}/k3s-baseline"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 LOG_FILE="${LOG_DIR}/veil-workers-audit-${STAMP}.log"
 

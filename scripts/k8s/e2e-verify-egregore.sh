@@ -4,17 +4,19 @@
 # Usage:
 #   CXADO_OFFLINE_SSH_HOST=bbv-p30-wifi ./scripts/k8s/e2e-verify-egregore.sh
 #
-# Exit 0 only when all gates pass; tee deploy_logs/e2e_verify_*.log
+# Exit 0 only when all gates pass; tee deploy/.local/logs/e2e_verify_*.log
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=scripts/k8s/cxado-offline-env.sh
+source "${ROOT}/scripts/k8s/cxado-offline-env.sh"
 SSH_HOST="${CXADO_OFFLINE_SSH_HOST:-}"
 SSH_PORT="${CXADO_OFFLINE_SSH_PORT:-22}"
 NS_APP="${CXADO_APP_NS:-cxado-app}"
 SMOKE_IMAGE="${CXADO_SMOKE_IMAGE:-curlimages/curl:8.5.0}"
 AD_GOAL="${AD_GOAL:-Как защитить Active Directory?}"
 POLL_TIMEOUT="${INVESTIGATION_POLL_TIMEOUT:-600}"
-OUT_DIR="${E2E_OUT_DIR:-${ROOT}/deploy_logs}"
+OUT_DIR="${E2E_OUT_DIR:-${CXADO_ARTIFACTS_DIR}}"
 LOG_FILE="${OUT_DIR}/e2e_verify_$(date +%Y%m%d_%H%M%S).log"
 
 mkdir -p "${OUT_DIR}"

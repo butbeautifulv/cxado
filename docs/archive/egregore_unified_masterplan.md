@@ -3,7 +3,7 @@ name: Egregore Unified Masterplan
 overview: "Unified backlog: deploy gates (Stream A) → single worker.jobs queue (B) → API-only catalog (C) → platform RunKernel (D) → datasources RBAC (E) + Python runtime hardening (F). 328 micro-todos."
 todos:
   - id: unified-dep-p0-snapshot-cluster
-    content: "[stream A] P0.1 SSH: kubectl get deploy/pods cxado-app, зафиксировать image tag + worker replicas в deploy_logs/preflight_YYYYMMDD.md"
+    content: "[stream A] P0.1 SSH: kubectl get deploy/pods cxado-app, зафиксировать image tag + worker replicas в deploy/.local/logs/preflight_YYYYMMDD.md"
     status: completed
     source: deploy
     source_id: p0-snapshot-cluster
@@ -223,7 +223,7 @@ todos:
     source: deploy
     source_id: p4d-e2e-worker-logs
   - id: unified-dep-p4e-e2e-exit-code
-    content: "[stream A] P4e e2e script: exit 1 on any FAIL, tee deploy_logs/e2e_verify_*.log"
+    content: "[stream A] P4e e2e script: exit 1 on any FAIL, tee deploy/.local/logs/e2e_verify_*.log"
     status: completed
     source: deploy
     source_id: p4e-e2e-exit-code
@@ -238,12 +238,12 @@ todos:
     source: deploy
     source_id: p5-benchmark-b3-b5
   - id: unified-dep-p5-langfuse-report
-    content: "[stream A] P5 langfuse-benchmark-report.sh → deploy_logs/"
+    content: "[stream A] P5 langfuse-benchmark-report.sh → deploy/.local/logs/"
     status: pending
     source: deploy
     source_id: p5-langfuse-report
   - id: unified-dep-p5-summary-doc
-    content: "[stream A] P5 deploy_logs/prod_deploy_summary_YYYYMMDD.md — цифры, pass/fail, scale rec"
+    content: "[stream A] P5 deploy/.local/logs/prod_deploy_summary_YYYYMMDD.md — цифры, pass/fail, scale rec"
     status: completed
     source: deploy
     source_id: p5-summary-doc
@@ -403,12 +403,12 @@ todos:
     source: deploy
     source_id: p8e-tempo-worker-spans
   - id: unified-dep-p8-gate-obs-summary
-    content: "[stream A] P8 gate: deploy_logs/trace_audit_YYYYMMDD.md — UI path traced end-to-end or documented gap"
+    content: "[stream A] P8 gate: deploy/.local/logs/trace_audit_YYYYMMDD.md — UI path traced end-to-end or documented gap"
     status: completed
     source: deploy
     source_id: p8-gate-obs-summary
   - id: unified-dep-p9a-kafka-lag-snapshot
-    content: "[stream A] P9a rpk group describe egregore-workers + topic LAG → deploy_logs/kafka_lag_YYYYMMDD.md"
+    content: "[stream A] P9a rpk group describe egregore-workers + topic LAG → deploy/.local/logs/kafka_lag_YYYYMMDD.md"
     status: completed
     source: deploy
     source_id: p9a-kafka-lag-snapshot
@@ -1463,7 +1463,7 @@ todos:
     source: new
     source_id: que-05
   - id: unified-que-06-migration-doc
-    content: "[stream B] deploy_logs/kafka_migration_YYYYMMDD.md cutover steps"
+    content: "[stream B] deploy/.local/logs/kafka_migration_YYYYMMDD.md cutover steps"
     status: completed
     source: new
     source_id: que-06
@@ -1734,8 +1734,8 @@ flowchart TD
 
 | Stream/wave | Start after | Primary gate | Artifact |
 |-------------|-------------|--------------|----------|
-| A DEPLOY | META | `e2e-verify-egregore.sh` exit 0; consultant LAG=0; trace audit explains UI/Langfuse path | `deploy_logs/e2e_verify_*.log`, `deploy_logs/kafka_lag_*.md`, `deploy_logs/trace_audit_*.md` |
-| B QUEUE | A gates or controlled parallel branch; re-run A gates after deploy | 2 parallel AD POST requests do not serialize/block; `worker.jobs` has N partitions and LAG=0 | `deploy_logs/kafka_migration_*.md` |
+| A DEPLOY | META | `e2e-verify-egregore.sh` exit 0; consultant LAG=0; trace audit explains UI/Langfuse path | `deploy/.local/logs/e2e_verify_*.log`, `deploy/.local/logs/kafka_lag_*.md`, `deploy/.local/logs/trace_audit_*.md` |
+| B QUEUE | A gates or controlled parallel branch; re-run A gates after deploy | 2 parallel AD POST requests do not serialize/block; `worker.jobs` has N partitions and LAG=0 | `deploy/.local/logs/kafka_migration_*.md` |
 | C CATALOG | B code path stable | catalog version > 0 after bootstrap; prod mode never reads FS personas | `docs/CATALOG_SEED.md` |
 | D0 PLATFORM inventory | META | inventories updated with `ManageRun`, queue split, and API-only catalog facts | inventory docs/tests in platform PR |
 | D1 PLATFORM product packs | `unified-cat-04` | product packs seed through API/bootstrap, no hybrid wording | tests/docs in platform PR |
@@ -1748,7 +1748,7 @@ flowchart TD
 | F1 PYTHON async/resources | A gates or controlled branch before B deploy | no hidden `asyncio.run` in app paths; Kafka/Redis/httpx resources close deterministically | unit/integration tests |
 | F2 PYTHON typing/config/tests | F1 | startup config validation, typed ports/DTOs, fallback metrics, pytest fixtures/import-linter gates pass | pytest/import-linter/ruff |
 
-Gate log template: [`deploy_logs/unified_gate_TEMPLATE.md`](deploy_logs/unified_gate_TEMPLATE.md)
+Gate log template: deploy/.local/logs/unified_gate_TEMPLATE.md (local artifact, gitignored)
 
 ---
 
@@ -2173,7 +2173,7 @@ name: Reliable k3s Egregore deploy
 overview: P0–P3+P7 shipped (offline-20260703-kafkafix); осталось P9 Kafka backlog unblock + parallel gates (E2E, P8, UI, benchmarks).
 todos:
   - id: p0-snapshot-cluster
-    content: "P0.1 SSH: kubectl get deploy/pods cxado-app, зафиксировать image tag + worker replicas в deploy_logs/preflight_YYYYMMDD.md"
+    content: "P0.1 SSH: kubectl get deploy/pods cxado-app, зафиксировать image tag + worker replicas в deploy/.local/logs/preflight_YYYYMMDD.md"
     status: completed
   - id: p0-snapshot-resources
     content: "P0.2 SSH: free -h, nproc, kubectl top nodes/pods — записать в тот же preflight log"
@@ -2305,7 +2305,7 @@ todos:
     content: "P4d e2e: grep worker logs — no LiteLLM >200s without completion/timeout"
     status: pending
   - id: p4e-e2e-exit-code
-    content: "P4e e2e script: exit 1 on any FAIL, tee deploy_logs/e2e_verify_*.log"
+    content: "P4e e2e script: exit 1 on any FAIL, tee deploy/.local/logs/e2e_verify_*.log"
     status: completed
   - id: p5-benchmark-b1-b2
     content: "P5 benchmark: B1 consultation + B2 investigation (poll)"
@@ -2314,10 +2314,10 @@ todos:
     content: "P5 benchmark: B3/B4 sessions + B5 vLLM direct"
     status: pending
   - id: p5-langfuse-report
-    content: P5 langfuse-benchmark-report.sh → deploy_logs/
+    content: P5 langfuse-benchmark-report.sh → deploy/.local/logs/
     status: pending
   - id: p5-summary-doc
-    content: P5 deploy_logs/prod_deploy_summary_YYYYMMDD.md — цифры, pass/fail, scale rec
+    content: P5 deploy/.local/logs/prod_deploy_summary_YYYYMMDD.md — цифры, pass/fail, scale rec
     status: completed
   - id: p6-fallback-vllm
     content: "P6 (if E2E fail on latency): doc vLLM reasoning off на Proxmox — не code"
@@ -2413,10 +2413,10 @@ todos:
     content: "P8e Grafana/Tempo: worker.process_job + worker.agent.run vs Langfuse LLM traces"
     status: pending
   - id: p8-gate-obs-summary
-    content: "P8 gate: deploy_logs/trace_audit_YYYYMMDD.md — UI path traced end-to-end or documented gap"
+    content: "P8 gate: deploy/.local/logs/trace_audit_YYYYMMDD.md — UI path traced end-to-end or documented gap"
     status: completed
   - id: p9a-kafka-lag-snapshot
-    content: P9a rpk group describe egregore-workers + topic LAG → deploy_logs/kafka_lag_YYYYMMDD.md
+    content: P9a rpk group describe egregore-workers + topic LAG → deploy/.local/logs/kafka_lag_YYYYMMDD.md
     status: completed
   - id: p9b-drain-consultant-backlog
     content: P9b rollout restart egregore-worker; дождаться consultant topic LAG=0
@@ -2470,7 +2470,7 @@ sequenceDiagram
 | Worker не шлёт SSE | [`run_worker_job.py`](projects/egregore/cys_core/application/use_cases/run_worker_job.py) | **FIXED** P7b |
 | `mark_persona_done` не закрывает | [`stores.py`](projects/egregore/cys_core/infrastructure/memory/stores.py) | **FIXED** P7a |
 
-Evidence: [`deploy_logs/preflight_20260703.md`](deploy_logs/preflight_20260703.md), [`deploy_logs/prod_deploy_summary_20260703.md`](deploy_logs/prod_deploy_summary_20260703.md).
+Evidence: deploy/.local/logs/preflight_20260703.md (local artifact, gitignored), deploy/.local/logs/prod_deploy_summary_20260703.md (local artifact, gitignored).
 
 ---
 
@@ -2478,7 +2478,7 @@ Evidence: [`deploy_logs/preflight_20260703.md`](deploy_logs/preflight_20260703.m
 
 | ID | Verify |
 |----|--------|
-| p0-snapshot-cluster | [`deploy_logs/preflight_20260703.md`](deploy_logs/preflight_20260703.md) |
+| p0-snapshot-cluster | deploy/.local/logs/preflight_20260703.md (local artifact, gitignored) |
 | p0-snapshot-resources | RAM/CPU в том же log |
 | p0-snapshot-redis-queue | XLEN/LLEN baseline |
 | p0-restart-stuck-workers | workers Ready |
@@ -2533,7 +2533,7 @@ CXADO_OFFLINE_TAG=offline-20260703-kafkafix
 
 | ID | Задача | Verify gate |
 |----|--------|-------------|
-| p9a-kafka-lag-snapshot | `rpk group describe egregore-workers` + LAG baseline | `deploy_logs/kafka_lag_YYYYMMDD.md` |
+| p9a-kafka-lag-snapshot | `rpk group describe egregore-workers` + LAG baseline | `deploy/.local/logs/kafka_lag_YYYYMMDD.md` |
 | p9b-drain-consultant-backlog | `kubectl rollout restart deploy/egregore-worker` | consultant LAG=0 |
 | p9c-stuck-pending-jobs | GET jobs `f635cbfd…` и др. | нет pending >5 min при LAG=0 |
 | p9d-partition-strategy | 1 partition + drain **или** increase partitions | документ в summary |
@@ -2555,7 +2555,7 @@ Stream B (после P9 gate).
 
 ## P5 — Benchmarks — **PARTIAL**
 
-[`prod_deploy_summary_20260703.md`](deploy_logs/prod_deploy_summary_20260703.md) done. Pending: B1–B5 full run, langfuse report, benchmark JSON.
+prod_deploy_summary_20260703.md (local artifact, gitignored) done. Pending: B1–B5 full run, langfuse report, benchmark JSON.
 
 Stream B (после P9 gate).
 
@@ -2575,7 +2575,7 @@ Stream B (после P9 gate).
 
 ## P8 — Trace / observability audit — **PARTIAL**
 
-Draft audit: [`deploy_logs/trace_audit_20260703.md`](deploy_logs/trace_audit_20260703.md).
+Draft audit: deploy/.local/logs/trace_audit_20260703.md (local artifact, gitignored).
 
 **Done:** worker callbacks OK, root cause UI→pending→LAG, consultant tools inventory (legacy, not Veil).
 
@@ -2687,7 +2687,7 @@ flowchart LR
 - `trace_audit_YYYYMMDD.md` обновлён с P8b PASS
 - AD investigation: `status=closed`, findings в API (job **completed**, не failed)
 - **UI:** badge не Live forever; consultant done + findings visible
-- `deploy_logs/benchmark_*.json` + `prod_deploy_summary_*.md`
+- `deploy/.local/logs/benchmark_*.json` + `prod_deploy_summary_*.md`
 ```
 
 ---

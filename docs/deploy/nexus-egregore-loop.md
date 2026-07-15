@@ -59,13 +59,9 @@ Corp Dockerfiles: `projects/egregore/Dockerfile.corp`, `projects/egregore/ui/Doc
 
 ## Deprecated path
 
-Tar bundle scripts remain for fallback only:
+Tar bundle scripts for **app images** were removed. Use `cxado-nexus-deploy.sh`.
 
-- `k3s-offline-bundle-egregore.sh`
-- `k3s-offline-bundle-egregore-ui.sh`
-- `k3s-distribute-offline-tag.sh`
-
-Prefer `cxado-nexus-deploy.sh`.
+Infra-only tar import: `k3s-offline-bundle-infra.sh` (see [nexus-veil-loop.md](nexus-veil-loop.md)).
 
 ## Related
 

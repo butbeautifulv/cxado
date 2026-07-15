@@ -55,12 +55,13 @@ See also [docs/observability/README.md](../../docs/observability/README.md).
 | `defectdojo-vm01-export-users.sh` | Export users from legacy VM |
 | `defectdojo-vm01-decommission.sh` | VM_01 decommission helper |
 
-## Bundles (airgap) — DEPRECATED
+## Infra + Nexus deploy
 
-Use [nexus-egregore-loop.md](../../docs/deploy/nexus-egregore-loop.md) / [nexus-veil-loop.md](../../docs/deploy/nexus-veil-loop.md) instead.
-
-| Script | Status |
-|--------|--------|
-| `cxado-nexus-deploy.sh` | **Canonical** egregore api+worker+ui |
+| Script | Purpose |
+|--------|---------|
+| `cxado-nexus-deploy.sh` | **Canonical** egregore api+worker+ui (Kaniko → Nexus → helm) |
 | `cxado-nexus-deploy-veil.sh` | **Canonical** veil-api+mcp |
-| `k3s-offline-bundle-*.sh` | DEPRECATED fallback (tar import) |
+| `k3s-offline-bundle-infra.sh` | Tar import: nats, neo4j, obs base images, toolbox |
+| `rsync-arch-docs-site.sh` | Rsync `docs/architecture-site/` to k3s node |
+
+Legacy tar bundles moved to [`deprecated/`](deprecated/README.md).

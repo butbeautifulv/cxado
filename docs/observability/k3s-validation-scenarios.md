@@ -7,7 +7,7 @@ CXADO_OFFLINE_SSH_HOST=bbv-p30-wifi ./scripts/k8s/run-validation-scenarios.sh
 VALIDATION_SCENARIO=S2 ./scripts/k8s/run-validation-scenarios.sh
 ```
 
-Results: `deploy_logs/k3s-validation/scenarios_*.json` (gitignored).
+Results: `deploy/.local/logs/k3s-validation/scenarios_*.json` (gitignored).
 
 ## Scenario S1 — Consultant + Veil playbook
 

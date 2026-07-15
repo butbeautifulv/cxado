@@ -84,7 +84,7 @@ make k3s-baseline-critical   # from runner or dev machine with P30 network acces
 make k3s-cluster-snapshot
 ```
 
-Artifacts: `deploy_logs/k3s-baseline/` (gitignored). Docs: [`docs/observability/k3s-bottleneck-slo.md`](../../docs/observability/k3s-bottleneck-slo.md).
+Artifacts: `deploy/.local/logs/k3s-baseline/` (gitignored). Docs: [`docs/observability/k3s-bottleneck-slo.md`](../../docs/observability/k3s-bottleneck-slo.md).
 
 Suggested GitLab job (manual / scheduled): run `make k3s-baseline-critical` with `CXADO_NODE_IP` from CI variables after deploy smoke.
 
