@@ -64,7 +64,7 @@ make cxado-local-e2e
 ./scripts/k8s/k3s-deploy-arch-docs-offline.sh
 ```
 
-App deploy (canonical): [docs/deploy/nexus-egregore-loop.md](../deploy/nexus-egregore-loop.md). **DEPRECATED:** `k3s-offline-bundle-*.sh` (fallback only).
+App deploy (canonical): [docs/deploy/nexus-egregore-loop.md](../deploy/nexus-egregore-loop.md). Infra tar: `k3s-offline-bundle-infra.sh`.
 
 URL: `https://<k3s-node>:30080`
 
@@ -77,8 +77,7 @@ URL: `https://<k3s-node>:30080`
 
 1. Обновить канонический `.md` в `projects/egregore/docs/`
 2. После Phase N arch refactor → обновить §arch-gates + D03/D04 + GAPS
-3. При изменении backlog — `python3 scripts/plan/build-unified-masterplan.py`
-4. Правка `diagrams/*.mmd` → проверка рендера в браузере (:8765)
+3. Правка `diagrams/*.mmd` → проверка рендера в браузере (:8765)
 5. Синк секций `index.html` + footer references
 6. Обновить [GAPS.md](GAPS.md)
 7. k3s: `./scripts/k8s/k3s-deploy-arch-docs-offline.sh` (arch-docs only)

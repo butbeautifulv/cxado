@@ -10,6 +10,7 @@ How documentation is organized in the meta-repo and submodules. **Link instead o
 | **Catalog** | [ecosystem-map.md](ecosystem-map.md) | Repos, roles, stack, data flows | Deploy steps |
 | **Deploy** | [deploy/nexus-egregore-loop.md](deploy/nexus-egregore-loop.md), [nexus-veil-loop.md](deploy/nexus-veil-loop.md), [nexus-npm-go-proxy-setup.md](deploy/nexus-npm-go-proxy-setup.md) | Kaniko/Nexus P30 loops | Quick start |
 | **Ports** | [deploy/ports.md](../deploy/ports.md) | Port SSOT | — |
+| **Local artifacts** | [deploy/.local/README.md](../deploy/.local/README.md) | k3s deploy logs, baselines (gitignored) | — |
 | **Contracts** | [shared/contracts/README.md](../shared/contracts/README.md) | Wire schemas (`engage.events`) | Integration prose |
 | **Integrations** | [integration/README.md](integration/README.md) | Wiring table | Architecture essays |
 | **Domains** | [domains/README.md](domains/README.md) | Tabula, Hexenhammer umbrellas | Per-product runbooks |

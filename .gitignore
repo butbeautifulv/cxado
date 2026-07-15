@@ -30,7 +30,11 @@ projects/fstec/
 !/deploy/.secrets/*.example
 docs/architecture-site/js/credentials.js
 
+.venv-ansible/
+
 # Offline k3s deploy (local-only)
+deploy/.local/*
+!deploy/.local/README.md
 deploy_logs/
 deploy/ansible/k3s/inventories/**/hosts.yml
 deploy/ansible/k3s/files/airgap/*

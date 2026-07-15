@@ -67,6 +67,6 @@ Full routing + pitfalls: [docs/agents/cursor-mcp-tooling.md](docs/agents/cursor-
 - **Build + deploy (canonical, P30)** — Kaniko in-cluster build → Nexus → helm upgrade:
   - [docs/deploy/nexus-egregore-loop.md](docs/deploy/nexus-egregore-loop.md) — `./scripts/k8s/cxado-nexus-deploy.sh --build --tag "$TAG"`
   - [docs/deploy/nexus-veil-loop.md](docs/deploy/nexus-veil-loop.md) — `./scripts/k8s/cxado-nexus-deploy-veil.sh --build --tag "$TAG"`
-  - `scripts/k8s/k3s-offline-bundle-*.sh` — **DEPRECATED** fallback only
+  - `scripts/k8s/k3s-offline-bundle-infra.sh` — infra tar import (nats/neo4j); app images via Nexus loops
 - **Git remotes:** `origin` = GitHub (default). Corp GitLab: `./scripts/gitlab/sync-monorepo-to-gitlab.sh` only. Normalize: `./scripts/gitlab/setup-github-remotes.sh`
 - [deploy/k8s/defectdojo-offline/README.md](deploy/k8s/defectdojo-offline/README.md) — DefectDojo in-cluster ASPM (`:30808`)
