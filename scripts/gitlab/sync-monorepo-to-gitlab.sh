@@ -18,10 +18,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "${ROOT}"
 
+# shellcheck source=scripts/gitlab/lib/remotes.sh
+source "${ROOT}/scripts/gitlab/lib/remotes.sh"
+
 SECRETS="${ROOT}/deploy/.secrets/cxado-k3s.env"
 [[ -f "${SECRETS}" ]] && source "${SECRETS}"
 
-GITLAB_REMOTE="${GITLAB_REMOTE:-gitlab}"
+GITLAB_REMOTE="${GITLAB_REMOTE:-${GITLAB_REMOTE_NAME}}"
 GITLAB_BRANCH="${GITLAB_BRANCH:-main}"
 GITMODULES_GITLAB="${ROOT}/.gitmodules.gitlab"
 SKIP_SUBMODULES=false
@@ -49,7 +52,8 @@ done
 [[ -f "${GITMODULES_GITLAB}" ]] || die "missing ${GITMODULES_GITLAB}"
 
 if ! git remote get-url "${GITLAB_REMOTE}" >/dev/null 2>&1; then
-  die "remote '${GITLAB_REMOTE}' not configured — git remote add gitlab git@gitlab.svo.aero:av.popov/cxado.git"
+  log "adding ephemeral remote ${GITLAB_REMOTE} -> ${GITLAB_MONOREPO_URL}"
+  ensure_gitlab_remote_ephemeral "${ROOT}" "${GITLAB_MONOREPO_URL}"
 fi
 
 if [[ -n "$(git status --porcelain)" ]]; then
@@ -162,6 +166,7 @@ main() {
   push_monorepo_gitlab_view
   trap - EXIT
   restore_gitmodules
+  remove_gitlab_remote_in_repo "${ROOT}"
   log "done — local .gitmodules still GitHub; push GitHub: ./scripts/gitlab/push-github.sh"
 }
 

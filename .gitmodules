@@ -1,35 +1,33 @@
-# GitLab-only submodule URLs — used on gitlab.svo.aero/av.popov/cxado (corp, no GitHub).
-# Local dev keeps .gitmodules (GitHub). Sync: scripts/gitlab/sync-monorepo-to-gitlab.sh
 [submodule "projects/veil"]
 	path = projects/veil
-	url = git@gitlab.svo.aero:av.popov/veil.git
+	url = https://github.com/butbeautifulv/veil.git
 [submodule "projects/egregore"]
 	path = projects/egregore
-	url = git@gitlab.svo.aero:av.popov/egregore.git
+	url = https://github.com/butbeautifulv/egregore.git
 [submodule "projects/fabrica"]
 	path = projects/fabrica
-	url = git@gitlab.svo.aero:av.popov/fabrica.git
+	url = https://github.com/butbeautifulv/fabrica.git
 [submodule "projects/asoc-api"]
 	path = projects/asoc-api
-	url = git@gitlab.svo.aero:av.popov/asoc-api.git
+	url = https://github.com/butbeautifulv/asoc-api.git
 [submodule "shared/skills"]
 	path = shared/skills
-	url = git@gitlab.svo.aero:av.popov/cxado-skills.git
+	url = https://github.com/butbeautifulv/cxado-skills.git
 [submodule "shared/references"]
 	path = shared/references
-	url = git@gitlab.svo.aero:av.popov/cxado-references.git
+	url = https://github.com/butbeautifulv/cxado-references.git
 [submodule "shared/agent-rules"]
 	path = shared/agent-rules
-	url = git@gitlab.svo.aero:av.popov/cxado-agent-rules.git
+	url = https://github.com/butbeautifulv/cxado-agent-rules.git
 [submodule "projects/veneno"]
 	path = projects/veneno
-	url = git@gitlab.svo.aero:av.popov/veneno.git
+	url = https://github.com/butbeautifulv/veneno.git
 [submodule "shared/gui"]
 	path = shared/gui
-	url = git@gitlab.svo.aero:av.popov/cxado-gui.git
+	url = https://github.com/butbeautifulv/cxado-gui.git
 [submodule "projects/hexenhammer"]
 	path = projects/hexenhammer
-	url = git@gitlab.svo.aero:av.popov/hexenhammer.git
+	url = https://github.com/butbeautifulv/hexenhammer.git
 [submodule "projects/tabula"]
 	path = projects/tabula
-	url = git@gitlab.svo.aero:av.popov/tabula.git
+	url = https://github.com/butbeautifulv/tabula.git

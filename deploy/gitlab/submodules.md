@@ -2,12 +2,18 @@
 
 ## Two remotes, one laptop
 
-| Remote | URL | `.gitmodules` | Who uses it |
-|--------|-----|---------------|-------------|
-| `origin` | `github.com/butbeautifulv/cxado` | GitHub submodule URLs | Public dev, laptop |
-| `gitlab` | `gitlab.svo.aero/av.popov/cxado` | **GitLab-only** URLs | P30 runner, corp CI, airgap |
+| Remote | URL | When present locally |
+|--------|-----|----------------------|
+| `origin` | `github.com/butbeautifulv/*` | **Always** — default dev upstream |
+| `gitlab` | `gitlab.svo.aero/av.popov/*` | **Never by default** — added only during corp sync scripts |
 
-GitHub and GitLab **diverge by design** on `.gitmodules` only. Same code + submodule SHAs; corp tree never references GitHub.
+`.gitmodules` on `origin/main` uses GitHub URLs. Corp tree on GitLab uses `.gitmodules.gitlab` (overlay commit via sync).
+
+Normalize after clone or if remotes drifted:
+
+```bash
+./scripts/gitlab/setup-github-remotes.sh
+```
 
 ## Bootstrap all mirrors (one-time)
 
@@ -53,6 +59,7 @@ Options:
 | `.gitmodules` | GitHub URLs — **committed on `origin/main`** |
 | `.gitmodules.github` | Same — restore template if sync touched working tree |
 | `.gitmodules.gitlab` | GitLab URLs — template for corp sync commit |
+| `scripts/gitlab/setup-github-remotes.sh` | **Local only** — origin=GitHub, remove gitlab remote |
 | `scripts/gitlab/sync-monorepo-to-gitlab.sh` | Push corp copy |
 | `scripts/gitlab/push-github.sh` | Push to GitHub only |
 | `scripts/gitlab/push-submodule-mirror.sh` | Push one submodule or `--all` |

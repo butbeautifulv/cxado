@@ -21,4 +21,5 @@ printf '[push-github] %s -> %s/%s\n' "$(git rev-parse --short HEAD)" "${REMOTE}"
 git push "${REMOTE}" "${BRANCH}"
 
 printf '[push-github] done\n'
+printf '[push-github] normalize remotes: ./scripts/gitlab/setup-github-remotes.sh\n'
 printf '[push-github] corp sync (separate): ./scripts/gitlab/sync-monorepo-to-gitlab.sh\n'

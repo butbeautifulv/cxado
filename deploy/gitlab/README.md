@@ -71,11 +71,12 @@ Fabrica `oss-full-enterprise` + cxado Kaniko overlay. Details: [CI.md](CI.md).
 ## Push monorepo
 
 ```bash
+./scripts/gitlab/setup-github-remotes.sh     # local: origin=GitHub, no gitlab remote
 ./scripts/gitlab/push-github.sh              # GitHub (public dev)
 ./scripts/gitlab/sync-monorepo-to-gitlab.sh  # corp GitLab (isolated .gitmodules)
 ```
 
-Do **not** `git push gitlab main` directly — use `sync-monorepo-to-gitlab.sh`.
+Do **not** add a persistent `gitlab` remote — `sync-monorepo-to-gitlab.sh` creates it ephemerally.
 
 ## Related
 

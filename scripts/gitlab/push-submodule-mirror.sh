@@ -11,11 +11,15 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=scripts/gitlab/lib/remotes.sh
+source "${ROOT}/scripts/gitlab/lib/remotes.sh"
+
 SECRETS="${ROOT}/deploy/.secrets/cxado-k3s.env"
 [[ -f "${SECRETS}" ]] && source "${SECRETS}"
 
 GITLAB_URL="${GITLAB_URL:-https://gitlab.svo.aero}"
 GITLAB_PREFIX="${CI_SUBMODULE_GITLAB_PREFIX:-git@gitlab.svo.aero:av.popov}"
+GITLAB_REMOTE="${GITLAB_REMOTE_NAME}"
 PAT="${GITLAB_PAT_RUNNER:-}"
 SSH_HOST="${CXADO_OFFLINE_SSH_HOST:-bbv-p30-wifi}"
 PUSH_ALL=false
@@ -162,13 +166,13 @@ push_with_gitmodules_overlay() {
   git checkout -- .gitmodules
   overlay="$(git commit-tree -p "${tip}" -m "chore(gitlab): corp nested submodule URLs" "${tree}")"
   log "push overlay ${overlay:0:12} (${branch})"
-  git fetch gitlab "${branch}" 2>/dev/null || true
-  if git rev-parse -q --verify "refs/remotes/gitlab/${branch}" >/dev/null 2>&1; then
-    git push gitlab "${overlay}:refs/heads/${branch}" \
-      --force-with-lease="refs/heads/${branch}:refs/remotes/gitlab/${branch}" 2>/dev/null \
-      || git push gitlab "${overlay}:refs/heads/${branch}"
+  git fetch "${GITLAB_REMOTE}" "${branch}" 2>/dev/null || true
+  if git rev-parse -q --verify "refs/remotes/${GITLAB_REMOTE}/${branch}" >/dev/null 2>&1; then
+    git push "${GITLAB_REMOTE}" "${overlay}:refs/heads/${branch}" \
+      --force-with-lease="refs/heads/${branch}:refs/remotes/${GITLAB_REMOTE}/${branch}" 2>/dev/null \
+      || git push "${GITLAB_REMOTE}" "${overlay}:refs/heads/${branch}"
   else
-    git push gitlab "${overlay}:refs/heads/${branch}"
+    git push "${GITLAB_REMOTE}" "${overlay}:refs/heads/${branch}"
   fi
 }
 
@@ -195,10 +199,10 @@ push_one() {
 
   cd "${ROOT}/${path}"
   branch="$(git branch --show-current)"
-  git remote remove gitlab 2>/dev/null || true
-  git remote add gitlab "${gitlab_ssh}"
+  ensure_gitlab_remote_ephemeral "${ROOT}/${path}" "${gitlab_ssh}"
   log "push ${path} (${branch}) -> ${gitlab_ssh}"
   push_with_gitmodules_overlay "${branch}"
+  remove_gitlab_remote_in_repo "${ROOT}/${path}"
   log "done ${repo}"
   cd "${ROOT}"
 }
