@@ -64,7 +64,7 @@ Admin REST API Nexus (`/service/rest/v1/repositories`, `/service/rest/v1/reposit
 
 - `deploy/registry.defaults.env` — `NEXUS_NPM_HOST/REPO`, `NEXUS_GO_HOST/REPO` (порт 8443, как у PyPI)
 - `scripts/k8s/nexus-npm-go-proxy-setup.sh` — API-based create (может не сработать из-за 404 выше — тогда просто справочный список полей для UI)
-- `projects/egregore/ui/Dockerfile.corp` — `bun install` через `BUN_CONFIG_REGISTRY` → `npm-proxy`
+- `projects/egregore/web_ui/Dockerfile.corp` — `bun install` через `BUN_CONFIG_REGISTRY` → `npm-proxy`
 - `projects/veil/deploy/knowledge/docker/{api,mcp}.Dockerfile.corp` — `go build` через `GOPROXY` → `go-proxy`
 - `deploy/k8s/kaniko/21-job-egregore-ui.yaml`, `22-job-veil-api.yaml`, `23-job-veil-mcp.yaml` — новые `--build-arg`
 - `docs/deploy/nexus-egregore-loop.md`, `docs/deploy/nexus-veil-loop.md` — обновлённые prerequisite-шаги и troubleshooting

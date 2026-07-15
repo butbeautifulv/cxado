@@ -29,7 +29,7 @@ options:
   --build           Kaniko build + push to Nexus, then helm upgrade
   --skip-build      helm upgrade only (image already in Nexus)
   --tag TAG         image tag (default: egregore git short SHA)
-  --prebuilt-ui     UI: use Dockerfile.prebuilt.corp (host ui/.next required)
+  --prebuilt-ui     UI: use Dockerfile.prebuilt.corp (host web_ui/.next required)
   --backend-only    build backend only
   --ui-only         build UI only
   --help

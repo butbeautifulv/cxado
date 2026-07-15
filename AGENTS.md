@@ -6,7 +6,7 @@ Meta-repo umbrella. Load project-specific rules from each submodule:
 |---------|------|------------|
 | Veil | `projects/veil/` | [AGENTS.md](projects/veil/AGENTS.md) — knowledge layer |
 | Veneno | `projects/veneno/` | [AGENTS.md](projects/veneno/AGENTS.md) — pentest execution |
-| Egregore | `projects/egregore/` (API root + `ui/`) | [AGENTS.md](projects/egregore/AGENTS.md) |
+| Egregore | `projects/egregore/` (API root + `web_ui/`) | [AGENTS.md](projects/egregore/AGENTS.md) |
 | Fabrica | `projects/fabrica/` | [AGENTS.md](projects/fabrica/AGENTS.md) |
 | Precursor | `projects/precursor/` | MCP adapters (SIEM, Nessus, DefectDojo) — [README](projects/precursor/README.md) |
 

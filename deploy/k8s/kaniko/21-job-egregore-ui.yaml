@@ -56,8 +56,8 @@ spec:
               mountPath: /etc/ssl/certs/nexus
               readOnly: true
           args:
-            - --dockerfile=/workspace/ui/${UI_DOCKERFILE}
-            - --context=dir:///workspace/ui
+            - --dockerfile=/workspace/web_ui/${UI_DOCKERFILE}
+            - --context=dir:///workspace/web_ui
             - --destination=${CXADO_UI_IMAGE_REPO}:${BUILD_TAG}
             - --build-arg=NEXUS_REGISTRY=${NEXUS_DOCKER_REGISTRY}
             - --build-arg=NEXUS_CXADO_REPO=${NEXUS_CXADO_DOCKER_REPO}

@@ -102,15 +102,15 @@ rsync_sources() {
     "${remote_dest}"
 
   if [[ "${PREBUILT_UI}" -eq 1 ]]; then
-    if [[ ! -d "${ROOT}/projects/egregore/ui/.next/standalone" ]]; then
-      die "missing projects/egregore/ui/.next — run: cd projects/egregore/ui && bun run build"
+    if [[ ! -d "${ROOT}/projects/egregore/web_ui/.next/standalone" ]]; then
+      die "missing projects/egregore/web_ui/.next — run: cd projects/egregore/web_ui && bun run build"
     fi
-    log "rsync ui/.next (prebuilt)"
+    log "rsync web_ui/.next (prebuilt)"
     rsync -az \
       -e "ssh -p ${SSH_PORT}" \
-      "${ROOT}/projects/egregore/ui/.next" \
-      "${ROOT}/projects/egregore/ui/public" \
-      "${SSH_HOST}:${KANIKO_BUILD_DIR}/egregore/ui/"
+      "${ROOT}/projects/egregore/web_ui/.next" \
+      "${ROOT}/projects/egregore/web_ui/public" \
+      "${SSH_HOST}:${KANIKO_BUILD_DIR}/egregore/web_ui/"
   fi
 
   if [[ -n "${SUDO_PW}" ]]; then

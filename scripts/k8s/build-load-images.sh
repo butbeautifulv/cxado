@@ -21,7 +21,7 @@ if ! kind get clusters 2>/dev/null | grep -qx "$CLUSTER_NAME"; then
 fi
 
 build_and_load cxado/egregore "${ROOT}/projects/egregore"
-build_and_load cxado/egregore-ui "${ROOT}/projects/egregore/ui"
+build_and_load cxado/egregore-ui "${ROOT}/projects/egregore/web_ui"
 
 if [[ -f "${ROOT}/projects/veil/deploy/knowledge/docker/api.Dockerfile" ]]; then
   docker build -t "veil-api:${TAG}" \

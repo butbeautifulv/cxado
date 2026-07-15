@@ -41,10 +41,10 @@ Re-deploy without rebuild:
 | Mode | Command |
 |------|---------|
 | Full Kaniko UI build | default in `cxado-nexus-deploy.sh --build` |
-| Prebuilt `.next` on laptop | `cd projects/egregore/ui && bun run build` then `--build --prebuilt-ui` |
+| Prebuilt `.next` on laptop | `cd projects/egregore/web_ui && bun run build` then `--build --prebuilt-ui` |
 | Backend only | `kaniko-build-egregore.sh --backend-only --tag "${TAG}"` |
 
-Corp Dockerfiles: `projects/egregore/Dockerfile.corp`, `projects/egregore/ui/Dockerfile.corp`.
+Corp Dockerfiles: `projects/egregore/Dockerfile.corp`, `projects/egregore/web_ui/Dockerfile.corp`.
 
 ## Troubleshooting
 
