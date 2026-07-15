@@ -1,20 +1,20 @@
 # cxado references (local only — gitignored)
 
-JCSF, DAF, OWASP extracts. **Not tracked in git** (~1 GB). Projects access via `make refs-link` → `refs/`.
+JCSF, DAF, OWASP extracts. **Not tracked in git** (~1 GB). Canonical path: **`refs/`** at cxado meta-repo root (no per-project symlinks).
 
 ## Populate locally
 
-If you had the old submodule checkout, it should still be on disk at `shared/references/`.
+If you had the old `shared/references/` checkout, it should now live here at `refs/`.
 
 Otherwise restore from backup or clone the archived private repo (if you still have access):
 
 ```bash
-# one-time: replace this directory contents
+# one-time: populate refs/ at cxado root
 git clone https://github.com/butbeautifulv/cxado-references.git /tmp/cxado-references
-rsync -a /tmp/cxado-references/ ./shared/references/
+rsync -a /tmp/cxado-references/ ./refs/
 rm -rf /tmp/cxado-references
 ```
 
-Then from cxado root: `make refs-link`
+From projects in the monorepo, reference as `../../refs/` (e.g. `projects/veil/../../refs/owasp/`).
 
 **Not included in references tree:** `Anthropic-Cybersecurity-Skills-main/` (Veil-local for `make corpus-import`).

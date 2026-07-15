@@ -29,7 +29,7 @@ Per-project: `README.md` (one-liner + verify) → `docs/README.md` (index) → `
 | engage pentest layer | `projects/veneno` |
 | hexenhammer / tabula / fstec / asoc-api | **Out of scope** — `~/Desktop/` |
 | cxado-agent-rules / cxado-skills / cxado-gui | merged into `shared/*` in cxado |
-| cxado-references (repo) | `shared/references/` — **gitignored**, local only |
+| cxado-references (repo) | `refs/` at meta root — **gitignored**, local only |
 
 **Intentional legacy (do not rename in docs/code):** Grafana uid `egregore-cys-agi`, metric prefix `cys_*`, product alias `cys-agi` in egregore `agents/manifest.yaml`, Python package `cys_core`.
 
@@ -54,7 +54,7 @@ Submodule repos (veil, veneno, egregore, …) need **embedded** `.git` directori
 
 Then **Developer: Reload Window**.
 
-Workspace settings: `git.detectSubmodules: false`, `git.autoRepositoryDetection: false` (explicit `git.scanRepositories` only), `git.openRepositoryInParentFolders: never`. `shared/*` hubs are **in-tree** — not separate SCM repos; `shared/references` is gitignored local corpora.
+Workspace settings: `git.detectSubmodules: false`, `git.autoRepositoryDetection: false` (explicit `git.scanRepositories` only), `git.openRepositoryInParentFolders: never`. `shared/*` hubs are **in-tree** — not separate SCM repos; `refs/` is gitignored local corpora at meta root.
 
 Core Cursor rules: `shared/agent-rules/core/` — committed symlinks in [`.cursor/rules/`](../.cursor/rules/). No `make rules-link` into submodules.
 

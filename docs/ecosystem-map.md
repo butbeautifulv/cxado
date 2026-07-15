@@ -39,7 +39,7 @@ hexenhammer (awareness), tabula (compliance + fstec submodule), asoc-api.
 |------|---------|
 | `shared/agent-rules/` | Core Cursor rules — meta `.cursor/rules/` |
 | `shared/skills/` | DevSecOps + agent skills (`make skills-install`) |
-| `shared/references/` | JCSF, DAF, OWASP — **gitignored** (~1 GB local); `make refs-link` |
+| `refs/` | JCSF, DAF, OWASP — **gitignored** (~1 GB local); meta-repo root, no per-project symlinks |
 | `shared/gui/` | `@cxado/gui` UI kit (`make gui-link`) |
 | `shared/contracts/` | Wire schemas — `make test-contracts` |
 | `shared/go/auth-broker/` | OAuth2 M2M token broker |
@@ -56,7 +56,7 @@ flowchart TB
   subgraph cxado [cxado meta-repo]
     RULES[shared/agent-rules]
     SKILLS[shared/skills]
-    REFS[shared/references]
+    REFS[refs]
     CTR[shared/contracts]
     GUI[shared/gui]
     AUTHBROKER[shared/go/auth-broker]
@@ -75,9 +75,9 @@ flowchart TB
   RULES --> AGI
   SKILLS -->|make skills-install| CURSOR[Cursor IDE]
   SKILLS -->|make skills-link| FAB[fabrica skills]
-  REFS -->|refs symlink| VEIL
-  REFS -->|refs symlink| CICD
-  REFS -->|refs symlink| AGI
+  REFS --> VEIL
+  REFS --> CICD
+  REFS --> AGI
   AUTHBROKER -.->|token HTTP/gRPC| VEIL
   AUTHBROKER -.->|token HTTP/gRPC| VENENO
   AUTHBROKER -.->|token HTTP| AGI
@@ -132,7 +132,7 @@ Domain vision (archived): [docs/domains/](domains/README.md).
 | **@cxado/gui** | `shared/gui` | Compliance/cybersec UI kit (tiers 1–3) | App domain logic, Prisma/API |
 | **agent-rules** | `shared/agent-rules` | 7 core Cursor rules | Project overlays |
 | **skills** | `shared/skills` | devsecops + veil + agent/* generic skills | Veil corpus, egregore runtime |
-| **references** | `shared/references` | JCSF, DAF, OWASP, hexstrike extracts | Anthropic Skills upstream (Veil-local) |
+| **references** | `refs` | JCSF, DAF, OWASP, hexstrike extracts | Anthropic Skills upstream (Veil-local) |
 | **cxado-contracts** | in [cxado](https://github.com/butbeautifulv/cxado) · `shared/contracts` | Cross-repo wire schemas | — |
 | **auth-broker** | in [cxado](https://github.com/butbeautifulv/cxado) · `shared/go/auth-broker` | OAuth2 M2M token broker (gRPC + HTTP) | JWT resource-server middleware |
 | **cxado_auth_client** | in [cxado](https://github.com/butbeautifulv/cxado) · `shared/python/cxado_auth_client` | Python client for auth-broker | — |
@@ -149,7 +149,7 @@ Core rules: `shared/agent-rules/core/` — Cursor loads via meta [`.cursor/rules
 | **fabrica** | [fabrica](https://github.com/butbeautifulv/fabrica) | `core-*.mdc` symlinks | `project-workflow.mdc` + `.cursor/rules/` | `skills-link` devsecops |
 
 - **skills** (`make skills-install` + `make skills-link`): devsecops symlinks in fabrica; agent/* via global install — **not** egregore runtime overlays.
-- **egregore** OWASP: `shared/references/owasp/` via `refs-link`; sync pointers via `scripts/generate_owasp_skills.py`.
+- **egregore** OWASP: `refs/owasp/` at meta root; sync pointers via `scripts/generate_owasp_skills.py`.
 - **Wire contracts:** `shared/contracts/` — `make test-contracts`.
 
 ## Data flows (planned / partial)
@@ -181,7 +181,7 @@ flowchart LR
 
 ## Architecture ADR
 
-See [adr/cxado-architecture.md](adr/cxado-architecture.md) for the accepted meta-repo architecture decision record (synced with codebase-memory-mcp).
+See [adr/cxado-architecture.md](adr/cxado-architecture.md) for the accepted meta-repo architecture decision record.
 
 Domain docs: [docs/domains/](domains/README.md).
 
@@ -189,7 +189,7 @@ Domain docs: [docs/domains/](domains/README.md).
 
 | Target | What it does |
 |--------|----------------|
-| `make bootstrap` | Submodules + `refs-link` + `skills-link` + `skills-install` + `gui-link` |
+| `make bootstrap` | Submodules + `skills-link` + `skills-install` + `gui-link` + legacy symlink cleanup |
 | `make skills-install` | Install `shared/skills` to `~/.cursor/skills/` |
 | `make gui-link` | Symlink `@cxado/gui` into consumer projects |
 | `make agent-skills-install` | Fetch HashiCorp/terraform + docker/grafana skills into `.agents/skills/` |
@@ -227,7 +227,7 @@ Runbook: [deploy/k3s-offline-baseline.md](deploy/k3s-offline-baseline.md) · obs
 
 ## Agent MCP tooling (Cursor IDE)
 
-For development in this meta-repo, agents use **codebase-memory-mcp** (graph + ADR), **Serena** (LSP symbols/refactor), and **Context7 / ctx7** (live library docs). See [agents/cursor-mcp-tooling.md](agents/cursor-mcp-tooling.md).
+For development in this meta-repo, agents use **Context7** (live library docs) and scoped **Grep/Read** for internal navigation. See [agents/cursor-mcp-tooling.md](agents/cursor-mcp-tooling.md).
 
 ## Clone entrypoint
 

@@ -92,7 +92,7 @@ Creates GitLab project via API if `GITLAB_PAT_RUNNER` is in `deploy/.secrets/cxa
 | **As needed** | `projects/veneno`, MCP repos |
 | **Not in workspace** | [fish](https://github.com/butbeautifulv/fish) — archive donor for hexenhammer, **no submodule** |
 | **In meta-repo** | `shared/skills`, `shared/agent-rules`, `shared/gui` |
-| **Local only (gitignored)** | `shared/references/` |
+| **Local only (gitignored)** | `refs/` |
 | **Optional** | `projects/fabrica`, `projects/tabula`, … |
 
 ## GitLab pull mirror (alternative)
