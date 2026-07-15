@@ -35,8 +35,7 @@
       "shared",
       "shared/gui",
       "shared/agent-rules",
-      "shared/skills",
-      "shared/references"
+      "shared/skills"
     ]
   }
 }

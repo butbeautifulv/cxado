@@ -1,9 +1,9 @@
 # Submodule working trees (managed by git submodules)
 # projects/* = git submodules; shared/agent-rules, shared/skills, shared/gui = in-tree
 
-# Large reference corpora — local only (not in git). See shared/references/README.md
-shared/references/*
-!shared/references/README.md
+# Large reference corpora — local only (not in git). See refs/README.md
+refs/*
+!refs/README.md
 
 # Legacy manual clones (removed — use submodules / GitHub archives)
 .external/

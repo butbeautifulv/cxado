@@ -1,4 +1,4 @@
-.PHONY: bootstrap skills-install skills-link refs-link gui-link auth-broker-test test-contracts \
+.PHONY: bootstrap skills-install skills-link refs-cleanup gui-link auth-broker-test test-contracts \
 	cxado-up cxado-up-lite cxado-up-minimal cxado-up-veil cxado-up-siem-mcp cxado-up-tenable-mcp cxado-up-defectdojo-mcp siem-mcp-scrape-docs cxado-down cxado-status cxado-obs-reload cxado-validate-grafana \
 	cxado-local-e2e \
 	cxado-kind-up cxado-kind-down cxado-k8s-build-images cxado-tf-init cxado-tf-apply cxado-tf-destroy \
@@ -11,7 +11,7 @@
 
 help:
 	@echo "Targets:"
-	@echo "  bootstrap       Initialize submodules + refs/skills/gui links + cleanup legacy shared symlinks"
+	@echo "  bootstrap       Initialize submodules + skills/gui links + cleanup legacy symlinks"
 	@echo "  cxado-up        Full stack: veil + egregore infra + obs (Tempo, Qdrant)"
 	@echo "  cxado-up-lite   Lite profile: no Tempo, 1 worker; includes Qdrant + Langfuse"
 	@echo "  cxado-up-minimal  Agents-only: veil-lite + postgres+redis+langfuse+grafana (no kafka/qdrant)"
@@ -43,7 +43,7 @@ help:
 	@echo "  egregore-typecheck-tests-core  ty check domain + core flow tests"
 	@echo "  skills-link     Symlink shared/skills into project .agents/skills/"
 	@echo "  skills-install  Symlink cxado-skills into ~/.cursor/skills/"
-	@echo "  refs-link       Symlink shared/references into project refs/"
+	@echo "  refs-cleanup    Remove legacy projects/*/refs symlinks (SSOT: refs/ at meta root)"
 	@echo "  gui-link        Symlink shared/gui into project node_modules/@cxado/gui"
 	@echo "  agent-skills-install  Fetch docker-expert + grafana-dashboards into .agents/skills/"
 	@echo "  wshobson-skills-install  Curated wshobson/agents skills (Python, LLM, k8s, UI, DevSecOps)"
@@ -60,8 +60,8 @@ skills-link:
 skills-install:
 	@./scripts/install-skills.sh
 
-refs-link:
-	@./scripts/link-references.sh
+refs-cleanup:
+	@./scripts/cleanup-refs-symlinks.sh
 
 gui-link:
 	@./scripts/link-gui.sh

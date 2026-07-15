@@ -10,11 +10,9 @@ Run on a clean machine (or temp directory) to verify cxado bootstrap.
 - [ ] `test -d projects/egregore/.git` — egregore submodule initialized
 - [ ] `test -d projects/fabrica/.git` — fabrica submodule initialized
 - [ ] `test -d shared/skills/devsecops` — skills hub present
-- [ ] `test -d shared/references/Jet-Container-Security-Framework-main` — references hub present (**optional**, gitignored; see `shared/references/README.md`)
+- [ ] `test -d refs/Jet-Container-Security-Framework-main` — references hub present (**optional**, gitignored; see `refs/README.md`)
 - [ ] `test -f shared/contracts/engage-events-audit.json` — wire contracts present
-- [ ] `test -L projects/veil/refs` — refs symlink created
-- [ ] `test -L projects/fabrica/refs` — refs symlink created
-- [ ] `test -L projects/egregore/refs` — refs symlink created (egregore)
+- [ ] `test ! -e projects/veil/refs` — no legacy refs symlink (SSOT: `refs/` at meta root)
 - [ ] `test -d shared/agent-rules/core` — agent rules hub present
 - [ ] `test -L projects/veil/.cursor/rules/core-karpathy-guidelines.mdc` — core rules symlinked (veil)
 - [ ] `test -L projects/fabrica/.agents/rules/core-karpathy-guidelines.mdc` — core rules symlinked (fabrica)
@@ -32,8 +30,8 @@ cxado/
 ├── projects/veneno/
 ├── projects/egregore/
 ├── projects/fabrica/
+├── refs/
 ├── shared/skills/
-├── shared/references/
 ├── shared/agent-rules/
 ├── shared/contracts/
 └── cxado.code-workspace
