@@ -218,7 +218,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Policy fallbacks per second — requests that could not be routed by the primary policy.",
+      "description": "Silent fallbacks from the durable policy loader to in-memory defaults, per second.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -267,7 +267,7 @@
         },
         "textMode": "auto"
       },
-      "title": "Policy Fallback Rate",
+      "title": "Policy Loader Fallback Rate",
       "type": "stat",
       "targets": [
         {
@@ -275,7 +275,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(cys_policy_fallback_total[$__rate_interval])) or vector(0)",
+          "expr": "sum(rate(cys_persistence_fallback_total{component=\"policy_loader\"}[$__rate_interval])) or vector(0)",
           "refId": "A",
           "range": true
         }
@@ -412,7 +412,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Policy fallback rate over time — sustained increases indicate the primary policy catalog is failing to route requests.",
+      "description": "Policy loader fallback rate over time — sustained increases indicate the durable policy store is unreachable and the API is silently serving in-memory defaults.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -452,7 +452,7 @@
           "sort": "desc"
         }
       },
-      "title": "Policy Fallback Rate",
+      "title": "Policy Loader Fallback Rate",
       "type": "timeseries",
       "targets": [
         {
@@ -460,7 +460,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(cys_policy_fallback_total[$__rate_interval])) or vector(0)",
+          "expr": "sum(rate(cys_persistence_fallback_total{component=\"policy_loader\"}[$__rate_interval])) or vector(0)",
           "legendFormat": "fallbacks/s",
           "refId": "A",
           "range": true
