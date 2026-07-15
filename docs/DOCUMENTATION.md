@@ -54,7 +54,7 @@ Submodule repos (veil, veneno, egregore, …) need **embedded** `.git` directori
 
 Then **Developer: Reload Window**.
 
-Workspace settings: `git.detectSubmodules: false`, `git.autoRepositoryDetection: true`, `git.openRepositoryInParentFolders: never`.
+Workspace settings: `git.detectSubmodules: false`, `git.autoRepositoryDetection: false` (explicit `git.scanRepositories` only), `git.openRepositoryInParentFolders: never`. `shared/*` hubs are **in-tree** — not separate SCM repos; `shared/references` is gitignored local corpora.
 
 Core Cursor rules: `shared/agent-rules/core/` — committed symlinks in [`.cursor/rules/`](../.cursor/rules/). No `make rules-link` into submodules.
 

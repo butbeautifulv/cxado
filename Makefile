@@ -11,7 +11,7 @@
 
 help:
 	@echo "Targets:"
-	@echo "  bootstrap       Initialize and update git submodules"
+	@echo "  bootstrap       Initialize submodules + refs/skills/gui links + cleanup legacy shared symlinks"
 	@echo "  cxado-up        Full stack: veil + egregore infra + obs (Tempo, Qdrant)"
 	@echo "  cxado-up-lite   Lite profile: no Tempo, 1 worker; includes Qdrant + Langfuse"
 	@echo "  cxado-up-minimal  Agents-only: veil-lite + postgres+redis+langfuse+grafana (no kafka/qdrant)"
@@ -52,6 +52,7 @@ help:
 
 bootstrap:
 	@./scripts/bootstrap.sh
+	@./scripts/cleanup-legacy-shared-links.sh
 
 skills-link:
 	@./scripts/link-skills.sh
