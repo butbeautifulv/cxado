@@ -10,10 +10,9 @@ shared/references/*
 projects/fish/
 projects/fstec/
 
-# Local IDE / plans (keep .cursor/rules in git — SSOT via shared/agent-rules)
-.cursor/*
-!.cursor/rules/
-!.cursor/rules/**
+# Local IDE / agent tooling (not in git — SSOT: shared/agent-rules, skills-lock + make skills-install)
+.cursor/
+.agents/
 .codebase-memory/
 .serena/
 

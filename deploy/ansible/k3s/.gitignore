@@ -1,3 +1,7 @@
 files/airgap/*
 !files/airgap/.gitkeep
 inventories/offline/hosts.yml
+
+# Local IDE / agent tooling
+.cursor/
+.agents/
