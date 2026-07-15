@@ -1,10 +1,10 @@
 # cxado — домены
 
-Продуктовые домены meta-repo: отдельные линии развития со своими модулями и submodule-продуктами.
+Продуктовые домены, которые **раньше** жили в meta-repo как submodule-продукты.
 
-| Домен | Документ | Первый продукт |
-|-------|----------|----------------|
-| **Awareness** | [awareness.md](awareness.md) | [hexenhammer](../../projects/hexenhammer/) |
-| **Compliance** | — (см. [tabula AGENTS.md](../../projects/tabula/AGENTS.md)) | [tabula/fstec](../../projects/tabula/fstec/) |
+| Домен | Статус | Локальный клон |
+|-------|--------|----------------|
+| **Awareness** | out of scope | `~/Desktop/hexenhammer` — [awareness.md](awareness.md) |
+| **Compliance (Tabula/fstec)** | out of scope | `~/Desktop/tabula` |
 
-Проекты уровня платформы (Veil, Veneno, Egregore, Fabrica, ASOC) — в [ecosystem-map.md](../ecosystem-map.md).
+Платформа cxado (Veil, Veneno, Egregore, Fabrica) — [ecosystem-map.md](../ecosystem-map.md).

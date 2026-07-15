@@ -94,23 +94,14 @@ Suggested GitLab job (manual / scheduled): run `make k3s-baseline-critical` with
 
 | Tier | Component | Deploy path |
 |------|-----------|-------------|
-| **Critical** | api + worker | `k3s-offline-bundle-egregore.sh` → `egregore-helm-upgrade.sh` |
-| **Operator UI** | egregore-ui (Next.js) | `k3s-offline-bundle-egregore-ui.sh` — default console |
-| **Optional** | Next.js `egregore-ui` | `k3s-offline-bundle-egregore-ui.sh` → `EGREGORE_UI_REPLICAS=2 egregore-helm-upgrade.sh` |
-
-Default `values-egregore-offline.yaml` sets **`ui.replicas: 0`** so helm never blocks on a missing Next.js image. `helm upgrade` runs **without** global `--wait`; blocking gates are explicit scripts.
+| **Critical** | api + worker + ui | [nexus-egregore-loop.md](../../docs/deploy/nexus-egregore-loop.md) — `cxado-nexus-deploy.sh` |
+| **Veil** | veil-api + veil-mcp | [nexus-veil-loop.md](../../docs/deploy/nexus-veil-loop.md) — `cxado-nexus-deploy-veil.sh` |
+| **Fallback** | tar import | `k3s-offline-bundle-*.sh` — **DEPRECATED** |
 
 ```bash
-# Pre-upgrade baseline (optional)
-./scripts/k8s/diagnose-pending-pods.sh
-
-# Backend upgrade (requires secrets in deploy/.secrets/cxado-k3s.env)
-CXADO_OFFLINE_TAG=offline-YYYYMMDD-pN ./scripts/k8s/k3s-offline-bundle-egregore.sh
-CXADO_OFFLINE_TAG=offline-YYYYMMDD-pN ./scripts/k8s/egregore-helm-upgrade.sh
-
-# Optional full Next.js UI (only after UI bundle)
-CXADO_OFFLINE_TAG=offline-YYYYMMDD-pN ./scripts/k8s/k3s-offline-bundle-egregore-ui.sh
-CXADO_OFFLINE_TAG=offline-YYYYMMDD-pN EGREGORE_UI_REPLICAS=2 ./scripts/k8s/egregore-helm-upgrade.sh
+TAG=offline-$(date +%Y%m%d)
+./scripts/k8s/cxado-nexus-deploy.sh --build --tag "$TAG"
+./scripts/k8s/egregore-helm-upgrade.sh   # if not part of deploy script
 ```
 
 **Rollback:**

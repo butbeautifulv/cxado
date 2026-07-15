@@ -1,5 +1,7 @@
 # K3s deploy backlog (deferred until cluster available)
 
+**Deploy SSOT:** [k3s-offline-baseline.md](deploy/k3s-offline-baseline.md) · [nexus-egregore-loop.md](deploy/nexus-egregore-loop.md) · [nexus-veil-loop.md](deploy/nexus-veil-loop.md)
+
 Execute as **one sprint** when `kubectl` / offline SSH is reachable.
 
 ## Queue and catalog

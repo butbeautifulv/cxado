@@ -1,0 +1,34 @@
+---
+description: Metacognition on errors — 5 Whys, Gemba Kaizen, continuous improvement
+alwaysApply: true
+---
+
+# Kaizen on errors (cxado core)
+
+When any error appears — test failure, CI red, build break — **stop guessing**. Use metacognition before the next change.
+
+## Trigger
+
+- Verify command exits non-zero.
+- Same failure twice after a fix.
+- Cannot explain why in one sentence.
+
+## Method: 5 Whys
+
+Stop at a controllable root cause (code, config, plan gap).
+
+```markdown
+## 5 Whys — <title>
+**Symptom:** <command, log>
+**Root cause:** <one sentence>
+**Gemba:** <repro command>
+```
+
+## Gemba Kaizen workflow
+
+1. Reproduce with the exact failing command.
+2. Smallest fix at the true failure point.
+3. Re-run failing check, then layer regression.
+4. Kaizen note in PR: symptom → cause → fix → guard.
+
+Bugfix PRs are gated on this at critic review — see the Kaizen checklist in [core-agent-critic.mdc](core-agent-critic.mdc)'s verdict template.

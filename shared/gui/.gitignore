@@ -1,0 +1,23 @@
+node_modules/
+.next/
+dist/
+.turbo/
+.cache/
+
+# env
+.env
+.env.*
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+
+# Cursor codebase memory MCP (local only)
+.codebase-memory/

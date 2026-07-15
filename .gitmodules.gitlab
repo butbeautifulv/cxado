@@ -1,5 +1,6 @@
 # GitLab-only submodule URLs — used on gitlab.svo.aero/av.popov/cxado (corp, no GitHub).
 # Local dev keeps .gitmodules (GitHub). Sync: scripts/gitlab/sync-monorepo-to-gitlab.sh
+# shared/* hubs are in-tree in cxado — not mirrored as separate GitLab projects.
 [submodule "projects/veil"]
 	path = projects/veil
 	url = git@gitlab.svo.aero:av.popov/veil.git
@@ -9,27 +10,6 @@
 [submodule "projects/fabrica"]
 	path = projects/fabrica
 	url = git@gitlab.svo.aero:av.popov/fabrica.git
-[submodule "projects/asoc-api"]
-	path = projects/asoc-api
-	url = git@gitlab.svo.aero:av.popov/asoc-api.git
-[submodule "shared/skills"]
-	path = shared/skills
-	url = git@gitlab.svo.aero:av.popov/cxado-skills.git
-[submodule "shared/references"]
-	path = shared/references
-	url = git@gitlab.svo.aero:av.popov/cxado-references.git
-[submodule "shared/agent-rules"]
-	path = shared/agent-rules
-	url = git@gitlab.svo.aero:av.popov/cxado-agent-rules.git
 [submodule "projects/veneno"]
 	path = projects/veneno
 	url = git@gitlab.svo.aero:av.popov/veneno.git
-[submodule "shared/gui"]
-	path = shared/gui
-	url = git@gitlab.svo.aero:av.popov/cxado-gui.git
-[submodule "projects/hexenhammer"]
-	path = projects/hexenhammer
-	url = git@gitlab.svo.aero:av.popov/hexenhammer.git
-[submodule "projects/tabula"]
-	path = projects/tabula
-	url = git@gitlab.svo.aero:av.popov/tabula.git

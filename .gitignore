@@ -1,13 +1,19 @@
 # Submodule working trees (managed by git submodules)
-# projects/* and shared/* are submodules — see .gitmodules
+# projects/* = git submodules; shared/agent-rules, shared/skills, shared/gui = in-tree
+
+# Large reference corpora — local only (not in git). See shared/references/README.md
+shared/references/*
+!shared/references/README.md
 
 # Legacy manual clones (removed — use submodules / GitHub archives)
 .external/
 projects/fish/
 projects/fstec/
 
-# Local IDE / plans
-.cursor/
+# Local IDE / plans (keep .cursor/rules in git — SSOT via shared/agent-rules)
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
 .codebase-memory/
 .serena/
 

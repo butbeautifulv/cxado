@@ -2,7 +2,7 @@
 
 Аудит drift для architecture-site. Обновлено после local-first platform waves (2026-07).
 
-**Masterplan rollup:** см. [egregore_unified_masterplan.md](../egregore_unified_masterplan.md) §6 — **301 completed**, **24 pending** (k3s deploy), **1 in_progress** (`p9b-drain-consultant-backlog`). Таблица streams в masterplan §4 может отставать от rollup; для статуса реализации ориентироваться на §6 и код.
+**Masterplan rollup (archived):** [archive/egregore_unified_masterplan.md](../archive/egregore_unified_masterplan.md). Active plan: [projects/egregore/docs/MASTER_PLAN_SECURE_PLATFORM.md](../../projects/egregore/docs/MASTER_PLAN_SECURE_PLATFORM.md).
 
 ## FIXED (site synced)
 
@@ -34,20 +34,21 @@
 | k3s deploy gates | **pending** | que-07/08, cat-07, E2E P4–P9 — cluster required |
 | Loki/Tempo in minimal | empty panels | Expected in `cxado-up-minimal` Grafana |
 
-## Naming (cys-agi vs egregore)
+## Naming (cys-agi vs egregore) — intentional, do not rename
 
-| Location | Issue | Action |
-|----------|-------|--------|
-| Grafana dashboard dir | `egregore/` | Product metrics may still use `cys_*` prefix — intentional |
-| `agents/manifest.yaml` | product layer alias `cys-agi` | Keep; not user-facing CLI name |
+| Location | Name | Notes |
+|----------|------|-------|
+| Grafana dashboard uid | `egregore-cys-agi` | Historical uid; keep |
+| Prometheus metrics | `cys_*` prefix | Package `cys_core` |
+| `agents/manifest.yaml` | alias `cys-agi` | Product layer only |
+| Repo / path | `egregore` | Canonical GitHub repo name |
 
-## Missing cross-links (optional follow-up)
+## Cross-links (synced)
 
-| File | Issue |
-|------|-------|
-| Root `README.md` | Link to architecture site :8765 / :30080 |
-| `docs/ecosystem-map.md` | Port 30080 arch site; maxpatrol-siem-mcp not in MCP diagram |
-| `docs/integration/README.md` | No SIEM MCP row |
+| File | Status |
+|------|--------|
+| `docs/integration/README.md` | SIEM / Tenable / DefectDojo MCP rows |
+| `docs/ecosystem-map.md` | MCP repos in catalog + diagram |
 
 ## Port matrix
 

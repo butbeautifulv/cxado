@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 HUB="$ROOT/shared/skills"
 
 if [[ ! -d "$HUB/devsecops" ]]; then
-  echo "error: shared/skills submodule not initialized; run make bootstrap first" >&2
+  echo "error: shared/skills not found; clone cxado meta-repo" >&2
   exit 1
 fi
 

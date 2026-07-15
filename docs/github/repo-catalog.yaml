@@ -1,0 +1,26 @@
+# GitHub repo metadata SSOT — sync: make sync-github-descriptions
+repos:
+  - slug: butbeautifulv/cxado
+    path: .
+    description: "cxado meta-repo — Veil, Egregore, Veneno, Fabrica, shared hubs, deploy"
+  - slug: butbeautifulv/veil
+    path: projects/veil
+    description: "Neo4j TI graph — discovery, pipeline, knowledge; veil-api + veil-mcp"
+  - slug: butbeautifulv/egregore
+    path: projects/egregore
+    description: "Event-driven multi-agent SOC + Operator UI; kill-chain personas"
+  - slug: butbeautifulv/fabrica
+    path: projects/fabrica
+    description: "DevSecOps CI/CD reference templates and adopt scripts"
+  - slug: butbeautifulv/veneno
+    path: projects/veneno
+    description: "Pentest execution layer — veneno-api + veneno-mcp"
+  - slug: butbeautifulv/maxpatrol-siem-mcp
+    path: projects/maxpatrol-siem-mcp
+    description: "MaxPatrol SIEM MCP server for egregore SOC tools"
+  - slug: butbeautifulv/tenable-mcp
+    path: projects/tenable-mcp
+    description: "Tenable Nessus vulnerability inventory MCP"
+  - slug: butbeautifulv/defectdojo-mcp
+    path: projects/defectdojo-mcp
+    description: "DefectDojo ASPM findings MCP for egregore"

@@ -2,7 +2,7 @@
 
 Active MCP servers for agent-assisted development in this workspace. Config lives in `~/.cursor/mcp.json` (user-level, not in git).
 
-**Enforcement:** `shared/agent-rules/core/agent-mcp-tooling.mdc` (`alwaysApply: true`) — symlinked into every project and meta-repo `.cursor/rules` via `make rules-link`.
+**Enforcement:** [`shared/agent-rules/core/agent-mcp-tooling.mdc`](../shared/agent-rules/core/agent-mcp-tooling.mdc) (`alwaysApply: true`) — loaded from meta [`.cursor/rules/`](../.cursor/rules/) when using `cxado.code-workspace`.
 
 ## Current stack (2026-06)
 
@@ -82,7 +82,7 @@ Semantic code intelligence (oraios/serena) via `uvx`. Project root: `/home/bbv/D
 | `get_diagnostics_for_file` | Type/lint issues from LSP |
 | `replace_symbol_body` | Surgical body replace |
 
-Prefer Serena over blind grep for renames and “find all usages” in large submodules (veil, fstec, hexenhammer).
+Prefer Serena over blind grep for renames and “find all usages” in large submodules (veil, egregore).
 
 ---
 
@@ -95,7 +95,7 @@ Live documentation for third-party libraries. **Do not commit API keys** — key
 1. `resolve-library-id` — e.g. `shadcn/ui`, `tailwindcss`, `next.js`
 2. `query-docs` — ask with concrete `libraryId` + task (“add Button in Next.js App Router”)
 
-Use before implementing UI in **hexenhammer**, **fstec** (`@cxado/gui`), or any stack that may differ from training data.
+Use before implementing UI in **Veil** (`@cxado/gui`) or any stack that may differ from training data.
 
 ---
 
@@ -157,8 +157,7 @@ Scoped `grep` is acceptable when MCP returns 0 **and** you documented `index_sta
 | egregore | `projects/egregore` |
 | veil | `projects/veil` |
 | veneno | `projects/veneno` |
-| hexenhammer | `projects/hexenhammer` |
-| fstec | `projects/tabula/fstec` |
+| fabrica | `projects/fabrica` |
 
 ---
 

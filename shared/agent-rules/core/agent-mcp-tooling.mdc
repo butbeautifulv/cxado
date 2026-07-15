@@ -1,0 +1,43 @@
+---
+description: MCP-first workflow — codebase-memory, Serena, Context7 before blind search
+alwaysApply: true
+---
+
+# MCP tooling (cxado core)
+
+Use configured MCP servers **before** repeated grep/read loops or guessing third-party APIs. Reference: cxado `docs/agents/cursor-mcp-tooling.md`.
+
+## Mandatory routing
+
+| Situation | Prefer |
+|-----------|--------|
+| Architecture, cross-module flows, ADR, "where is X used?" | **codebase-memory-mcp** — `search_code`, `trace_path` (not `get_architecture` first — too heavy) |
+| Rename, references, symbol location, file structure | **Serena** — `find_symbol`, `find_referencing_symbols` + **`relative_path`** |
+| Library/API docs (React, Next.js, shadcn, Tailwind, MCP SDK) | **Context7** — third-party only |
+| UI smoke / form flows | **cursor-ide-browser** |
+
+## Exploration ladder (internal code)
+
+1. `search_code(pattern, project, path_filter)` — scope with `path_filter` (e.g. `projects/egregore`)
+2. Serena `find_symbol(..., relative_path="projects/<submodule>")` — **always scope**; unscoped search hits `shared/references`, veil corpus, etc.
+3. `trace_path` when you know source/target symbols
+4. Blind `grep` / `SemanticSearch` — last resort; log why MCP failed
+
+**Context7** is for external library APIs, not egregore/veil internal modules.
+
+## Session workflow
+
+1. **Coding tasks** — Serena `initial_instructions` once at task start.
+2. **Before explore** — `index_status(project)` if `search_code` returns unexpected 0.
+3. **Implement** — Context7 before inventing third-party API shapes.
+4. **After merge** (not during active branch work) — `index_repository` via `scripts/reindex-post-merge.sh`.
+
+## Anti-patterns
+
+- Skipping MCP when servers are enabled and the task matches the table.
+- `get_architecture` as first exploration step (use `search_code` / `trace_path`).
+- Serena `find_symbol` without `relative_path` in a monorepo.
+- Context7 for internal Python/Go code.
+- Full re-index while another agent edits the same submodule.
+
+If an MCP call fails (auth, timeout, stale index), say so in the summary and fall back to scoped grep.

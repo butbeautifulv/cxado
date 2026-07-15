@@ -9,8 +9,9 @@
 | Приоритет | Источник | Когда обновлять |
 |-----------|----------|-----------------|
 | 1 | Код + `projects/egregore/docs/*.md` | Любое архитектурное изменение |
-| 2 | [egregore_unified_masterplan.md](../egregore_unified_masterplan.md) | После `python3 scripts/plan/build-unified-masterplan.py` |
-| 3 | [CONTENT.md](CONTENT.md) | Новая секция / diagram ID |
+| 2 | [archive/egregore_unified_masterplan.md](../archive/egregore_unified_masterplan.md) | Historical rollup only |
+| 3 | [projects/egregore/docs/MASTER_PLAN_SECURE_PLATFORM.md](../../projects/egregore/docs/MASTER_PLAN_SECURE_PLATFORM.md) | Active product master plan |
+| 4 | [CONTENT.md](CONTENT.md) | Новая секция / diagram ID |
 | 4 | [diagrams/](diagrams/) (`*.mmd`) | Изменение потоков или топологии |
 | 5 | [index.html](index.html) | Текст таблиц, ссылки, registry |
 | 6 | [GAPS.md](GAPS.md) | Закрытие drift docs ↔ code |
@@ -59,20 +60,13 @@ make cxado-local-e2e
 ## k3s offline deploy
 
 ```bash
-./scripts/k8s/k3s-sync-arch-docs-credentials.sh   # secrets → js/credentials.js
-./scripts/k8s/k3s-offline-bundle-arch-docs.sh --remote
+./scripts/k8s/k3s-sync-arch-docs-credentials.sh
+./scripts/k8s/k3s-deploy-arch-docs-offline.sh
 ```
 
-Смежные k3s deploy (контекст топологии, не обязательны для arch-docs):
+App deploy (canonical): [docs/deploy/nexus-egregore-loop.md](../deploy/nexus-egregore-loop.md). **DEPRECATED:** `k3s-offline-bundle-*.sh` (fallback only).
 
-```bash
-./scripts/k8s/k3s-offline-bundle-egregore-ui.sh   # egregore-ui :30300/:30301
-./scripts/k8s/k3s-deploy-siem-mcp.sh             # siem-mcp ClusterIP :8094
-```
-
-URL: `https://<k3s-node>:30080` (TLS gateway, NodePort 30080)
-
-k8s монтирует **hostPath** `/home/bbv/cxado/arch-docs`; sync через bundle script.
+URL: `https://<k3s-node>:30080`
 
 ## Реестр контента
 
@@ -87,7 +81,7 @@ k8s монтирует **hostPath** `/home/bbv/cxado/arch-docs`; sync через
 4. Правка `diagrams/*.mmd` → проверка рендера в браузере (:8765)
 5. Синк секций `index.html` + footer references
 6. Обновить [GAPS.md](GAPS.md)
-7. k3s: `./scripts/k8s/k3s-offline-bundle-arch-docs.sh --remote`
+7. k3s: `./scripts/k8s/k3s-deploy-arch-docs-offline.sh` (arch-docs only)
 
 ## Credentials
 

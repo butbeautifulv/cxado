@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GUI="$ROOT/shared/gui"
 
 if [[ ! -f "$GUI/package.json" ]]; then
-  echo "error: shared/gui submodule not initialized; run make bootstrap first" >&2
+  echo "error: shared/gui not found; clone cxado meta-repo" >&2
   exit 1
 fi
 
@@ -27,6 +27,5 @@ link_gui_project() {
 
 echo "Linking @cxado/gui into pilot projects"
 link_gui_project veil
-link_gui_project tabula/fstec
 
 echo "GUI symlinks created."

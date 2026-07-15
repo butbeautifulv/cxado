@@ -55,11 +55,12 @@ See also [docs/observability/README.md](../../docs/observability/README.md).
 | `defectdojo-vm01-export-users.sh` | Export users from legacy VM |
 | `defectdojo-vm01-decommission.sh` | VM_01 decommission helper |
 
-## Bundles (airgap)
+## Bundles (airgap) — DEPRECATED
 
-| Script | Purpose |
-|--------|---------|
-| `k3s-offline-bundle-egregore.sh` | Egregore image bundle |
-| `k3s-offline-bundle-egregore-ui.sh` | Egregore UI image bundle |
-| `k3s-offline-bundle-obs.sh` | Observability image bundle |
-| `k3s-offline-bundle-min.sh` | Minimal bundle |
+Use [nexus-egregore-loop.md](../../docs/deploy/nexus-egregore-loop.md) / [nexus-veil-loop.md](../../docs/deploy/nexus-veil-loop.md) instead.
+
+| Script | Status |
+|--------|--------|
+| `cxado-nexus-deploy.sh` | **Canonical** egregore api+worker+ui |
+| `cxado-nexus-deploy-veil.sh` | **Canonical** veil-api+mcp |
+| `k3s-offline-bundle-*.sh` | DEPRECATED fallback (tar import) |

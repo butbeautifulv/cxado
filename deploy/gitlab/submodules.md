@@ -91,7 +91,8 @@ Creates GitLab project via API if `GITLAB_PAT_RUNNER` is in `deploy/.secrets/cxa
 | **Nested** | `projects/tabula/fstec` (submodule inside tabula — mirrored as `av.popov/fstec`) |
 | **As needed** | `projects/veneno`, MCP repos |
 | **Not in workspace** | [fish](https://github.com/butbeautifulv/fish) — archive donor for hexenhammer, **no submodule** |
-| **Low priority** | `shared/skills`, `shared/references`, `shared/agent-rules`, `shared/gui` |
+| **In meta-repo** | `shared/skills`, `shared/agent-rules`, `shared/gui` |
+| **Local only (gitignored)** | `shared/references/` |
 | **Optional** | `projects/fabrica`, `projects/tabula`, … |
 
 ## GitLab pull mirror (alternative)

@@ -1,0 +1,23 @@
+version: "1.0"
+core_rules:
+  - name: karpathy-guidelines
+    file: core/karpathy-guidelines.mdc
+    symlink: core-karpathy-guidelines.mdc
+  - name: workflow-chain
+    file: core/workflow-chain.mdc
+    symlink: core-workflow-chain.mdc
+  - name: parallel-branches
+    file: core/parallel-branches.mdc
+    symlink: core-parallel-branches.mdc
+  - name: agent-critic
+    file: core/agent-critic.mdc
+    symlink: core-agent-critic.mdc
+  - name: kaizen
+    file: core/kaizen.mdc
+    symlink: core-kaizen.mdc
+  - name: agent-documentation
+    file: core/agent-documentation.mdc
+    symlink: core-agent-documentation.mdc
+  - name: agent-mcp-tooling
+    file: core/agent-mcp-tooling.mdc
+    symlink: core-agent-mcp-tooling.mdc

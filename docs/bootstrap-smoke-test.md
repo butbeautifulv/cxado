@@ -9,10 +9,8 @@ Run on a clean machine (or temp directory) to verify cxado bootstrap.
 - [ ] `test -d projects/veil/.git` — veil submodule initialized
 - [ ] `test -d projects/egregore/.git` — egregore submodule initialized
 - [ ] `test -d projects/fabrica/.git` — fabrica submodule initialized
-- [ ] `test -d projects/asoc-api/.git` — asoc-api submodule initialized
 - [ ] `test -d shared/skills/devsecops` — skills hub present
-- [ ] `test -d shared/references/Jet-Container-Security-Framework-main` — references hub present
-- [ ] `test -d shared/references/owasp` — OWASP cheat sheets in references hub
+- [ ] `test -d shared/references/Jet-Container-Security-Framework-main` — references hub present (**optional**, gitignored; see `shared/references/README.md`)
 - [ ] `test -f shared/contracts/engage-events-audit.json` — wire contracts present
 - [ ] `test -L projects/veil/refs` — refs symlink created
 - [ ] `test -L projects/fabrica/refs` — refs symlink created
@@ -34,7 +32,6 @@ cxado/
 ├── projects/veneno/
 ├── projects/egregore/
 ├── projects/fabrica/
-├── projects/asoc-api/
 ├── shared/skills/
 ├── shared/references/
 ├── shared/agent-rules/
