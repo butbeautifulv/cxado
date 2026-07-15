@@ -66,4 +66,8 @@ Full routing + pitfalls: [docs/agents/cursor-mcp-tooling.md](docs/agents/cursor-
 - [docs/integration/egregore-tenable-mcp.md](docs/integration/egregore-tenable-mcp.md) — egregore ↔ tenable-mcp (Nessus vulnerability inventory)
 - [docs/observability/README.md](docs/observability/README.md) — k3s offline observability, validation gate, worker telemetry
 - [docs/deploy/k3s-offline-baseline.md](docs/deploy/k3s-offline-baseline.md) — offline lab k3s deploy baseline
+- **Build + deploy (canonical, P30)** — Kaniko in-cluster build → push to Nexus → helm upgrade. No `docker save`/tar import for app images.
+  - [docs/deploy/nexus-egregore-loop.md](docs/deploy/nexus-egregore-loop.md) — egregore api+worker+ui: `./scripts/k8s/cxado-nexus-deploy.sh --build --tag "$TAG"`
+  - [docs/deploy/nexus-veil-loop.md](docs/deploy/nexus-veil-loop.md) — veil-api+veil-mcp: `./scripts/k8s/cxado-nexus-deploy-veil.sh --build --tag "$TAG"`
+  - `scripts/k8s/k3s-offline-bundle-*.sh` / `k3s-distribute-offline-tag.sh` are DEPRECATED fallback only — do not use for a normal deploy loop.
 - [deploy/k8s/defectdojo-offline/README.md](deploy/k8s/defectdojo-offline/README.md) — DefectDojo in-cluster ASPM (`:30808`)

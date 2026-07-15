@@ -31,6 +31,5 @@ window.CXADO_SERVICES = {
   clusterInfra: [
     { name: "Gitea", ns: "gitea", note: "ClusterIP · git hosting" },
     { name: "Kubernetes Dashboard", ns: "kubernetes-dashboard", note: "ClusterIP" },
-    { name: "Tekton Dashboard", ns: "tekton-pipelines", port: 9097, note: "ClusterIP" },
   ],
 };
