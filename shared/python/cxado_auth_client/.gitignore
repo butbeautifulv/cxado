@@ -1,2 +1,6 @@
 .venv/
 *.egg-info/
+
+# Local IDE / agent tooling
+.cursor/
+.agents/

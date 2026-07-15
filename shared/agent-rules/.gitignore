@@ -1,2 +1,6 @@
 # Cursor codebase memory MCP (local only)
 .codebase-memory/
+
+# Local IDE / agent tooling
+.cursor/
+.agents/
