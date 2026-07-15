@@ -51,6 +51,7 @@ data:
         # API on same origin as UI (one TLS cert — avoids NetworkError on :30880)
         location /v1/ {
           proxy_buffering off;
+          proxy_read_timeout 3600s;
           proxy_pass http://egregore-api.cxado-app.svc.cluster.local:8080;
         }
         location /catalog/ {
@@ -74,7 +75,19 @@ data:
         location /health {
           proxy_pass http://egregore-api.cxado-app.svc.cluster.local:8080;
         }
+        location /status/stream {
+          proxy_buffering off;
+          proxy_read_timeout 3600s;
+          proxy_pass http://egregore-api.cxado-app.svc.cluster.local:8080;
+        }
         location /status {
+          proxy_pass http://egregore-api.cxado-app.svc.cluster.local:8080;
+        }
+
+        location /api/egregore/ {
+          proxy_buffering off;
+          proxy_read_timeout 3600s;
+          rewrite ^/api/egregore/?(.*)$ /$1 break;
           proxy_pass http://egregore-api.cxado-app.svc.cluster.local:8080;
         }
 
@@ -86,6 +99,49 @@ data:
       server {
         listen 30301 ssl;
         error_page 497 =301 https://$http_host$request_uri;
+
+        # Same-origin API routes (belt-and-suspenders alongside Next.js /api/egregore proxy)
+        location /v1/ {
+          proxy_buffering off;
+          proxy_read_timeout 3600s;
+          proxy_pass http://egregore-api.cxado-app.svc.cluster.local:8080;
+        }
+        location /catalog/ {
+          proxy_pass http://egregore-api.cxado-app.svc.cluster.local:8080;
+        }
+        location /investigations/ {
+          proxy_pass http://egregore-api.cxado-app.svc.cluster.local:8080;
+        }
+        location /jobs/ {
+          proxy_pass http://egregore-api.cxado-app.svc.cluster.local:8080;
+        }
+        location /approvals/ {
+          proxy_pass http://egregore-api.cxado-app.svc.cluster.local:8080;
+        }
+        location /runs/ {
+          proxy_pass http://egregore-api.cxado-app.svc.cluster.local:8080;
+        }
+        location /sessions {
+          proxy_pass http://egregore-api.cxado-app.svc.cluster.local:8080;
+        }
+        location /health {
+          proxy_pass http://egregore-api.cxado-app.svc.cluster.local:8080;
+        }
+        location /status/stream {
+          proxy_buffering off;
+          proxy_read_timeout 3600s;
+          proxy_pass http://egregore-api.cxado-app.svc.cluster.local:8080;
+        }
+        location /status {
+          proxy_pass http://egregore-api.cxado-app.svc.cluster.local:8080;
+        }
+
+        location /api/egregore/ {
+          proxy_buffering off;
+          proxy_read_timeout 3600s;
+          rewrite ^/api/egregore/?(.*)$ /$1 break;
+          proxy_pass http://egregore-api.cxado-app.svc.cluster.local:8080;
+        }
 
         location / {
           proxy_pass http://egregore-ui.cxado-app.svc.cluster.local:3000;

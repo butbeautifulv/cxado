@@ -67,6 +67,9 @@ IMAGES=(
   "${HUB}/library/redis:7|redis:7"
   "${HUB}/defectdojo/defectdojo-django:${DEFECTDOJO_VERSION}|defectdojo-django:${DEFECTDOJO_VERSION}"
   "${HUB}/defectdojo/defectdojo-nginx:${DEFECTDOJO_VERSION}|defectdojo-nginx:${DEFECTDOJO_VERSION}"
+  "${HUB}/oven/bun:1-alpine|oven-bun:1-alpine"
+  "${HUB}/library/golang:1.25-bookworm|golang-1.25-bookworm"
+  "${GROUP}/distroless/static-debian12:nonroot|distroless-static-debian12:nonroot"
 )
 
 # Not cached in Nexus gitlab-hub proxy — verify-only if already imported to containerd

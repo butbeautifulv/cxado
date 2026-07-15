@@ -36,7 +36,15 @@ k3s_kubelet_args:
   - "eviction-max-pod-grace-period=60"
 
 k3s_hostpaths:
+  - path: /var/lib/veil/playbooks
+    owner: root
+    group: root
+    mode: "0755"
   - path: /var/lib/veil/playbooks/docs/skills-index
+    owner: root
+    group: root
+    mode: "0755"
+  - path: /var/lib/veil/playbooks/corpus
     owner: root
     group: root
     mode: "0755"

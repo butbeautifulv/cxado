@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Deploy Veil graph plane (+ optional workers overlay) onto k3s offline.
 #
+# DEPRECATED for veil-api/mcp image iteration — prefer:
+#   TAG="$(git -C projects/veil rev-parse --short HEAD)" \
+#     ./scripts/k8s/cxado-nexus-deploy-veil.sh --build --tag "${TAG}"
+# This script remains for greenfield data-plane (nats/neo4j) + full offline deploy.
+#
 # Usage:
 #   VEIL_OFFLINE_TAG=offline-YYYYMMDD ./scripts/k8s/k3s-deploy-veil-offline.sh
 #   VEIL_OFFLINE_TAG=offline-YYYYMMDD ./scripts/k8s/k3s-deploy-veil-offline.sh --with-workers-obs
@@ -39,16 +44,6 @@ kubectl_cmd() {
   fi
 }
 
-helm_cmd() {
-  if [[ -n "$SSH_HOST" ]]; then
-    # shellcheck disable=SC2029
-    ssh -p "$SSH_PORT" "$SSH_HOST" \
-      "KUBECONFIG=/home/bbv/.kube/config helm $(printf '%q ' "$@")"
-  else
-    helm "$@"
-  fi
-}
-
 apply_file() {
   local f="$1"
   if [[ -n "$SSH_HOST" ]]; then
@@ -80,18 +75,6 @@ refresh_prometheus_profile() {
   fi
 }
 
-copy_and_sed_values() {
-  local dest="/tmp/values-veil-offline.yaml"
-  sed "s/__VEIL_OFFLINE_TAG__/${TAG}/g" "${ROOT}/deploy/k8s/veil-offline/values-graph-only.yaml" >"${ROOT}/.tmp-values-veil-offline.yaml"
-  if [[ -n "$SSH_HOST" ]]; then
-    scp -P "$SSH_PORT" "${ROOT}/.tmp-values-veil-offline.yaml" "${SSH_HOST}:${dest}"
-  else
-    cp "${ROOT}/.tmp-values-veil-offline.yaml" "$dest"
-  fi
-  rm -f "${ROOT}/.tmp-values-veil-offline.yaml"
-  echo "$dest"
-}
-
 main() {
   log "tag=${TAG} ssh=${SSH_HOST:-local} profile=${CXADO_VEIL_PROFILE}"
 
@@ -100,33 +83,14 @@ main() {
   apply_file "${ROOT}/deploy/k8s/veil-offline/10-nats.yaml"
   apply_file "${ROOT}/deploy/k8s/veil-offline/20-neo4j.yaml"
 
-  VALUES="$(copy_and_sed_values)"
-  HELM_ARGS=(-n veil -f "$VALUES")
+  HELM_ARGS=()
   if [[ "$WITH_WORKERS_OBS" -eq 1 ]]; then
-    if [[ -n "$SSH_HOST" ]]; then
-      scp -P "$SSH_PORT" "${ROOT}/deploy/k8s/veil-offline/values-workers-obs.yaml" "${SSH_HOST}:/tmp/values-workers-obs.yaml"
-    fi
-    HELM_ARGS+=(-f /tmp/values-workers-obs.yaml)
+    HELM_ARGS+=(--with-workers-obs)
   fi
 
-  log "helm upgrade veil"
-  if [[ -n "$SSH_HOST" ]]; then
-    rsync -a -e "ssh -p ${SSH_PORT}" "${ROOT}/projects/veil/deploy/helm/veil/" "${SSH_HOST}:/tmp/veil-helm/"
-    helm_cmd upgrade --install veil /tmp/veil-helm "${HELM_ARGS[@]}" --set global.imageTag="${TAG}"
-  else
-    helm_cmd upgrade --install veil "${ROOT}/projects/veil/deploy/helm/veil" "${HELM_ARGS[@]}" --set global.imageTag="${TAG}"
-  fi
-
-  log "rollout graph plane"
-  kubectl_cmd -n veil rollout status deploy/veil-veil-api --timeout=300s
-  kubectl_cmd -n veil rollout status deploy/veil-veil-mcp --timeout=300s
-
-  if [[ "$WITH_WORKERS_OBS" -eq 1 ]]; then
-    log "rollout workers (workers-obs)"
-    for deploy in veil-veil-ingest-worker veil-veil-pipeline-worker veil-veil-engage-events-worker; do
-      kubectl_cmd -n veil rollout status "deploy/${deploy}" --timeout=300s
-    done
-  fi
+  log "helm upgrade veil (Nexus pull)"
+  VEIL_OFFLINE_TAG="${TAG}" VEIL_OFFLINE_SSH_HOST="${SSH_HOST}" VEIL_OFFLINE_SSH_PORT="${SSH_PORT}" \
+    "${ROOT}/scripts/k8s/veil-helm-upgrade.sh" "${HELM_ARGS[@]}"
 
   refresh_prometheus_profile
 

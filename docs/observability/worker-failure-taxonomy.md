@@ -21,7 +21,7 @@ Answer «why do worker jobs fail?» from Prometheus/Loki without reading every l
 | `llm_error` | `model_refusal:*` | `run_worker_job.py` |
 | `sandbox_error` | sandbox create/destroy failures | `run_worker_job.py` |
 | `security_violation` | input sanitizer `SecurityViolation` | `run_worker_job.py` |
-| `cancelled` | `dependency_not_ready:*`, operator cancel | orchestrator re-queue (not terminal failure) |
+| `cancelled` | `dependency_not_ready:*`, operator cancel, `reconciled_*_bus_job` | orchestrator re-queue / reconcile (not terminal failure) |
 | `unknown` | unclassified exception | fallback + alert |
 
 ## Egress contract

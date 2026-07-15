@@ -1,5 +1,5 @@
 # Namespace-level caps for cxado-app (egregore + siem-mcp + tenable-mcp).
-# Sum of limits should stay below ~80% of P30 allocatable after kubelet reservations.
+# 3-node offline cluster: api×4 + worker×8 + ui×2 — see k3s-capacity-budget.md
 apiVersion: v1
 kind: ResourceQuota
 metadata:
@@ -7,11 +7,11 @@ metadata:
   namespace: cxado-app
 spec:
   hard:
-    pods: "25"
-    requests.cpu: "3750m"
-    requests.memory: 7Gi
-    limits.cpu: "6000m"
-    limits.memory: 9Gi
+    pods: "35"
+    requests.cpu: "6000m"
+    requests.memory: 12Gi
+    limits.cpu: "16000m"
+    limits.memory: 20Gi
 ---
 apiVersion: v1
 kind: LimitRange

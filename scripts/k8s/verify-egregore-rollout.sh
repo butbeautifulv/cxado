@@ -13,7 +13,7 @@ source "${ROOT}/scripts/k8s/cxado-offline-env.sh"
 SSH_HOST="${CXADO_OFFLINE_SSH_HOST:-}"
 SSH_PORT="${CXADO_OFFLINE_SSH_PORT}"
 NS="${CXADO_APP_NS:-cxado-app}"
-ROLLOUT_TIMEOUT="${EGREGORE_ROLLOUT_TIMEOUT:-300}"
+ROLLOUT_TIMEOUT="${EGREGORE_ROLLOUT_TIMEOUT:-120}"
 
 fail=0
 pass() { printf 'OK   %s\n' "$1"; }

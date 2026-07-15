@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 # Build a minimal offline image bundle and import it into k3s containerd on the target.
+#
+# DEPRECATED for veil-api / veil-mcp — use Nexus Kaniko loop instead:
+#   TAG="$(git -C projects/veil rev-parse --short HEAD)" \
+#     ./scripts/k8s/cxado-nexus-deploy-veil.sh --build --tag "${TAG}"
+# This script remains for nats/neo4j and other third-party images in the tar bundle.
+#
 # Target access: ssh/scp to the forwarded endpoint (10.8.184.22:22012 -> 10.8.185.15).
 #
 # Usage:
@@ -27,6 +33,7 @@ OUT_TAR="${CXADO_OFFLINE_TAR:-/tmp/cxado_offline_min_${TAG}.tar}"
 log() { printf '[k3s-offline-min] %s\n' "$*"; }
 
 build_local_images() {
+  log "DEPRECATED: build veil-api/mcp via ./scripts/k8s/cxado-nexus-deploy-veil.sh --build"
   log "build veil-api:${TAG}"
   docker build -t "veil-api:${TAG}" \
     -f "${ROOT}/projects/veil/deploy/knowledge/docker/api.Dockerfile" \

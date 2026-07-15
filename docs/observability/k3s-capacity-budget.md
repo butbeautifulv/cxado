@@ -1,47 +1,41 @@
-# k3s Capacity Budget — cxado-app (P30)
+# k3s Capacity Budget — cxado-app (3-node offline)
 
-**Phase:** 5 (P5.2)  
-**Host:** P30 ~ 8 CPU / 14 GiB RAM  
-**Node allocatable:** ~7200m CPU, ~12 GiB memory (kubelet reserved)
+**Phase:** 5 (P5.2) — updated for 3-node cluster  
+**Control-plane:** P30 ~ 8 CPU / 14 GiB RAM  
+**Workers:** 2 additional nodes (corp network)  
+**Node allocatable (P30):** ~7200m CPU, ~12 GiB memory (kubelet reserved)
 
 ## Namespace quota (`cxado-app-cap`)
 
 | Resource | Hard limit |
 |----------|------------|
-| `pods` | 25 |
-| `requests.cpu` | 3750m |
-| `requests.memory` | 7 Gi |
-| `limits.cpu` | 6000m |
-| `limits.memory` | 9 Gi |
+| `pods` | 35 |
+| `requests.cpu` | 6000m |
+| `requests.memory` | 12 Gi |
+| `limits.cpu` | 16000m |
+| `limits.memory` | 20 Gi |
 
-## Egregore steady-state requests (offline values, post Phase 5)
+## Egregore steady-state requests (offline values, 3-node)
 
 | Workload | Replicas | req CPU | req RAM | Σ CPU |
 |----------|----------|---------|---------|-------|
-| egregore-api | 1 | 150m | 512Mi | 150m |
-| egregore-worker | 2 (HPA min) | 200m | 640Mi | 400m |
-| egregore-ui | **0** (disabled) | — | — | 0m |
-| **egregore Σ** | | | | **550m** |
+| egregore-api | 4 | 150m | 512Mi | 600m |
+| egregore-worker | 8 | 200m | 640Mi | 1600m |
+| egregore-ui | 2 | 50m | 128Mi | 100m |
+| **egregore Σ** | | | | **2300m** |
 
-## HPA worst case (worker maxReplicas=3)
+## HPA (worker fixed at 8)
 
 | Workload | Replicas | req CPU | Σ CPU |
 |----------|----------|---------|-------|
-| egregore-worker | 3 | 200m | 600m |
-| **egregore Σ (HPA max)** | | | **750m** |
+| egregore-worker | 8 | 200m | 1600m |
+| **egregore Σ** | | | **2300m** |
 
 ## Rollout worst case (worker strategy)
 
-Worker offline profile: `maxSurge: 0`, `maxUnavailable: 1` → at most **3** worker pods during rollout (no extra surge pod).
+Worker offline profile: `maxSurge: 0`, `maxUnavailable: 1` → at most **9** worker pods during rollout (one extra during replace).
 
 API: `maxSurge: 1` → transient +150m for one new api pod before old terminates.
-
-```
-worst_case_cpu_requests =
-  egregore_steady_or_hpa_max
-  + api_rollout_surge (150m)
-  + mcp_neighbors
-```
 
 ## Neighbor workloads (estimate)
 
@@ -53,31 +47,26 @@ worst_case_cpu_requests =
 
 ## Budget check
 
-| Scenario | CPU requests | vs quota 3750m | vs node 7200m |
-|----------|--------------|----------------|---------------|
-| Steady (2 workers) | ~1050m | OK | OK |
-| HPA max (3 workers) | ~1250m | OK | OK |
-| Old config (4 workers + surge) | ~1850m+ overlap | Risk Pending | Risk Pending |
+| Scenario | CPU requests | vs quota 6000m |
+|----------|--------------|----------------|
+| Steady (8 workers) | ~2700m | OK |
+| Rollout overlap | ~2850m | OK |
 
-**Formula:**
-
-```
-must be < min(quota.requests.cpu, node.allocatable.cpu - system_reserved)
-```
-
-Phase 5 did **not** raise quota — reduced egregore footprint instead (Tier B + C).
+Pods spread across 3 nodes (no control-plane nodeSelector). Images must be imported on all nodes via `k3s-distribute-image.sh`.
 
 ## Tuning knobs
 
-| Knob | File | P30 value |
-|------|------|-----------|
-| `worker.replicas` | `values-egregore-offline.yaml` | 2 |
-| `worker.hpa.maxReplicas` | same | 3 |
+| Knob | File | 3-node value |
+|------|------|--------------|
+| `api.replicas` | `values-egregore-offline.yaml` | 4 |
+| `worker.replicas` | same | 8 |
+| `worker.hpa.maxReplicas` | same | 8 |
+| `ui.replicas` | same | 2 |
 | `resources.worker.requests.cpu` | same | 200m |
 | `rollout.worker.maxSurge` | same | 0 |
-| Quota | `cxado-app-quota.yaml` | unchanged |
+| Quota | `cxado-app-quota.yaml` | raised for 3-node |
 
 ## When to revisit
 
-- Second k3s node added → may raise HPA max and worker surge
-- New MCP sidecars in `cxado-app` → re-run `diagnose-pending-pods.sh` and update this table
+- Node added/removed → re-run `diagnose-pending-pods.sh` and update this table
+- New MCP sidecars in `cxado-app` → re-run capacity check

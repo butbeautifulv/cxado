@@ -1,6 +1,6 @@
 global:
-  # Images are imported into k3s containerd as docker.io/library/<name>:<tag>
-  imageRegistry: "docker.io/library/"
+  # Images pulled from Nexus cxado-docker (see deploy/registry.defaults.env)
+  imageRegistry: "__VEIL_IMAGE_REGISTRY__"
   imageTag: "__VEIL_OFFLINE_TAG__"
   natsUrl: "nats://nats.veil-data.svc:4222"
   neo4jUri: "neo4j://neo4j.veil-data.svc:7687"
@@ -10,9 +10,22 @@ graph:
   api:
     enabled: true
     replicas: 1
+    # Offline: images + skills-index hostPath live on control-plane only.
+    nodeSelector:
+      node-role.kubernetes.io/control-plane: "true"
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
   mcp:
     enabled: true
     replicas: 1
+    nodeSelector:
+      node-role.kubernetes.io/control-plane: "true"
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
   ingress:
     enabled: false
 
@@ -50,4 +63,13 @@ observability:
   samplerRatio: 1.0
   logFormat: json
   logLevel: info
+
+playbooks:
+  hostPath: /var/lib/veil/playbooks
+  mountPath: /home/nonroot
+  searchEngine: bleve
+  searchMode: keyword
+
+imagePullSecrets:
+  - name: nexus-registry
 

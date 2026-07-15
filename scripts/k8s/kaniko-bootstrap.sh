@@ -90,6 +90,14 @@ apply_local() {
     --docker-password="${NEXUS_PASSWORD}" \
     --dry-run=client -o yaml | k3s kubectl apply -f -
 
+  log "secret nexus-registry (veil)"
+  k3s kubectl create ns veil 2>/dev/null || true
+  k3s kubectl -n veil create secret docker-registry nexus-registry \
+    --docker-server="${NEXUS_DOCKER_REGISTRY}" \
+    --docker-username="${NEXUS_USER}" \
+    --docker-password="${NEXUS_PASSWORD}" \
+    --dry-run=client -o yaml | k3s kubectl apply -f -
+
   log "secret nexus-ca-cert"
   k3s kubectl -n cxado-build create secret generic nexus-ca-cert \
     --from-file=ca.crt="${ca_file}" \

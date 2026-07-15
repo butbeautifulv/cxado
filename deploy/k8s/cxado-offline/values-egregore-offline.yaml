@@ -3,6 +3,9 @@ image:
   tag: "__CXADO_OFFLINE_TAG__"
   pullPolicy: IfNotPresent
 
+imagePullSecrets:
+  - name: nexus-registry
+
 ui:
   image:
     repository: "__CXADO_UI_IMAGE_REPO__"
@@ -11,18 +14,18 @@ ui:
   replicas: 2
 
 api:
-  replicas: 4
+  replicas: 3
   port: 8080
   uvicornWorkers: 3
 
 worker:
-  replicas: 8
+  replicas: 6
   idleTimeout: 0
   metricsPort: 8081
   hpa:
     enabled: true
-    minReplicas: 8
-    maxReplicas: 8
+    minReplicas: 6
+    maxReplicas: 6
     targetCPUUtilization: 65
 
 topologySpread:

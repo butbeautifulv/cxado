@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# DEPRECATED — use ./scripts/k8s/cxado-nexus-deploy.sh (Nexus Kaniko loop).
 # Build egregore backend image and import into k3s containerd on the target.
 # Bundle Next.js UI separately: k3s-offline-bundle-egregore-ui.sh
 #

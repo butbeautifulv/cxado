@@ -77,7 +77,6 @@ Add to `projects/egregore/.env`:
 LANGFUSE_PUBLIC_KEY=pk-lf-dev-public
 LANGFUSE_SECRET_KEY=sk-lf-dev-secret
 LANGFUSE_HOST=http://localhost:3001
-CRITIC_USE_LLM_JUDGE=true   # optional: after make langfuse-setup-judge
 ```
 
 Or via cxado: `make cxado-up-langfuse` or lite profile (`make cxado-up-lite`).

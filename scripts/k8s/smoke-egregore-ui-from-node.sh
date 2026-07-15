@@ -9,6 +9,14 @@ echo "==> health"
 "${CURL[@]}" "$BASE/api/egregore/health" | head -c 200
 echo
 
+echo "==> health/infra"
+"${CURL[@]}" "$BASE/api/egregore/health/infra" | head -c 400
+echo
+
+echo "==> approvals/pending"
+"${CURL[@]}" "$BASE/api/egregore/approvals/pending" | head -c 400
+echo
+
 echo "==> engagements (limit=1)"
 "${CURL[@]}" "$BASE/api/egregore/v1/engagements?tenant_id=default&limit=1" | head -c 400
 echo

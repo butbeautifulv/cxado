@@ -46,6 +46,24 @@ bad() { echo "FAIL $1"; fail=1; }
 
 echo "=== Veil observability smoke (profile=${CXADO_VEIL_PROFILE}) ==="
 
+api_image="$(kubectl_cmd -n veil get deploy veil-veil-api -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || true)"
+mcp_image="$(kubectl_cmd -n veil get deploy veil-veil-mcp -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || true)"
+nexus_prefix="${VEIL_IMAGE_REGISTRY:-${CXADO_CI_REGISTRY}/}"
+if [[ -n "${api_image}" && "${api_image}" == "${nexus_prefix}"* ]]; then
+  ok "veil-api image from Nexus (${api_image})"
+elif [[ -n "${api_image}" && "${api_image}" == docker.io/library/* ]]; then
+  bad "veil-api still on docker.io/library (${api_image}) — use cxado-nexus-deploy-veil.sh"
+elif [[ -n "${api_image}" ]]; then
+  skip "veil-api image ${api_image} (not Nexus prefix ${nexus_prefix})"
+fi
+if [[ -n "${mcp_image}" && "${mcp_image}" == "${nexus_prefix}"* ]]; then
+  ok "veil-mcp image from Nexus (${mcp_image})"
+elif [[ -n "${mcp_image}" && "${mcp_image}" == docker.io/library/* ]]; then
+  bad "veil-mcp still on docker.io/library (${mcp_image}) — use cxado-nexus-deploy-veil.sh"
+elif [[ -n "${mcp_image}" ]]; then
+  skip "veil-mcp image ${mcp_image} (not Nexus prefix ${nexus_prefix})"
+fi
+
 if kubectl_cmd -n veil rollout status deploy/veil-veil-api --timeout=120s >/dev/null 2>&1; then
   ok "rollout veil-api"
 else

@@ -44,7 +44,8 @@ Evidence pattern (not verbatim — pods deleted after rollback):
 
 | Symptom | Category | Notes |
 |---------|----------|-------|
-| `egregore-ui` ImagePullBackOff | `image_pull` | Bundle UI first: `k3s-offline-bundle-egregore-ui.sh`, then `egregore-helm-upgrade.sh` |
+| `egregore-ui` ImagePullBackOff | `image_pull` | Build/push UI to Nexus: `./scripts/k8s/cxado-nexus-deploy.sh --build --tag <sha>` or verify tag exists in `cxado-docker` |
+| `veil-api` / `veil-mcp` ImagePullBackOff | `image_pull` | Build/push to Nexus: `./scripts/k8s/cxado-nexus-deploy-veil.sh --build --tag <sha>`; confirm `nexus.svo.aero:8345/cxado-docker/veil-api:<tag>` and `secret/nexus-registry` in namespace `veil` |
 
 ## Diagnosis workflow
 

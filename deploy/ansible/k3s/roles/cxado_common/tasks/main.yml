@@ -86,7 +86,51 @@
     content: |
       net.bridge.bridge-nf-call-iptables = 1
       net.ipv4.ip_forward = 1
+      net.ipv4.conf.all.rp_filter = 0
+      net.ipv4.conf.default.rp_filter = 0
   notify: Apply sysctl settings
+
+- name: Allow flannel VXLAN via ufw on control-plane (P30)
+  when:
+    - ansible_pkg_mgr == "apt"
+    - cxado_k3s_flannel_ufw | default(true)
+  ansible.builtin.command: >-
+    ufw allow from {{ item }} to any port 8472 proto udp comment 'k3s flannel vxlan'
+  loop:
+    - 10.8.185.15
+    - 10.20.16.195
+    - 10.20.16.185
+  changed_when: false
+  failed_when: false
+
+- name: Allow k3s pod/service CIDR via ufw on control-plane
+  when:
+    - ansible_pkg_mgr == "apt"
+    - cxado_k3s_flannel_ufw | default(true)
+  ansible.builtin.command: "ufw allow from {{ item }} comment 'k3s {{ item }}'"
+  loop:
+    - 10.42.0.0/16
+    - 10.43.0.0/16
+  changed_when: false
+  failed_when: false
+
+- name: Allow flannel VXLAN between k3s nodes (iptables)
+  when: cxado_k3s_flannel_iptables | default(true)
+  ansible.builtin.shell: |
+    set -euo pipefail
+    for peer in 10.8.185.15 10.20.16.195 10.20.16.185; do
+      iptables -C INPUT -p udp --dport 8472 -s "$peer" -j ACCEPT 2>/dev/null || \
+        iptables -I INPUT -p udp --dport 8472 -s "$peer" -j ACCEPT
+      iptables -C OUTPUT -p udp --dport 8472 -d "$peer" -j ACCEPT 2>/dev/null || \
+        iptables -I OUTPUT -p udp --dport 8472 -d "$peer" -j ACCEPT
+    done
+    for cidr in 10.42.0.0/16 10.43.0.0/16; do
+      iptables -C INPUT -s "$cidr" -j ACCEPT 2>/dev/null || iptables -I INPUT -s "$cidr" -j ACCEPT
+      iptables -C OUTPUT -d "$cidr" -j ACCEPT 2>/dev/null || iptables -I OUTPUT -d "$cidr" -j ACCEPT
+    done
+  args:
+    executable: /bin/bash
+  changed_when: false
 
 - name: Apply sysctl settings
   ansible.builtin.meta: flush_handlers

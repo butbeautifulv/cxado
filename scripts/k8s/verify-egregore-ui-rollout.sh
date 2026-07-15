@@ -2,7 +2,7 @@
 # Optional gate for egregore-ui when ui.replicas > 0.
 #
 # Usage:
-#   CXADO_OFFLINE_TAG=offline-20260709 ./scripts/k8s/verify-egregore-ui-rollout.sh
+#   CXADO_OFFLINE_TAG=abc123 ./scripts/k8s/verify-egregore-ui-rollout.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -13,7 +13,7 @@ SSH_HOST="${CXADO_OFFLINE_SSH_HOST:-}"
 SSH_PORT="${CXADO_OFFLINE_SSH_PORT}"
 NS="${CXADO_APP_NS:-cxado-app}"
 TAG="${CXADO_OFFLINE_TAG:-}"
-UI_IMAGE="${EGREGORE_UI_IMAGE:-cxado/egregore-ui:${TAG}}"
+UI_IMAGE="${EGREGORE_UI_IMAGE:-${CXADO_UI_IMAGE_REPO}:${TAG}}"
 ROLLOUT_TIMEOUT="${EGREGORE_UI_ROLLOUT_TIMEOUT:-300}"
 
 fail=0
@@ -39,18 +39,10 @@ if [[ "${desired}" == "0" || -z "${desired}" ]]; then
   exit 0
 fi
 
-if [[ -x "${ROOT}/scripts/k8s/k3s-image-imported.sh" ]]; then
-  if "${ROOT}/scripts/k8s/k3s-image-imported.sh" "${UI_IMAGE}"; then
-    pass "ui image imported (${UI_IMAGE})"
-  else
-    bad "ui image missing (${UI_IMAGE}) — run: CXADO_OFFLINE_TAG=${TAG:-<tag>} ./scripts/k8s/k3s-offline-bundle-egregore-ui.sh"
-  fi
-fi
-
 if kubectl_cmd -n "${NS}" rollout status deploy/egregore-ui --timeout="${ROLLOUT_TIMEOUT}s" >/dev/null 2>&1; then
-  pass "egregore-ui rollout complete"
+  pass "egregore-ui rollout complete (${UI_IMAGE})"
 else
-  bad "egregore-ui rollout not complete within ${ROLLOUT_TIMEOUT}s"
+  bad "egregore-ui rollout not complete within ${ROLLOUT_TIMEOUT}s — check ImagePullBackOff / Nexus tag ${UI_IMAGE}"
 fi
 
 ready="$(kubectl_cmd -n "${NS}" get deploy egregore-ui \

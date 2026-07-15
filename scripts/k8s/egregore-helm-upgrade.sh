@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
-# Incremental egregore helm upgrade on k3s offline (no full redeploy).
+# Incremental egregore helm upgrade on k3s offline (Nexus pull — no tar import).
 #
 # Production model:
-#   1. Preflight: backend + egregore-ui images must exist in k3s containerd.
+#   1. Preflight: optional Nexus ctr pull on control plane.
 #   2. helm upgrade WITHOUT --wait (never block on unrelated pods).
 #   3. Blocking gate: verify-egregore-rollout.sh (api + worker + ui).
 #
-# Bundle UI before upgrade:
-#   CXADO_OFFLINE_TAG=offline-YYYYMMDD ./scripts/k8s/k3s-offline-bundle-egregore-ui.sh
+# Build + push images first:
+#   TAG="$(git -C projects/egregore rev-parse --short HEAD)" \
+#     ./scripts/k8s/kaniko-build-egregore.sh --tag "${TAG}"
+# Or use the entrypoint:
+#   ./scripts/k8s/cxado-nexus-deploy.sh --build --tag "${TAG}"
 #
 # Always passes postgres/redis/bus secrets so empty values cannot wipe secrets.
 #
 # Usage:
-#   CXADO_OFFLINE_TAG=offline-YYYYMMDD-msgfix ./scripts/k8s/egregore-helm-upgrade.sh
+#   CXADO_OFFLINE_TAG=abc123 ./scripts/k8s/egregore-helm-upgrade.sh
 #
 # Optional replica overrides (values file is SSOT; env vars override at deploy time):
 #   EGREGORE_API_REPLICAS=4 EGREGORE_WORKER_REPLICAS=8 EGREGORE_UI_REPLICAS=2
@@ -32,11 +35,13 @@ NS_APP="${CXADO_APP_NS:-cxado-app}"
 API_REPLICAS_OVERRIDE="${EGREGORE_API_REPLICAS:-}"
 WORKER_REPLICAS_OVERRIDE="${EGREGORE_WORKER_REPLICAS:-}"
 UI_REPLICAS_OVERRIDE="${EGREGORE_UI_REPLICAS:-}"
+SKIP_NEXUS_PREFLIGHT="${SKIP_NEXUS_PREFLIGHT:-0}"
 
 KCTL="KUBECONFIG=/home/bbv/.kube/config k3s kubectl"
 HELM="KUBECONFIG=/home/bbv/.kube/config helm"
 
 log() { printf '[egregore-helm-upgrade] %s\n' "$*"; }
+warn() { printf '[egregore-helm-upgrade] WARN: %s\n' "$*" >&2; }
 die() { printf '[egregore-helm-upgrade] ERROR: %s\n' "$*" >&2; exit 1; }
 
 if [[ -f "${SECRETS_ENV_FILE}" ]]; then
@@ -53,33 +58,40 @@ if [[ -z "${BUS_SIGNING_KEY:-}" ]]; then
   log "generated ephemeral BUS_SIGNING_KEY (set in ${SECRETS_ENV_FILE} to persist)"
 fi
 
+export CXADO_IMAGE_REPO="${CXADO_IMAGE_REPO:-${NEXUS_DOCKER_REGISTRY}/${NEXUS_CXADO_DOCKER_REPO}/egregore}"
+export CXADO_UI_IMAGE_REPO="${CXADO_UI_IMAGE_REPO:-${NEXUS_DOCKER_REGISTRY}/${NEXUS_CXADO_DOCKER_REPO}/egregore-ui}"
+
 log "tag=${TAG} ui_tag=${UI_TAG} ssh=${SSH_HOST}:${SSH_PORT}"
+log "backend=${CXADO_IMAGE_REPO}:${TAG} ui=${CXADO_UI_IMAGE_REPO}:${UI_TAG}"
 
-BACKEND_IMAGE="cxado/egregore:${TAG}"
-if ! "${ROOT}/scripts/k8s/k3s-image-imported.sh" "${BACKEND_IMAGE}"; then
-  die "import backend first: CXADO_OFFLINE_TAG=${TAG} ./scripts/k8s/k3s-offline-bundle-egregore.sh"
-fi
-log "preflight ok: ${BACKEND_IMAGE}"
-
-# Unique per-run path: a fixed shared path let concurrent/retried runs race on
-# cat+sed and could hand helm a half-substituted file (seen 2026-07-13: TAG
-# resolved but __CXADO_IMAGE_REPO__ leaked through -> InvalidImageName pods).
-REMOTE_VALUES="/tmp/values-egregore-offline.${TAG}.$$.yaml"
-trap 'ssh -p "${SSH_PORT}" "${SSH_HOST}" "rm -f ${REMOTE_VALUES}" >/dev/null 2>&1 || true' EXIT
-
-ssh -p "${SSH_PORT}" "${SSH_HOST}" "cat >${REMOTE_VALUES}" \
-  < "${ROOT}/deploy/k8s/cxado-offline/values-egregore-offline.yaml"
-# All substitutions + verification in one SSH round trip so a dropped
-# connection mid-sequence can't leave unresolved placeholders on disk.
-ssh -p "${SSH_PORT}" "${SSH_HOST}" "
-  set -euo pipefail
-  sed -i 's/__CXADO_OFFLINE_TAG__/${TAG}/g; s|__CXADO_IMAGE_REPO__|cxado/egregore|g; s|__CXADO_UI_IMAGE_REPO__|cxado/egregore-ui|g' '${REMOTE_VALUES}'
-  if grep -q '__CXADO_' '${REMOTE_VALUES}'; then
-    echo 'ERROR: unresolved __CXADO_* placeholder in ${REMOTE_VALUES}' >&2
-    grep -n '__CXADO_' '${REMOTE_VALUES}' >&2
-    exit 1
+nexus_preflight_pull() {
+  local image_ref="$1"
+  if [[ "${SKIP_NEXUS_PREFLIGHT}" == "1" ]]; then
+    log "skip Nexus preflight for ${image_ref}"
+    return 0
   fi
-"
+  log "preflight ctr pull ${image_ref}"
+  if ssh -p "${SSH_PORT}" "${SSH_HOST}" \
+    "K3S_CONFIG_FILE=/dev/null k3s ctr images pull '${image_ref}'" >/dev/null 2>&1; then
+    log "preflight ok: ${image_ref}"
+    return 0
+  fi
+  die "Nexus image missing: ${image_ref} — build first: ./scripts/k8s/kaniko-build-egregore.sh --tag ${TAG}"
+}
+
+nexus_preflight_pull "${CXADO_IMAGE_REPO}:${TAG}"
+
+REMOTE_VALUES="/tmp/values-egregore-offline.${TAG}.$$.yaml"
+LOCAL_VALUES="$(mktemp)"
+trap 'rm -f "${LOCAL_VALUES}"; ssh -p "${SSH_PORT}" "${SSH_HOST}" "rm -f ${REMOTE_VALUES}" >/dev/null 2>&1 || true' EXIT
+
+TAG="${TAG}" CXADO_IMAGE_TAG="${TAG}" \
+  "${ROOT}/scripts/gitlab/render-egregore-values.sh" > "${LOCAL_VALUES}"
+if grep -q '__CXADO_' "${LOCAL_VALUES}"; then
+  die "unresolved placeholder in rendered values"
+fi
+
+ssh -p "${SSH_PORT}" "${SSH_HOST}" "cat >${REMOTE_VALUES}" < "${LOCAL_VALUES}"
 
 rsync -a -e "ssh -p ${SSH_PORT}" \
   "${ROOT}/projects/egregore/deploy/helm/egregore" \
@@ -93,7 +105,6 @@ fi
 
 HELM_EXTRA_SET=()
 HELM_CLEAR_NODESEL=()
-# Helm retains prior release nodeSelector unless explicitly nulled when values omit the pin.
 if ! grep -q 'node-role.kubernetes.io/control-plane' "${ROOT}/deploy/k8s/cxado-offline/values-egregore-offline.yaml" 2>/dev/null; then
   HELM_CLEAR_NODESEL=(
     --set-json 'api.nodeSelector=null'
@@ -117,11 +128,8 @@ if [[ -n "${UI_REPLICAS_OVERRIDE}" ]]; then
 fi
 
 if [[ "${UI_REPLICAS}" != "0" ]]; then
-  UI_IMAGE="cxado/egregore-ui:${UI_TAG}"
-  if ! "${ROOT}/scripts/k8s/k3s-image-imported.sh" "${UI_IMAGE}"; then
-    die "ui.replicas=${UI_REPLICAS} but image missing — bundle first: CXADO_OFFLINE_TAG=${TAG} ./scripts/k8s/k3s-offline-bundle-egregore-ui.sh (or set ui.replicas=0 / omit EGREGORE_UI_REPLICAS)"
-  fi
-  log "preflight ok: ${UI_IMAGE} (ui.replicas=${UI_REPLICAS})"
+  nexus_preflight_pull "${CXADO_UI_IMAGE_REPO}:${UI_TAG}"
+  log "ui preflight ok (ui.replicas=${UI_REPLICAS})"
 else
   log "ui.replicas=0 — skip egregore-ui preflight"
 fi
@@ -129,7 +137,6 @@ fi
 ssh -p "${SSH_PORT}" "${SSH_HOST}" \
   "${KCTL} create ns ${NS_APP} 2>/dev/null || true"
 
-# Drop zero-replica ReplicaSets left from prior rollouts (speeds scheduling / status).
 ssh -p "${SSH_PORT}" "${SSH_HOST}" \
   "${KCTL} -n ${NS_APP} get rs -o jsonpath='{range .items[?(@.spec.replicas==0)]}{.metadata.name}{\"\\n\"}{end}'" \
   | while read -r rs; do
@@ -138,7 +145,6 @@ ssh -p "${SSH_PORT}" "${SSH_HOST}" \
       ssh -p "${SSH_PORT}" "${SSH_HOST}" "${KCTL} -n ${NS_APP} delete rs/${rs}" || true
     done
 
-# No --wait: deployments verified explicitly below (api/worker blocking; UI optional).
 ssh -p "${SSH_PORT}" "${SSH_HOST}" bash -s <<REMOTE_HELM
 set -euo pipefail
 ${HELM} upgrade --install egregore /tmp/egregore-helm/egregore -n ${NS_APP} \\
@@ -170,6 +176,7 @@ fi
 if [[ "${UI_REPLICAS}" != "0" ]]; then
   log "blocking gate: egregore-ui (replicas=${UI_REPLICAS})"
   CXADO_OFFLINE_TAG="${TAG}" CXADO_OFFLINE_SSH_HOST="${SSH_HOST}" CXADO_OFFLINE_SSH_PORT="${SSH_PORT}" \
+    EGREGORE_UI_IMAGE="${CXADO_UI_IMAGE_REPO}:${UI_TAG}" \
     "${ROOT}/scripts/k8s/verify-egregore-ui-rollout.sh"
 else
   log "skip egregore-ui verify (replicas=0)"
