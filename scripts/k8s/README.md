@@ -15,6 +15,8 @@ See also [docs/observability/README.md](../../docs/observability/README.md).
 | `k3s-deploy-langfuse-offline.sh` | Langfuse offline |
 | `k3s-deploy-arch-docs-offline.sh` | Architecture docs site `:30080` |
 | `offline-tls-apply.sh` | TLS gateway NodePorts |
+| `kaniko-build-egregore.sh` | Kaniko → Nexus (api, dispatcher, agent-runtime, tool-gateway, ui) |
+| `cxado-nexus-deploy.sh` | Build + `egregore-helm-upgrade.sh` entrypoint |
 | `egregore-helm-upgrade.sh` | Helm upgrade wrapper |
 
 ## Observability
@@ -25,7 +27,8 @@ See also [docs/observability/README.md](../../docs/observability/README.md).
 | `collect-k3s-baseline.sh` | `make k3s-baseline` backend |
 | `collect-k3s-cluster-snapshot.sh` | `make k3s-cluster-snapshot` backend |
 | `generate-k3s-after-report.sh` | Baseline before/after markdown report |
-| `smoke-test-egregore-obs.sh` | Egregore worker metrics smoke |
+| `smoke-test-egregore-obs.sh` | Egregore api + dispatcher/worker metrics smoke |
+| `verify-egregore-rollout.sh` | Post-deploy api + dispatcher + tool-gateway check |
 | `smoke-test-veil-obs.sh` | Veil obs smoke |
 | `smoke-gpu-telemetry.sh` | GPU host exporter smoke |
 | `diagnose-gpu-telemetry.sh` | GPU scrape triage |
@@ -43,7 +46,7 @@ See also [docs/observability/README.md](../../docs/observability/README.md).
 
 | Script | Purpose |
 |--------|---------|
-| `verify-egregore-rollout.sh` | Post-deploy egregore API check |
+| `verify-egregore-rollout.sh` | Post-deploy api + dispatcher + tool-gateway |
 | `verify-egregore-ui-rollout.sh` | Post-deploy UI check |
 | `smoke-egregore-ui-from-node.sh` | UI smoke from k3s node |
 | `e2e-verify-egregore.sh` | E2E verification |

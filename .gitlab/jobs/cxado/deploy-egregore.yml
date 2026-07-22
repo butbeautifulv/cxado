@@ -56,7 +56,10 @@ deploy:egregore:
       ${HELM_CMD} upgrade --install "${HELM_RELEASE}" "${HELM_CHART_PATH}" \
         -f /tmp/values-egregore-ci.yaml \
         --create-namespace \
-        --set "image.tag=${TAG}" \
+        --set "api.image.tag=${TAG}" \
+        --set "dispatcher.image.tag=${TAG}" \
+        --set "agentRuntime.image.tag=${TAG}" \
+        --set "toolGateway.image.tag=${TAG}" \
         --set "ui.image.tag=${TAG}" \
         --set "postgres.password=${POSTGRES_PASSWORD}" \
         --set "redis.password=${REDIS_PASSWORD}" \

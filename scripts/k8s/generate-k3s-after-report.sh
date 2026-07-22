@@ -84,7 +84,10 @@ def up_count(snap, job_pattern):
     for row in (result.get("data") or {}).get("result") or []:
         job = row.get("metric", {}).get("job", "")
         val = row.get("value", [None, "0"])[1]
-        if job_pattern in job or (job_pattern == "egregore-worker" and job == "egregore-worker"):
+        if job_pattern in job or (
+            job_pattern in ("egregore-worker", "egregore-dispatcher")
+            and job in ("egregore-worker", "egregore-dispatcher")
+        ):
             if val == "1":
                 count += 1
     return count
@@ -98,7 +101,7 @@ blocking_fails = []
 warnings = []
 
 checks = [
-    ("1 Worker scrape", "egregore_worker_scrape_up", "blocking", lambda v: int(v or 0) >= 1),
+    ("1 Dispatcher or worker scrape", "egregore_worker_scrape_up", "blocking", lambda v: int(v or 0) >= 1),
     ("2 ti_search success (7d)", "ti_search_success_7d", "blocking", lambda v: v is not None and float(v) > 0),
     ("3 Failure reasons", "worker_failures_by_persona_reason_7d", "blocking", lambda v: int(v or 0) > 0),
     ("5 Pending pods", "pending_egregore", "blocking", lambda v: int(v or 0) == 0),

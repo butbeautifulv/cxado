@@ -117,6 +117,22 @@ Refresh Prometheus config on k3s:
 kubectl -n cxado-obs rollout restart deployment/prometheus
 ```
 
+## Egregore topology (dispatcher split, P30)
+
+Production offline path (`cxado-app`):
+
+| Workload | Role |
+|----------|------|
+| `egregore-api` | REST + SSE proxy |
+| `egregore-dispatcher` | Queue consumer; `EXECUTION_BACKEND=k8s` |
+| Batch `Job` (`egregore-agent-runtime`) | Per-job agent execution |
+| `tool-gateway` | Sandboxed tool MCP gateway |
+| `egregore-ui` | Operator console (`https://<node>:30300`) |
+| `egregore-worker` | **Scaled to 0** (rollback only) |
+
+Deploy: `./scripts/k8s/cxado-nexus-deploy.sh --build --tag "$(git -C projects/egregore rev-parse --short HEAD)"`  
+SSOT: [projects/egregore/docs/deploy/K3S.md](../../projects/egregore/docs/deploy/K3S.md) · [nexus-egregore-loop.md](nexus-egregore-loop.md)
+
 ## Architecture docs site (hostPath)
 
 Static architecture landing for architects: `docs/architecture-site/` → nginx on k3s.
