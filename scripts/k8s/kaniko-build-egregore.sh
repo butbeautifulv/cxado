@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Build egregore backend and/or UI on P30 via in-cluster Kaniko → push to Nexus.
+# Build egregore split images and/or UI on P30 via in-cluster Kaniko → push to Nexus.
 #
 # Usage:
 #   TAG="$(git -C projects/egregore rev-parse --short HEAD)" \
 #     ./scripts/k8s/kaniko-build-egregore.sh --tag "${TAG}"
-#   ./scripts/k8s/kaniko-build-egregore.sh --backend-only --tag abc123
+#   ./scripts/k8s/kaniko-build-egregore.sh --api-only --tag abc123
 #   ./scripts/k8s/kaniko-build-egregore.sh --ui-only --prebuilt --tag abc123
 #
 # Env: deploy/.secrets/cxado-k3s.env (NEXUS_PASSWORD, …), cxado-offline-env.sh
@@ -23,13 +23,18 @@ SSH_HOST="${CXADO_OFFLINE_SSH_HOST}"
 SSH_PORT="${CXADO_OFFLINE_SSH_PORT}"
 SUDO_PW="${CXADO_OFFLINE_SUDO_PW:-}"
 
-BUILD_BACKEND=1
-BUILD_UI=1
+BUILD_API=0
+BUILD_DISPATCHER=0
+BUILD_AGENT_RUNTIME=0
+BUILD_TOOL_GATEWAY=0
+BUILD_UI=0
+BUILD_ALL_BACKEND=0
 PREBUILT_UI=0
 BUILD_TAG=""
 NEXT_PUBLIC_EGRESS_SSE="${NEXT_PUBLIC_EGRESS_SSE:-1}"
 NEXT_PUBLIC_STREAM_API_BASE="${NEXT_PUBLIC_STREAM_API_BASE:-}"
 NEXT_PUBLIC_LANGFUSE_HOST="${NEXT_PUBLIC_LANGFUSE_HOST:-https://localhost:30001}"
+NEXT_PUBLIC_HITL_CHAT_AUTO_APPROVE="${NEXT_PUBLIC_HITL_CHAT_AUTO_APPROVE:-}"
 
 log() { printf '[kaniko-build-egregore] %s\n' "$*"; }
 die() { printf '[kaniko-build-egregore] ERROR: %s\n' "$*" >&2; exit 1; }
@@ -39,10 +44,15 @@ usage() {
 usage: $(basename "$0") [options]
 
 options:
-  --tag TAG           image tag (default: projects/egregore short git SHA)
-  --backend-only      build/push egregore backend only
-  --ui-only           build/push egregore-ui only
-  --prebuilt          UI: use Dockerfile.prebuilt (host must have ui/.next built)
+  --tag TAG                 image tag (default: projects/egregore short git SHA)
+  --all                     build all backend images + UI (default when no filter)
+  --api-only                build/push egregore-api only
+  --dispatcher-only         build/push egregore-dispatcher only
+  --agent-runtime-only      build/push egregore-agent-runtime only
+  --tool-gateway-only       build/push egregore-tool-gateway only
+  --backend-only            alias for --all without UI
+  --ui-only                 build/push egregore-ui only
+  --prebuilt                UI: use Dockerfile.prebuilt (host must have ui/.next built)
   --help
 EOF
   exit 2
@@ -51,13 +61,30 @@ EOF
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --tag) BUILD_TAG="${2:-}"; shift 2 ;;
-    --backend-only) BUILD_BACKEND=1; BUILD_UI=0; shift ;;
-    --ui-only) BUILD_BACKEND=0; BUILD_UI=1; shift ;;
+    --all) BUILD_ALL_BACKEND=1; BUILD_UI=1; shift ;;
+    --api-only) BUILD_API=1; shift ;;
+    --dispatcher-only) BUILD_DISPATCHER=1; shift ;;
+    --agent-runtime-only) BUILD_AGENT_RUNTIME=1; shift ;;
+    --tool-gateway-only) BUILD_TOOL_GATEWAY=1; shift ;;
+    --backend-only) BUILD_ALL_BACKEND=1; shift ;;
+    --ui-only) BUILD_UI=1; shift ;;
     --prebuilt) PREBUILT_UI=1; shift ;;
     --help|-h) usage ;;
     *) die "unknown arg: $1" ;;
   esac
 done
+
+if [[ "${BUILD_API}" -eq 0 && "${BUILD_DISPATCHER}" -eq 0 && "${BUILD_AGENT_RUNTIME}" -eq 0 \
+  && "${BUILD_TOOL_GATEWAY}" -eq 0 && "${BUILD_UI}" -eq 0 && "${BUILD_ALL_BACKEND}" -eq 0 ]]; then
+  BUILD_ALL_BACKEND=1
+  BUILD_UI=1
+fi
+if [[ "${BUILD_ALL_BACKEND}" -eq 1 ]]; then
+  BUILD_API=1
+  BUILD_DISPATCHER=1
+  BUILD_AGENT_RUNTIME=1
+  BUILD_TOOL_GATEWAY=1
+fi
 
 if [[ -z "${NEXUS_PASSWORD:-}" ]]; then
   die "missing NEXUS_PASSWORD (set in ${SECRETS_ENV_FILE})"
@@ -66,7 +93,9 @@ fi
 NEXUS_USER="${NEXUS_USER:-admin-SEC}"
 export NEXUS_DOCKER_REGISTRY NEXUS_PYPI_HOST NEXUS_PYPI_REPO NEXUS_USER NEXUS_PASSWORD
 export NEXUS_NPM_HOST="${NEXUS_NPM_HOST:-nexus.svo.aero:8443}" NEXUS_NPM_REPO="${NEXUS_NPM_REPO:-npm-proxy}"
-export CXADO_IMAGE_REPO CXADO_UI_IMAGE_REPO KANIKO_BUILD_DIR KANIKO_EXECUTOR_IMAGE
+export CXADO_IMAGE_REPO CXADO_API_IMAGE_REPO CXADO_DISPATCHER_IMAGE_REPO
+export CXADO_AGENT_RUNTIME_IMAGE_REPO CXADO_TOOL_GATEWAY_IMAGE_REPO CXADO_UI_IMAGE_REPO
+export KANIKO_BUILD_DIR KANIKO_EXECUTOR_IMAGE
 
 if [[ -z "${BUILD_TAG}" ]]; then
   BUILD_TAG="$(git -C "${ROOT}/projects/egregore" rev-parse --short HEAD 2>/dev/null || echo "local")"
@@ -118,7 +147,7 @@ rsync_sources() {
     ssh -p "${SSH_PORT}" "${SSH_HOST}" \
       "printf '%s\n' '${SUDO_PW}' | sudo -S -p '' bash -c 'chown -R root:root \"${KANIKO_BUILD_DIR}/egregore\" && chmod -R a+rX \"${KANIKO_BUILD_DIR}/egregore\"'"
   else
-  # shellcheck disable=SC2029
+    # shellcheck disable=SC2029
     ssh -p "${SSH_PORT}" "${SSH_HOST}" \
       "sudo chown -R root:root '${KANIKO_BUILD_DIR}/egregore' && sudo chmod -R a+rX '${KANIKO_BUILD_DIR}/egregore'"
   fi
@@ -134,6 +163,7 @@ submit_job() {
     export UI_DOCKERFILE="Dockerfile.prebuilt.corp"
   fi
   export NEXT_PUBLIC_EGRESS_SSE NEXT_PUBLIC_STREAM_API_BASE NEXT_PUBLIC_LANGFUSE_HOST
+  export NEXT_PUBLIC_HITL_CHAT_AUTO_APPROVE
   envsubst < "${template}" > "${tmp}"
   log "apply Job ${job_name}"
   kubectl_remote delete job "${job_name}" -n cxado-build --ignore-not-found=true
@@ -154,13 +184,31 @@ wait_job() {
 }
 
 main() {
-  log "tag=${BUILD_TAG} backend=${BUILD_BACKEND} ui=${BUILD_UI} prebuilt=${PREBUILT_UI}"
+  log "tag=${BUILD_TAG} api=${BUILD_API} dispatcher=${BUILD_DISPATCHER} agent_runtime=${BUILD_AGENT_RUNTIME} tool_gateway=${BUILD_TOOL_GATEWAY} ui=${BUILD_UI}"
   rsync_sources
 
-  if [[ "${BUILD_BACKEND}" -eq 1 ]]; then
-    submit_job "${ROOT}/deploy/k8s/kaniko/20-job-egregore.yaml" "kaniko-egregore-${BUILD_TAG_SLUG}"
-    wait_job "kaniko-egregore-${BUILD_TAG_SLUG}"
-    log "pushed ${CXADO_IMAGE_REPO}:${BUILD_TAG}"
+  if [[ "${BUILD_API}" -eq 1 ]]; then
+    submit_job "${ROOT}/deploy/k8s/kaniko/22-job-egregore-api.yaml" "kaniko-egregore-api-${BUILD_TAG_SLUG}"
+    wait_job "kaniko-egregore-api-${BUILD_TAG_SLUG}"
+    log "pushed ${CXADO_API_IMAGE_REPO}:${BUILD_TAG}"
+  fi
+
+  if [[ "${BUILD_DISPATCHER}" -eq 1 ]]; then
+    submit_job "${ROOT}/deploy/k8s/kaniko/23-job-egregore-dispatcher.yaml" "kaniko-egregore-dispatcher-${BUILD_TAG_SLUG}"
+    wait_job "kaniko-egregore-dispatcher-${BUILD_TAG_SLUG}"
+    log "pushed ${CXADO_DISPATCHER_IMAGE_REPO}:${BUILD_TAG}"
+  fi
+
+  if [[ "${BUILD_AGENT_RUNTIME}" -eq 1 ]]; then
+    submit_job "${ROOT}/deploy/k8s/kaniko/24-job-egregore-agent-runtime.yaml" "kaniko-egregore-agent-runtime-${BUILD_TAG_SLUG}"
+    wait_job "kaniko-egregore-agent-runtime-${BUILD_TAG_SLUG}"
+    log "pushed ${CXADO_AGENT_RUNTIME_IMAGE_REPO}:${BUILD_TAG}"
+  fi
+
+  if [[ "${BUILD_TOOL_GATEWAY}" -eq 1 ]]; then
+    submit_job "${ROOT}/deploy/k8s/kaniko/25-job-egregore-tool-gateway.yaml" "kaniko-egregore-tool-gateway-${BUILD_TAG_SLUG}"
+    wait_job "kaniko-egregore-tool-gateway-${BUILD_TAG_SLUG}"
+    log "pushed ${CXADO_TOOL_GATEWAY_IMAGE_REPO}:${BUILD_TAG}"
   fi
 
   if [[ "${BUILD_UI}" -eq 1 ]]; then
@@ -169,6 +217,8 @@ main() {
     log "pushed ${CXADO_UI_IMAGE_REPO}:${BUILD_TAG}"
   fi
 
+  # Legacy alias — helm scripts may still reference CXADO_IMAGE_REPO
+  export CXADO_IMAGE_REPO="${CXADO_API_IMAGE_REPO}"
   log "done"
 }
 

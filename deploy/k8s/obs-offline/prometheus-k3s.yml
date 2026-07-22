@@ -94,6 +94,42 @@ scrape_configs:
       - target_label: component
         replacement: worker
 
+  - job_name: egregore-dispatcher
+    metrics_path: /metrics
+    scrape_interval: 15s
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names: [cxado-app]
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        regex: egregore-dispatcher
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        regex: "true"
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+      - target_label: job
+        replacement: egregore-dispatcher
+      - target_label: service
+        replacement: egregore-dispatcher
+      - target_label: platform
+        replacement: egregore
+      - target_label: component
+        replacement: dispatcher
+
   - job_name: veil-api
     metrics_path: /metrics
     static_configs:
@@ -129,6 +165,18 @@ scrape_configs:
           service: vllm
           platform: vllm
           component: inference-server
+          host: phy-gpu-host01
+
+  # LMCache MP server on phy-gpu-host01 (HTTP :8080, Prometheus :9090).
+  - job_name: lmcache
+    metrics_path: /metrics
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["10.8.185.185:9090"]
+        labels:
+          service: lmcache
+          platform: lmcache
+          component: kv-cache-server
           host: phy-gpu-host01
 
   # phy-gpu-host01 — node-exporter (host CPU/RAM/disk). Install on 10.8.185.185:9100.

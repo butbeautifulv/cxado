@@ -35,7 +35,7 @@ section() {
 
 {
   section "egregore pods"
-  kubectl_cmd get pods -n "${NS}" -l 'app in (egregore-api,egregore-worker,egregore-ui)' -o wide
+  kubectl_cmd get pods -n "${NS}" -l 'app in (egregore-api,egregore-dispatcher,egregore-worker,egregore-ui,tool-gateway)' -o wide
 
   section "all Pending pods in ${NS}"
   kubectl_cmd get pods -n "${NS}" --field-selector=status.phase=Pending -o wide || true
@@ -46,7 +46,7 @@ section() {
     printf '\n--- %s ---\n' "${pod}"
     kubectl_cmd describe -n "${NS}" "${pod}" | sed -n '/Events:/,$p'
   done < <(kubectl_cmd get pods -n "${NS}" --field-selector=status.phase=Pending \
-    -l 'app in (egregore-api,egregore-worker,egregore-ui)' -o name 2>/dev/null || true)
+    -l 'app in (egregore-api,egregore-dispatcher,egregore-worker,egregore-ui,tool-gateway)' -o name 2>/dev/null || true)
 
   section "resource quota"
   kubectl_cmd describe resourcequota -n "${NS}" || true
@@ -55,13 +55,13 @@ section() {
   kubectl_cmd describe limitrange -n "${NS}" || true
 
   section "egregore deployments"
-  kubectl_cmd get deploy -n "${NS}" egregore-api egregore-worker egregore-ui 2>/dev/null || true
+  kubectl_cmd get deploy -n "${NS}" egregore-api egregore-dispatcher egregore-worker tool-gateway egregore-ui 2>/dev/null || true
 
   section "HPA"
   kubectl_cmd get hpa -n "${NS}" 2>/dev/null || true
 
   section "egregore ReplicaSets"
-  kubectl_cmd get rs -n "${NS}" -l 'app in (egregore-api,egregore-worker)' -o wide 2>/dev/null || true
+  kubectl_cmd get rs -n "${NS}" -l 'app in (egregore-api,egregore-dispatcher,egregore-worker,tool-gateway)' -o wide 2>/dev/null || true
 
   section "node allocatable"
   kubectl_cmd get nodes -o custom-columns=NAME:.metadata.name,CPU:.status.allocatable.cpu,MEMORY:.status.allocatable.memory
@@ -92,7 +92,7 @@ print(f'requests.memory (scheduled in {sys.argv[1]}): {total_mem}Mi')
 " "${NS}" 2>/dev/null || echo "could not sum requests"
 
   section "non-Running egregore (ImagePullBackOff / CrashLoop)"
-  kubectl_cmd get pods -n "${NS}" -l 'app in (egregore-api,egregore-worker,egregore-ui)' \
+  kubectl_cmd get pods -n "${NS}" -l 'app in (egregore-api,egregore-dispatcher,egregore-worker,egregore-ui,tool-gateway)' \
     --field-selector=status.phase!=Running,status.phase!=Succeeded -o wide 2>/dev/null || true
 
 } | tee -a "${LOG_FILE}"

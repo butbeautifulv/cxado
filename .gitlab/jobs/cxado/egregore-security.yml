@@ -148,13 +148,19 @@ dockerfile-lint:
     - |
       echo '{"version":"2.1.0","runs":[{"tool":{"driver":{"name":"hadolint"}},"results":[]}]}' > hadolint.sarif
       echo '[]' > hadolint-report.json
-      DF="${EGREGORE_ROOT}/Dockerfile.corp"
-      if [ ! -f "${DF}" ]; then
-        echo "No ${DF} — skip hadolint"
-      else
+      for DF in \
+        "${EGREGORE_ROOT}/deploy/Dockerfile.corp.api" \
+        "${EGREGORE_ROOT}/deploy/Dockerfile.corp.dispatcher" \
+        "${EGREGORE_ROOT}/deploy/Dockerfile.corp.agent-runtime" \
+        "${EGREGORE_ROOT}/deploy/Dockerfile.corp.tool-gateway" \
+        "${EGREGORE_ROOT}/deploy/Dockerfile.corp.worker"; do
+        if [ ! -f "${DF}" ]; then
+          echo "No ${DF} — skip hadolint"
+          continue
+        fi
         echo "Linting ${DF}"
-        hadolint -f json "${DF}" > hadolint-report.json 2>/dev/null || echo '[]' > hadolint-report.json
-      fi
+        hadolint -f json "${DF}" >> hadolint-report.json 2>/dev/null || true
+      done
     - |
       if command -v python3 >/dev/null 2>&1; then
         python3 scripts/normalize-sarif.py hadolint.sarif hadolint || true

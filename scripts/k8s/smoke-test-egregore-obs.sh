@@ -55,16 +55,40 @@ else
   bad "egregore-api rollout"
 fi
 
-if kubectl_cmd -n "${NS_APP}" rollout status deploy/egregore-worker --timeout=120s >/dev/null 2>&1; then
-  pass "egregore-worker rollout"
+METRICS_APP="egregore-dispatcher"
+METRICS_JOB="egregore-dispatcher"
+if ! kubectl_cmd -n "${NS_APP}" get deploy egregore-dispatcher >/dev/null 2>&1; then
+  METRICS_APP="egregore-worker"
+  METRICS_JOB="egregore-worker"
 else
-  bad "egregore-worker rollout"
+  disp_replicas="$(kubectl_cmd -n "${NS_APP}" get deploy egregore-dispatcher -o jsonpath='{.spec.replicas}' 2>/dev/null || echo 0)"
+  if [[ "${disp_replicas}" == "0" ]]; then
+    METRICS_APP="egregore-worker"
+    METRICS_JOB="egregore-worker"
+  fi
+fi
+
+if [[ "${METRICS_APP}" == "egregore-dispatcher" ]]; then
+  if kubectl_cmd -n "${NS_APP}" rollout status deploy/egregore-dispatcher --timeout=120s >/dev/null 2>&1; then
+    pass "egregore-dispatcher rollout"
+  else
+    bad "egregore-dispatcher rollout"
+  fi
+else
+  worker_replicas="$(kubectl_cmd -n "${NS_APP}" get deploy egregore-worker -o jsonpath='{.spec.replicas}' 2>/dev/null || echo 0)"
+  if [[ "${worker_replicas}" == "0" ]]; then
+    skip "egregore-worker scaled to 0 (dispatcher topology)"
+  elif kubectl_cmd -n "${NS_APP}" rollout status deploy/egregore-worker --timeout=120s >/dev/null 2>&1; then
+    pass "egregore-worker rollout"
+  else
+    bad "egregore-worker rollout"
+  fi
 fi
 
 if kubectl_cmd -n "${NS_APP}" get pods -l app=egregore-api -o name >/dev/null 2>&1; then
   API_POD="$(kubectl_cmd -n "${NS_APP}" get pods -l app=egregore-api --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
-  if [[ -n "${API_POD}" ]] && kubectl_cmd -n "${NS_APP}" exec "${API_POD}" -- python3 -c \
-    "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=5).read().decode())" \
+  if [[ -n "${API_POD}" ]] && kubectl_cmd -n "${NS_APP}" exec "${API_POD}" -- sh -c \
+    "cd /app/api && uv run python -c \"import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=5).read().decode())\"" \
     2>/dev/null | grep -q ok; then
     pass "egregore-api /health"
   else
@@ -74,33 +98,37 @@ else
   bad "egregore-api pod not found"
 fi
 
-WORKER_POD="$(kubectl_cmd -n "${NS_APP}" get pod -l app=egregore-worker --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
-if [[ -n "${WORKER_POD}" ]]; then
-  scrape_ann="$(kubectl_cmd -n "${NS_APP}" get pod "${WORKER_POD}" -o jsonpath='{.metadata.annotations.prometheus\.io/scrape}' 2>/dev/null || true)"
+METRICS_POD="$(kubectl_cmd -n "${NS_APP}" get pod -l app="${METRICS_APP}" --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
+if [[ -n "${METRICS_POD}" ]]; then
+  scrape_ann="$(kubectl_cmd -n "${NS_APP}" get pod "${METRICS_POD}" -o jsonpath='{.metadata.annotations.prometheus\.io/scrape}' 2>/dev/null || true)"
   if [[ "${scrape_ann}" == "true" ]]; then
-    pass "egregore-worker prometheus.io/scrape annotation"
+    pass "${METRICS_APP} prometheus.io/scrape annotation"
   else
-    bad "egregore-worker prometheus.io/scrape annotation (pod=${WORKER_POD} ann=${scrape_ann:-empty})"
+    bad "${METRICS_APP} prometheus.io/scrape annotation (pod=${METRICS_POD} ann=${scrape_ann:-empty})"
   fi
-  if kubectl_cmd -n "${NS_APP}" exec "${WORKER_POD}" -- /app/.venv/bin/python -c \
-    "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8081/health', timeout=5).read().decode())" \
+  if kubectl_cmd -n "${NS_APP}" exec "${METRICS_POD}" -- sh -c \
+    "python3 -c \"import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8081/health', timeout=5).read().decode())\"" \
     2>/dev/null | grep -q ok; then
-    pass "egregore-worker /health on metrics port"
+    pass "${METRICS_APP} /health on metrics port"
   else
-    bad "egregore-worker /health on metrics port"
+    bad "${METRICS_APP} /health on metrics port"
   fi
 else
-  bad "egregore-worker pod not found"
+  if [[ "${METRICS_APP}" == "egregore-worker" ]]; then
+    skip "egregore-worker pod not found (scaled to 0)"
+  else
+    bad "${METRICS_APP} pod not found"
+  fi
 fi
 
-PROM_QUERY='up{job="egregore-worker"}'
+PROM_QUERY="up{job=\"${METRICS_JOB}\"}"
 CURL_OPTS=(-fsS)
 [[ "${PROMETHEUS_URL}" == https://* ]] && CURL_OPTS+=(-k)
 prom_out="$(curl "${CURL_OPTS[@]}" -G "${PROMETHEUS_URL%/}/api/v1/query" --data-urlencode "query=${PROM_QUERY}" 2>/dev/null || true)"
 if echo "${prom_out}" | grep -q '"status":"success"' && echo "${prom_out}" | grep -q '"value":\[.*,"1"\]'; then
-  pass "prometheus up{job=egregore-worker}"
+  pass "prometheus up{job=${METRICS_JOB}}"
 else
-  bad "prometheus up{job=egregore-worker}"
+  bad "prometheus up{job=${METRICS_JOB}}"
 fi
 
 for job in prometheus tempo loki grafana; do

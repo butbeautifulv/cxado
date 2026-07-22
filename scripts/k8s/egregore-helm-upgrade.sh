@@ -59,10 +59,16 @@ if [[ -z "${BUS_SIGNING_KEY:-}" ]]; then
 fi
 
 export CXADO_IMAGE_REPO="${CXADO_IMAGE_REPO:-${NEXUS_DOCKER_REGISTRY}/${NEXUS_CXADO_DOCKER_REPO}/egregore}"
+export CXADO_API_IMAGE_REPO="${CXADO_API_IMAGE_REPO:-${NEXUS_DOCKER_REGISTRY}/${NEXUS_CXADO_DOCKER_REPO}/egregore-api}"
+export CXADO_DISPATCHER_IMAGE_REPO="${CXADO_DISPATCHER_IMAGE_REPO:-${NEXUS_DOCKER_REGISTRY}/${NEXUS_CXADO_DOCKER_REPO}/egregore-dispatcher}"
+export CXADO_AGENT_RUNTIME_IMAGE_REPO="${CXADO_AGENT_RUNTIME_IMAGE_REPO:-${NEXUS_DOCKER_REGISTRY}/${NEXUS_CXADO_DOCKER_REPO}/egregore-agent-runtime}"
+export CXADO_TOOL_GATEWAY_IMAGE_REPO="${CXADO_TOOL_GATEWAY_IMAGE_REPO:-${NEXUS_DOCKER_REGISTRY}/${NEXUS_CXADO_DOCKER_REPO}/egregore-tool-gateway}"
 export CXADO_UI_IMAGE_REPO="${CXADO_UI_IMAGE_REPO:-${NEXUS_DOCKER_REGISTRY}/${NEXUS_CXADO_DOCKER_REPO}/egregore-ui}"
 
 log "tag=${TAG} ui_tag=${UI_TAG} ssh=${SSH_HOST}:${SSH_PORT}"
-log "backend=${CXADO_IMAGE_REPO}:${TAG} ui=${CXADO_UI_IMAGE_REPO}:${UI_TAG}"
+log "api=${CXADO_API_IMAGE_REPO}:${TAG} dispatcher=${CXADO_DISPATCHER_IMAGE_REPO}:${TAG}"
+log "agent_runtime=${CXADO_AGENT_RUNTIME_IMAGE_REPO}:${TAG} tool_gateway=${CXADO_TOOL_GATEWAY_IMAGE_REPO}:${TAG}"
+log "ui=${CXADO_UI_IMAGE_REPO}:${UI_TAG}"
 
 nexus_preflight_pull() {
   local image_ref="$1"
@@ -79,7 +85,17 @@ nexus_preflight_pull() {
   die "Nexus image missing: ${image_ref} — build first: ./scripts/k8s/kaniko-build-egregore.sh --tag ${TAG}"
 }
 
-nexus_preflight_pull "${CXADO_IMAGE_REPO}:${TAG}"
+nexus_preflight_pull "${CXADO_API_IMAGE_REPO}:${TAG}"
+DISPATCHER_ENABLED="$(awk '/^dispatcher:/{d=1} d && /^  enabled:/{print $2; exit}' "${ROOT}/deploy/k8s/cxado-offline/values-egregore-offline.yaml" 2>/dev/null || echo true)"
+WORKER_REPLICAS_DEFAULT="$(awk '/^worker:/{w=1} w && /^  replicas:/{print $2; exit}' "${ROOT}/deploy/k8s/cxado-offline/values-egregore-offline.yaml" 2>/dev/null || echo 0)"
+if [[ "${DISPATCHER_ENABLED}" == "true" ]]; then
+  nexus_preflight_pull "${CXADO_DISPATCHER_IMAGE_REPO}:${TAG}"
+  nexus_preflight_pull "${CXADO_AGENT_RUNTIME_IMAGE_REPO}:${TAG}"
+fi
+if [[ "${WORKER_REPLICAS_DEFAULT}" != "0" ]]; then
+  nexus_preflight_pull "${CXADO_AGENT_RUNTIME_IMAGE_REPO}:${TAG}"
+fi
+nexus_preflight_pull "${CXADO_TOOL_GATEWAY_IMAGE_REPO}:${TAG}"
 
 REMOTE_VALUES="/tmp/values-egregore-offline.${TAG}.$$.yaml"
 LOCAL_VALUES="$(mktemp)"
@@ -108,9 +124,11 @@ HELM_CLEAR_NODESEL=()
 if ! grep -q 'node-role.kubernetes.io/control-plane' "${ROOT}/deploy/k8s/cxado-offline/values-egregore-offline.yaml" 2>/dev/null; then
   HELM_CLEAR_NODESEL=(
     --set-json 'api.nodeSelector=null'
+    --set-json 'dispatcher.nodeSelector=null'
     --set-json 'worker.nodeSelector=null'
     --set-json 'ui.nodeSelector=null'
     --set-json 'api.tolerations=null'
+    --set-json 'dispatcher.tolerations=null'
     --set-json 'worker.tolerations=null'
     --set-json 'ui.tolerations=null'
   )
@@ -149,7 +167,10 @@ ssh -p "${SSH_PORT}" "${SSH_HOST}" bash -s <<REMOTE_HELM
 set -euo pipefail
 ${HELM} upgrade --install egregore /tmp/egregore-helm/egregore -n ${NS_APP} \\
   -f ${REMOTE_VALUES} \\
-  --set image.tag='${TAG}' \\
+  --set api.image.tag='${TAG}' \\
+  --set dispatcher.image.tag='${TAG}' \\
+  --set agentRuntime.image.tag='${TAG}' \\
+  --set toolGateway.image.tag='${TAG}' \\
   --set ui.image.tag='${UI_TAG}' \\
   --set postgres.password='${POSTGRES_PASSWORD}' \\
   --set redis.password='${REDIS_PASSWORD}' \\
@@ -184,23 +205,23 @@ fi
 
 log "catalog seed + reload (sync agents/ from image to Postgres)"
 if ssh -p "${SSH_PORT}" "${SSH_HOST}" \
-  "${KCTL} -n ${NS_APP} exec deploy/egregore-api -- /app/.venv/bin/egregore catalog seed" >>/dev/null 2>&1; then
+  "${KCTL} -n ${NS_APP} exec deploy/egregore-api -- sh -c 'cd /app/api && uv run egregore catalog seed'" >>/dev/null 2>&1; then
   log "OK  egregore catalog seed"
 else
   warn "egregore catalog seed failed (non-blocking for helm; run manually)"
 fi
 if ssh -p "${SSH_PORT}" "${SSH_HOST}" \
-  "${KCTL} -n ${NS_APP} exec deploy/egregore-api -- /app/.venv/bin/python -c 'from cys_core.infrastructure.catalog.catalog_registry import reload_agent_registry; reload_agent_registry()'" >>/dev/null 2>&1; then
+  "${KCTL} -n ${NS_APP} exec deploy/egregore-api -- sh -c 'cd /app/api && uv run python -c \"from cys_core.infrastructure.catalog.catalog_registry import reload_agent_registry; reload_agent_registry()\"'" >>/dev/null 2>&1; then
   log "OK  catalog registry reload"
 else
   warn "catalog registry reload failed"
 fi
 CRITIC_RECIPIENTS="$(ssh -p "${SSH_PORT}" "${SSH_HOST}" \
-  "${KCTL} -n ${NS_APP} exec deploy/egregore-api -- /app/.venv/bin/python -c \"
+  "${KCTL} -n ${NS_APP} exec deploy/egregore-api -- sh -c 'cd /app/api && uv run python -c \"
 from bootstrap.container import get_container
-agent = get_container().get_agent_catalog().get_agent('critic')
-print(','.join(agent.bus_recipients) if agent else '')
-\" 2>/dev/null" || true)"
+agent = get_container().get_agent_catalog().get_agent(\\\"critic\\\")
+print(\\\",\\\".join(agent.bus_recipients) if agent else \\\"\\\")
+\"' 2>/dev/null" || true)"
 if [[ "${CRITIC_RECIPIENTS}" == *intel* ]]; then
   log "OK  critic.bus_recipients includes intel (${CRITIC_RECIPIENTS})"
 else

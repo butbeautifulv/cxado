@@ -215,13 +215,16 @@ if [[ -x "${ROOT}/scripts/k8s/langfuse-benchmark-report.sh" ]]; then
   fi
 fi
 
-# Worker logs: no hung LiteLLM without completion (grep best-effort)
-worker_pod="$(kubectl_cmd -n "${NS_APP}" get pods -l app=egregore-worker -o jsonpath='{.items[0].metadata.name}' 2>/dev/null | tr -d '\r' || true)"
-if [[ -n "${worker_pod}" ]]; then
-  if kubectl_cmd -n "${NS_APP}" logs "${worker_pod}" --tail=200 2>/dev/null | grep -qi "worker job timed out"; then
-    log "WARN: worker timeout observed (acceptable if vLLM slow)"
+# Dispatcher / worker logs: no hung LiteLLM without completion (grep best-effort)
+log_pod="$(kubectl_cmd -n "${NS_APP}" get pods -l app=egregore-dispatcher -o jsonpath='{.items[0].metadata.name}' 2>/dev/null | tr -d '\r' || true)"
+if [[ -z "${log_pod}" ]]; then
+  log_pod="$(kubectl_cmd -n "${NS_APP}" get pods -l app=egregore-worker -o jsonpath='{.items[0].metadata.name}' 2>/dev/null | tr -d '\r' || true)"
+fi
+if [[ -n "${log_pod}" ]]; then
+  if kubectl_cmd -n "${NS_APP}" logs "${log_pod}" --tail=200 2>/dev/null | grep -qi "worker job timed out"; then
+    log "WARN: job timeout observed (acceptable if vLLM slow)"
   else
-    pass "worker logs: no recent timeout storm"
+    pass "dispatcher/worker logs: no recent timeout storm"
   fi
 fi
 

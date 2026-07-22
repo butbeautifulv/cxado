@@ -1,0 +1,76 @@
+# Render with envsubst before apply (see scripts/k8s/kaniko-build-egregore.sh).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kaniko-egregore-dispatcher-${BUILD_TAG_SLUG}
+  namespace: cxado-build
+  labels:
+    app.kubernetes.io/name: kaniko-egregore-dispatcher
+    cxado.build/tag: "${BUILD_TAG}"
+spec:
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kaniko-egregore-dispatcher
+    spec:
+      serviceAccountName: kaniko-builder
+      restartPolicy: Never
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      imagePullSecrets:
+        - name: nexus-registry
+      volumes:
+        - name: workspace
+          hostPath:
+            path: ${KANIKO_BUILD_DIR}/egregore
+            type: Directory
+        - name: docker-config
+          secret:
+            secretName: nexus-registry
+            items:
+              - key: .dockerconfigjson
+                path: config.json
+        - name: nexus-ca-cert
+          secret:
+            secretName: nexus-ca-cert
+      containers:
+        - name: kaniko
+          image: ${KANIKO_EXECUTOR_IMAGE}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DOCKER_CONFIG
+              value: /kaniko/.docker
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: docker-config
+              mountPath: /kaniko/.docker
+              readOnly: true
+            - name: nexus-ca-cert
+              mountPath: /etc/ssl/certs/nexus
+              readOnly: true
+          args:
+            - --dockerfile=/workspace/deploy/Dockerfile.corp.dispatcher
+            - --context=dir:///workspace
+            - --destination=${CXADO_DISPATCHER_IMAGE_REPO}:${BUILD_TAG}
+            - --build-arg=NEXUS_REGISTRY=${NEXUS_DOCKER_REGISTRY}
+            - --build-arg=NEXUS_PYPI_HOST=${NEXUS_PYPI_HOST}
+            - --build-arg=NEXUS_PYPI_REPO=${NEXUS_PYPI_REPO}
+            - --build-arg=NEXUS_USER=${NEXUS_USER}
+            - --build-arg=NEXUS_PASSWORD=${NEXUS_PASSWORD}
+            - --registry-certificate=${NEXUS_DOCKER_REGISTRY},/etc/ssl/certs/nexus/ca.crt
+            - --snapshot-mode=redo
+            - --log-format=text
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 2Gi

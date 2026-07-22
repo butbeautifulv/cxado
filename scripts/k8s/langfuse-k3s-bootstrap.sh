@@ -146,7 +146,8 @@ remote "${HELM} upgrade --install egregore /tmp/egregore-helm/egregore -n cxado-
   --set langfuse.publicKey='pk-lf-egregore-dev-local' \
   --set langfuse.secretKey='sk-lf-egregore-dev-local'"
 remote "${KCTL} -n cxado-app rollout status deploy/egregore-api --timeout=180s"
-remote "${KCTL} -n cxado-app rollout status deploy/egregore-worker --timeout=180s"
+remote "${KCTL} -n cxado-app rollout status deploy/egregore-dispatcher --timeout=180s" || \
+  remote "${KCTL} -n cxado-app rollout status deploy/egregore-worker --timeout=180s"
 
 log "done"
 echo ""

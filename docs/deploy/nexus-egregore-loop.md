@@ -1,6 +1,6 @@
 # Nexus egregore build loop (P30 Kaniko)
 
-Single-command deploy for egregore **api + worker + ui** via Nexus — no `docker save`, no `k3s-distribute-image.sh`.
+Single-command deploy for egregore **split backend images + ui** via Nexus — no `docker save`, no `k3s-distribute-image.sh`.
 
 ## Prerequisites (one-time)
 
@@ -27,7 +27,12 @@ TAG="$(git -C projects/egregore rev-parse --short HEAD)"
 What it does:
 
 1. `rsync` `projects/egregore/` → `P30:/var/lib/cxado/kaniko-build/egregore/`
-2. Kaniko Job in `cxado-build` → push `nexus.svo.aero:8345/cxado-docker/egregore:${TAG}` and `…/egregore-ui:${TAG}`
+2. Kaniko Jobs in `cxado-build` → push split images:
+   - `…/egregore-api:${TAG}`
+   - `…/egregore-dispatcher:${TAG}`
+   - `…/egregore-agent-runtime:${TAG}`
+   - `…/egregore-tool-gateway:${TAG}`
+   - `…/egregore-ui:${TAG}`
 3. `egregore-helm-upgrade.sh` with Nexus repos + `imagePullSecrets: nexus-registry`
 
 Re-deploy without rebuild:
@@ -43,21 +48,33 @@ Re-deploy without rebuild:
 | Full Kaniko UI build | default in `cxado-nexus-deploy.sh --build` |
 | Prebuilt `.next` on laptop | `cd projects/egregore/web_ui && bun run build` then `--build --prebuilt-ui` |
 | Backend only | `kaniko-build-egregore.sh --backend-only --tag "${TAG}"` |
+| Single image hotfix | `kaniko-build-egregore.sh --api-only --tag "${TAG}"` (etc.) |
 
-Corp Dockerfiles: `projects/egregore/Dockerfile.corp`, `projects/egregore/web_ui/Dockerfile.corp`.
+Corp Dockerfiles (egregore repo root):
+
+- `deploy/Dockerfile.corp.api`
+- `deploy/Dockerfile.corp.dispatcher`
+- `deploy/Dockerfile.corp.agent-runtime`
+- `deploy/Dockerfile.corp.tool-gateway`
+- `web_ui/Dockerfile.corp`
+
+Topology SSOT: [projects/egregore/docs/deploy/K3S.md](../../projects/egregore/docs/deploy/K3S.md).
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---------|-----|
-| `ImagePullBackOff` on api/worker/ui | Confirm tag in Nexus; `k3s ctr images pull nexus.svo.aero:8345/cxado-docker/egregore:${TAG}` on node |
+| `ImagePullBackOff` on api/dispatcher/ui | Confirm tag in Nexus; `k3s ctr images pull nexus.svo.aero:8345/cxado-docker/egregore-api:${TAG}` on node |
 | Kaniko Job `hostPath` not found | Run `kaniko-bootstrap.sh`; rsync must land on control-plane (`nodeSelector`) |
 | UI Kaniko fails on `oven/bun` | Run `mirror-fabrica-ci-images.sh` (oven-bun:1-alpine) |
-| UI `bun install` hangs / hits npmjs.org directly | Run `nexus-npm-go-proxy-setup.sh`; UI build now routes through `NEXUS_NPM_HOST`/`NEXUS_NPM_REPO` (no direct internet from the Kaniko pod) |
+| UI `bun install` hangs / hits npmjs.org directly | Run `nexus-npm-go-proxy-setup.sh`; UI build routes through `NEXUS_NPM_HOST`/`NEXUS_NPM_REPO` |
 | UI OOM | `--prebuilt-ui` after local `bun run build` |
 | Dirty tree guard | Commit egregore or `CXADO_ALLOW_DIRTY_BUILD=1` |
+| Agent Job fails immediately | Check Job pod env (`kubectl describe job`); verify `envFrom` + secrets |
 
 ## Deprecated path
+
+Monolithic `Dockerfile.corp` / Kaniko job `20-job-egregore.yaml` — replaced by split jobs 22–25.
 
 Tar bundle scripts for **app images** were removed. Use `cxado-nexus-deploy.sh`.
 

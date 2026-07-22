@@ -39,7 +39,7 @@ warn() {
 
 prom_blocking_up() {
   local query='min(up{job=~"egregore-api|veil-mcp|vllm"} == 1)'
-  local workers='count(up{job="egregore-worker"} == 1)'
+  local workers='count(up{job=~"egregore-worker|egregore-dispatcher"} == 1)'
   local out min_up worker_count
   CURL_OPTS=(-fsS)
   [[ "${PROMETHEUS_URL}" == https://* ]] && CURL_OPTS+=(-k)
@@ -71,7 +71,7 @@ run "${ROOT}/scripts/k8s/verify-egregore-rollout.sh"
 run "${ROOT}/scripts/k8s/smoke-test-veil-obs.sh"
 
 if prom_blocking_up; then
-  log "OK  prometheus blocking targets (api/veil/vllm + workers>=1)"
+  log "OK  prometheus blocking targets (api/veil/vllm + dispatcher|worker>=1)"
 else
   log "FAIL prometheus blocking targets"
   exit 1

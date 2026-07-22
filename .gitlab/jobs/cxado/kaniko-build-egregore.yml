@@ -31,29 +31,40 @@ build:egregore:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
     - |
-      if [ ! -f "${CI_PROJECT_DIR}/${EGREGORE_ROOT}/Dockerfile.corp" ]; then
-        echo "missing ${EGREGORE_ROOT}/Dockerfile.corp — run submodule init" >&2
-        exit 2
-      fi
-    - |
       CERT_ARG=""
       if [ -f /etc/ssl/certs/nexus/ca.crt ]; then
         CERT_ARG="--registry-certificate=${REGISTRY_HOST},/etc/ssl/certs/nexus/ca.crt"
       fi
-      /kaniko/executor \
-        --dockerfile="${CI_PROJECT_DIR}/${EGREGORE_ROOT}/Dockerfile.corp" \
-        --context=dir://${CI_PROJECT_DIR}/${EGREGORE_ROOT} \
-        --destination="${CXADO_IMAGE_REPO}:${CXADO_IMAGE_TAG}" \
-        --build-arg=NEXUS_REGISTRY=${REGISTRY_HOST} \
-        --build-arg=NEXUS_PYPI_HOST=${NEXUS_PYPI_HOST} \
-        --build-arg=NEXUS_PYPI_REPO=${NEXUS_PYPI_REPO} \
-        --build-arg=NEXUS_USER=${NEXUS_USER} \
-        --build-arg=NEXUS_PASSWORD=${NEXUS_PASSWORD} \
-        ${CERT_ARG} \
-        --snapshot-mode=redo \
-        --log-format=text
+      build_corp() {
+        local dockerfile="$1"
+        local destination="$2"
+        if [ ! -f "${CI_PROJECT_DIR}/${EGREGORE_ROOT}/${dockerfile}" ]; then
+          echo "missing ${EGREGORE_ROOT}/${dockerfile}" >&2
+          exit 2
+        fi
+        /kaniko/executor \
+          --dockerfile="${CI_PROJECT_DIR}/${EGREGORE_ROOT}/${dockerfile}" \
+          --context=dir://${CI_PROJECT_DIR}/${EGREGORE_ROOT} \
+          --destination="${destination}:${CXADO_IMAGE_TAG}" \
+          --build-arg=NEXUS_REGISTRY=${REGISTRY_HOST} \
+          --build-arg=NEXUS_PYPI_HOST=${NEXUS_PYPI_HOST} \
+          --build-arg=NEXUS_PYPI_REPO=${NEXUS_PYPI_REPO} \
+          --build-arg=NEXUS_USER=${NEXUS_USER} \
+          --build-arg=NEXUS_PASSWORD=${NEXUS_PASSWORD} \
+          ${CERT_ARG} \
+          --snapshot-mode=redo \
+          --log-format=text
+      }
+      CXADO_API_IMAGE_REPO="${CXADO_API_IMAGE_REPO:-${CXADO_IMAGE_REPO%/*}/egregore-api}"
+      CXADO_DISPATCHER_IMAGE_REPO="${CXADO_DISPATCHER_IMAGE_REPO:-${CXADO_IMAGE_REPO%/*}/egregore-dispatcher}"
+      CXADO_AGENT_RUNTIME_IMAGE_REPO="${CXADO_AGENT_RUNTIME_IMAGE_REPO:-${CXADO_IMAGE_REPO%/*}/egregore-agent-runtime}"
+      CXADO_TOOL_GATEWAY_IMAGE_REPO="${CXADO_TOOL_GATEWAY_IMAGE_REPO:-${CXADO_IMAGE_REPO%/*}/egregore-tool-gateway}"
+      build_corp deploy/Dockerfile.corp.api "${CXADO_API_IMAGE_REPO}"
+      build_corp deploy/Dockerfile.corp.dispatcher "${CXADO_DISPATCHER_IMAGE_REPO}"
+      build_corp deploy/Dockerfile.corp.agent-runtime "${CXADO_AGENT_RUNTIME_IMAGE_REPO}"
+      build_corp deploy/Dockerfile.corp.tool-gateway "${CXADO_TOOL_GATEWAY_IMAGE_REPO}"
     - echo "IMAGE_TAG=${CXADO_IMAGE_TAG}" >> build.env
-    - echo "REGISTRY=${CXADO_IMAGE_REPO%/*}" >> build.env
+    - echo "REGISTRY=${CXADO_API_IMAGE_REPO%/*}" >> build.env
   artifacts:
     reports:
       dotenv: build.env

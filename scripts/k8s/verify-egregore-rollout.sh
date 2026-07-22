@@ -31,7 +31,19 @@ kubectl_cmd() {
 
 echo "[verify] egregore rollout health (ns=${NS})"
 
-for deploy in egregore-api egregore-worker; do
+DEPLOYS=(egregore-api tool-gateway)
+if kubectl_cmd -n "${NS}" get deploy egregore-dispatcher >/dev/null 2>&1; then
+  desired_disp="$(kubectl_cmd -n "${NS}" get deploy egregore-dispatcher -o jsonpath='{.spec.replicas}' 2>/dev/null || echo 0)"
+  if [[ "${desired_disp}" != "0" ]]; then
+    DEPLOYS+=(egregore-dispatcher)
+  fi
+fi
+worker_desired="$(kubectl_cmd -n "${NS}" get deploy egregore-worker -o jsonpath='{.spec.replicas}' 2>/dev/null || echo 0)"
+if [[ "${worker_desired}" != "0" ]]; then
+  DEPLOYS+=(egregore-worker)
+fi
+
+for deploy in "${DEPLOYS[@]}"; do
   if kubectl_cmd -n "${NS}" rollout status "deploy/${deploy}" --timeout="${ROLLOUT_TIMEOUT}s" >/dev/null 2>&1; then
     pass "${deploy} rollout complete"
   else
@@ -39,15 +51,23 @@ for deploy in egregore-api egregore-worker; do
   fi
 done
 
+app_labels="egregore-api,tool-gateway"
+if [[ " ${DEPLOYS[*]} " == *" egregore-dispatcher "* ]]; then
+  app_labels="${app_labels},egregore-dispatcher"
+fi
+if [[ " ${DEPLOYS[*]} " == *" egregore-worker "* ]]; then
+  app_labels="${app_labels},egregore-worker"
+fi
+
 pending="$(kubectl_cmd get pods -n "${NS}" --field-selector=status.phase=Pending \
-  -l 'app in (egregore-api,egregore-worker)' -o name 2>/dev/null || true)"
+  -l "app in (${app_labels})" -o name 2>/dev/null || true)"
 if [[ -z "${pending}" ]]; then
-  pass "no Pending egregore-api/worker pods"
+  pass "no Pending egregore core pods"
 else
   bad "Pending pods: ${pending//$'\n'/; }"
 fi
 
-for deploy in egregore-api egregore-worker; do
+for deploy in "${DEPLOYS[@]}"; do
   line="$(kubectl_cmd -n "${NS}" get deploy "${deploy}" \
     -o custom-columns=READY:.status.readyReplicas,DESIRED:.spec.replicas --no-headers 2>/dev/null || true)"
   ready="${line%% *}"
@@ -59,16 +79,16 @@ for deploy in egregore-api egregore-worker; do
   fi
 done
 
-crash="$(kubectl_cmd get pods -n "${NS}" -l 'app in (egregore-api,egregore-worker)' \
+crash="$(kubectl_cmd get pods -n "${NS}" -l "app in (${app_labels})" \
   -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.containerStatuses[0].state.waiting.reason}{"\n"}{end}' 2>/dev/null \
   | grep -E 'CrashLoopBackOff|Error' || true)"
 if [[ -z "${crash}" ]]; then
-  pass "no CrashLoopBackOff on api/worker"
+  pass "no CrashLoopBackOff on core deploys"
 else
   bad "unhealthy pods: ${crash//$'\n'/; }"
 fi
 
-restarts="$(kubectl_cmd get pods -n "${NS}" -l 'app in (egregore-api,egregore-worker)' \
+restarts="$(kubectl_cmd get pods -n "${NS}" -l "app in (${app_labels})" \
   -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.containerStatuses[0].restartCount}{"\n"}{end}' 2>/dev/null \
   | awk '$2 > 2 {print}' || true)"
 if [[ -z "${restarts}" ]]; then

@@ -1,5 +1,5 @@
 image:
-  repository: "__CXADO_IMAGE_REPO__"
+  repository: "__CXADO_API_IMAGE_REPO__"
   tag: "__CXADO_OFFLINE_TAG__"
   pullPolicy: IfNotPresent
 
@@ -14,18 +14,47 @@ ui:
   replicas: 2
 
 api:
+  image:
+    repository: "__CXADO_API_IMAGE_REPO__"
+    tag: "__CXADO_OFFLINE_TAG__"
+    pullPolicy: IfNotPresent
   replicas: 3
   port: 8080
   uvicornWorkers: 3
 
+dispatcher:
+  enabled: true
+  image:
+    repository: "__CXADO_DISPATCHER_IMAGE_REPO__"
+    tag: "__CXADO_OFFLINE_TAG__"
+    pullPolicy: IfNotPresent
+  replicas: 2
+  idleTimeout: 0
+  metricsPort: 8081
+
+agentRuntime:
+  image:
+    repository: "__CXADO_AGENT_RUNTIME_IMAGE_REPO__"
+    tag: "__CXADO_OFFLINE_TAG__"
+    pullPolicy: IfNotPresent
+
+toolGateway:
+  enabled: true
+  image:
+    repository: "__CXADO_TOOL_GATEWAY_IMAGE_REPO__"
+    tag: "__CXADO_OFFLINE_TAG__"
+    pullPolicy: IfNotPresent
+  replicas: 2
+  port: 8092
+
 worker:
-  replicas: 6
+  replicas: 0
   idleTimeout: 0
   metricsPort: 8081
   hpa:
-    enabled: true
-    minReplicas: 6
-    maxReplicas: 6
+    enabled: false
+    minReplicas: 0
+    maxReplicas: 0
     targetCPUUtilization: 65
 
 topologySpread:
@@ -37,9 +66,15 @@ rollout:
   api:
     maxSurge: 2
     maxUnavailable: 1
+  dispatcher:
+    maxSurge: 1
+    maxUnavailable: 1
   worker:
     maxSurge: 1
     maxUnavailable: 2
+  toolGateway:
+    maxSurge: 1
+    maxUnavailable: 0
 
 env:
   stage: prod
@@ -74,7 +109,9 @@ env:
   streamAgentOutput: "true"
   streamAgentTools: "true"
   streamAgentTokenStreaming: "true"
-  controlMode: "inprocess"
+  controlMode: "daemon"
+  executionBackend: "k8s"
+  toolHitlMode: "enforce"
 
   # 2ENV operator tunables (optional; defaults in bootstrap/settings.py)
   jobCostPer1kTokensUsd: "0.003"
@@ -101,15 +138,12 @@ obs:
   traceBackend: "composite"
 
 prometheus:
-  # empty = per-pod emptyDir (Strategy A: scrape each worker /metrics).
-  # Set host path only for documented Strategy B fallback — see egregore-worker-metrics-adr.md
   multiprocHostPath: ""
 
 postgres:
   host: "postgres.cxado-data.svc.cluster.local"
   port: 5432
   user: postgres
-  # password comes from egregore chart secret values
   password: ""
   database: egregore
 
@@ -126,7 +160,6 @@ veil:
   mcpEnabled: "true"
 
 siem:
-  # In-cluster SIEM MCP (helm release siem-mcp in cxado-app)
   mcpUrl: "http://siem-mcp.cxado-app.svc.cluster.local:8094/mcp"
   mcpEnabled: "true"
   mcpTimeout: "180"
@@ -159,7 +192,6 @@ llm:
   reasoningModel: ""
   reasoningTemperature: "0.0"
 
-# Per-pod caps; 8 workers × limits ≈ 9.6 CPU / 12Gi for egregore workers alone.
 resources:
   api:
     requests:
@@ -168,6 +200,13 @@ resources:
     limits:
       cpu: 1500m
       memory: 1536Mi
+  dispatcher:
+    requests:
+      cpu: 200m
+      memory: 640Mi
+    limits:
+      cpu: 1200m
+      memory: 1536Mi
   worker:
     requests:
       cpu: 200m
@@ -175,6 +214,13 @@ resources:
     limits:
       cpu: 1200m
       memory: 1536Mi
+  toolGateway:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
   ui:
     requests:
       cpu: 50m
