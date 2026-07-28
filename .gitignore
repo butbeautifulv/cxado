@@ -26,7 +26,6 @@ projects/fstec/
 .env.*
 /deploy/.secrets/*
 !/deploy/.secrets/README.md
-!/deploy/.secrets/*.example
 docs/architecture-site/js/credentials.js
 
 .venv-ansible/
@@ -46,3 +45,32 @@ deploy/k8s/**/*-secret.yaml
 **/.venv/
 **/node_modules/
 **/__pycache__/
+
+# Corp / offline infra (local-only; never push to public GitHub)
+deploy/ansible/k3s/
+scripts/k8s/
+scripts/tunnels/
+deploy/gitlab/
+deploy/.secrets/
+!deploy/.secrets/README.md
+deploy/containers/
+deploy/k8s/cxado-offline/
+deploy/k8s/defectdojo-offline/
+deploy/k8s/gitlab-runner/
+deploy/k8s/langfuse-offline/
+deploy/k8s/obs-offline/
+deploy/k8s/veil-offline/
+deploy/k8s/arch-docs-offline/
+deploy/k8s/offline-*/
+deploy/k8s/vllm-offline/
+deploy/k8s/kaniko/
+deploy/vllm-proxmox/
+scripts/gitlab/
+scripts/gpu/
+docs/deploy/*k3s*
+docs/deploy/*proxmox*
+docs/deploy/nexus-*
+docs/observability/k3s-*
+*.Dockerfile.corp
+Dockerfile.corp*
+deploy/registry.defaults.env
