@@ -1,6 +1,6 @@
 {
   "uid": "egregore-cys-agi",
-  "title": "cys-agi \u2014 SOC Platform",
+  "title": "cys-agi — SOC Platform",
   "description": "cys-agi SOC deep dive: workers, tools, security, RAG, cost, and trust. Executive KPIs on CXado Overview.",
   "tags": [
     "cys-agi",
@@ -10,7 +10,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "30s",
   "graphTooltip": 1,
   "style": "dark",
@@ -1107,6 +1107,82 @@
           "refId": "A",
           "range": true,
           "legendFormat": "{{profile_id}}"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Catalog drift detected at startup (1=drift, 0=ok), by agent and field.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "max": 1,
+          "min": 0,
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F2495C",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 58
+      },
+      "id": 172,
+      "options": {
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Catalog Drift",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(cys_catalog_drift{job=\"egregore-api\"}) by (agent, field)",
+          "refId": "A",
+          "range": true,
+          "legendFormat": "{{agent}} {{field}}"
         }
       ]
     }
