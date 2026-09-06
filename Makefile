@@ -12,22 +12,22 @@
 help:
 	@echo "Targets:"
 	@echo "  bootstrap       Initialize submodules + skills/gui links + cleanup legacy symlinks"
-	@echo "  cxado-up        Full stack: veil + egregore infra + obs (Tempo, Qdrant)"
-	@echo "  cxado-up-lite   Lite profile: no Tempo, 1 worker; includes Qdrant + Langfuse"
-	@echo "  cxado-up-minimal  Agents-only: veil-lite + postgres+redis+langfuse+grafana (no kafka/qdrant)"
-	@echo "  cxado-up-veil     Veil graph-only (neo4j+api+mcp) on cxado-net"
+	@echo "  cxado-up        DEPRECATED (archived stack): veil + egregore infra + obs"
+	@echo "  cxado-up-lite   DEPRECATED (archived stack): lite profile"
+	@echo "  cxado-up-minimal  DEPRECATED (archived stack): agents-only veil-lite"
+	@echo "  cxado-up-veil     ARCHIVED → ~/Desktop/archive/veil"
 	@echo "  cxado-up-siem-mcp MaxPatrol SIEM MCP HTTP on :8094 (host process)"
 	@echo "  cxado-up-tenable-mcp Nessus MCP HTTP on :8095 (host process)"
 	@echo "  cxado-up-defectdojo-mcp DefectDojo MCP HTTP on :8096 (host process)"
 	@echo "  cxado-smoke-tenable-mcp  Nessus MCP health + tools/list smoke (:8095)"
 	@echo "  cxado-smoke-defectdojo-mcp  DefectDojo MCP health + tools/list smoke (:8096)"
 	@echo "  siem-mcp-scrape-docs  Refresh maxpatrol-siem-mcp/docs/API.md from PT help 27.2"
-	@echo "  cxado-smoke-veil-mcp  Veil MCP health + tools/list smoke (:8091)"
-	@echo "  cxado-up-langfuse  cxado-up + Langfuse (:3001)"
-	@echo "  cxado-down      Stop obs + egregore infra (keeps veil by default)"
+	@echo "  cxado-smoke-veil-mcp  ARCHIVED → ~/Desktop/archive/egregore"
+	@echo "  cxado-up-langfuse  DEPRECATED (archived stack)"
+	@echo "  cxado-down      Stop obs + egregore infra (DEPRECATED if stack archived)"
 	@echo "  cxado-status    Health checks for cxado-default"
-	@echo "  cxado-validate-grafana  Prometheus datasource + egregore-api target health"
-	@echo "  cxado-local-e2e     POST investigation smoke against localhost:8080"
+	@echo "  cxado-validate-grafana  DEPRECATED (egregore-api archived)"
+	@echo "  cxado-local-e2e     DEPRECATED (egregore archived)"
 	@echo "  cxado-kind-up     Create kind cluster + ingress (cxado profile)"
 	@echo "  cxado-k8s-up      kind-up + build images + terraform apply"
 	@echo "  cxado-k8s-status  kubectl + curl health checks"
@@ -39,8 +39,8 @@ help:
 	@echo "  k3s-validation-gate     Phase 9 full validation (infra + scenarios + report)"
 	@echo "  k3s-validation-infra    Phase 9 infra-only gate (fast)"
 	@echo "  k3s-cluster-snapshot   SSH kubectl dump for cxado offline cluster"
-	@echo "  egregore-typecheck     ty check production paths (egregore)"
-	@echo "  egregore-typecheck-tests-core  ty check domain + core flow tests"
+	@echo "  egregore-typecheck     ARCHIVED → ~/Desktop/archive/egregore"
+	@echo "  egregore-typecheck-tests-core  ARCHIVED → ~/Desktop/archive/egregore"
 	@echo "  skills-link     Symlink shared/skills into project .agents/skills/"
 	@echo "  skills-install  Symlink cxado-skills into ~/.cursor/skills/"
 	@echo "  refs-cleanup    Remove legacy projects/*/refs symlinks (SSOT: refs/ at meta root)"
@@ -94,8 +94,7 @@ cxado-up-minimal:
 	@./scripts/cxado-up-minimal.sh
 
 cxado-up-veil:
-	@chmod +x scripts/cxado-up-veil.sh
-	@./scripts/cxado-up-veil.sh
+	@echo "archived → ~/Desktop/archive/veil (submodule removed from monorepo)" >&2; exit 1
 
 cxado-up-siem-mcp:
 	@chmod +x scripts/cxado-up-siem-mcp.sh projects/precursor/maxpatrol-siem-mcp/scripts/smoke_mcp.sh
@@ -121,12 +120,10 @@ siem-mcp-scrape-docs:
 	@cd projects/precursor/maxpatrol-siem-mcp && uv sync --all-groups && uv run python scripts/scrape_api_docs.py
 
 cxado-smoke-veil-mcp:
-	@chmod +x projects/egregore/scripts/smoke_veil_mcp.sh
-	@./projects/egregore/scripts/smoke_veil_mcp.sh
+	@echo "archived → ~/Desktop/archive/egregore (submodule removed from monorepo)" >&2; exit 1
 
 cxado-smoke-veil-mcp-k3s:
-	@chmod +x projects/egregore/scripts/smoke_veil_mcp.sh
-	@CXADO_OFFLINE_SSH_HOST="$(CXADO_OFFLINE_SSH_HOST)" ./projects/egregore/scripts/smoke_veil_mcp.sh
+	@echo "archived → ~/Desktop/archive/egregore (submodule removed from monorepo)" >&2; exit 1
 
 .PHONY: cxado-up-veil cxado-up-siem-mcp cxado-up-tenable-mcp cxado-up-defectdojo-mcp cxado-smoke-veil-mcp cxado-smoke-tenable-mcp cxado-smoke-defectdojo-mcp
 
@@ -217,22 +214,10 @@ k3s-validation-infra:
 		./scripts/k8s/run-k3s-validation-gate.sh
 
 egregore-typecheck:
-	cd projects/egregore && uv run ty check src
+	@echo "archived → ~/Desktop/archive/egregore (submodule removed from monorepo)" >&2; exit 1
 
 egregore-typecheck-tests-core:
-	cd projects/egregore && uv run ty check tests/domain \
-	  tests/application/test_enqueue_worker_jobs.py \
-	  tests/application/test_route_and_enqueue.py \
-	  tests/application/test_plan_investigation_parallel.py \
-	  tests/application/test_plan_investigation_ports.py \
-	  tests/application/test_plan_investigation_catalog.py \
-	  tests/application/test_bus_loop_guard.py \
-	  tests/workers/test_orchestrator.py \
-	  tests/workers/test_orchestrator_branches.py \
-	  tests/worker/test_sequential_enqueue.py \
-	  tests/contracts/test_job_queue_port.py \
-	  tests/application/port_fakes.py \
-	  tests/application/workers/factory.py
+	@echo "archived → ~/Desktop/archive/egregore (submodule removed from monorepo)" >&2; exit 1
 
 sync-github-descriptions:
 	@chmod +x scripts/github/sync-descriptions.sh
