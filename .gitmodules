@@ -1,15 +1,6 @@
-[submodule "projects/veil"]
-	path = projects/veil
-	url = https://github.com/butbeautifulv/veil.git
-[submodule "projects/egregore"]
-	path = projects/egregore
-	url = https://github.com/butbeautifulv/egregore.git
 [submodule "projects/fabrica"]
 	path = projects/fabrica
 	url = https://github.com/butbeautifulv/fabrica.git
-[submodule "projects/veneno"]
-	path = projects/veneno
-	url = https://github.com/butbeautifulv/veneno.git
 [submodule "projects/precursor"]
 	path = projects/precursor
 	url = https://github.com/butbeautifulv/precursor.git
