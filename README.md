@@ -1,6 +1,6 @@
 # cxado
 
-Meta-repository umbrella for the cxado cybersecurity product line: knowledge (Veil), pentest (Veneno), SOC agents (Egregore), DevSecOps reference (Fabrica).
+Meta-repository umbrella for the cxado cybersecurity product line. **Active:** DevSecOps reference (Fabrica), precursor MCP adapters, k3s deploy/observability, shared hubs. **Archived (2026-09):** Veil, Veneno, Egregore — local copies under `~/Desktop/archive/`.
 
 Shared hubs DRY agent rules, skills, references, wire contracts, and UI (`@cxado/gui`).
 
@@ -17,11 +17,11 @@ make bootstrap
 ### Default local stack
 
 ```bash
-make cxado-up
-make -C projects/egregore dev
+# Full AGI stack (veil + egregore) is archived — see ~/Desktop/archive/
+make cxado-status   # remaining compose/health checks where applicable
 ```
 
-Runbook: [docs/deploy/cxado-default-stack.md](docs/deploy/cxado-default-stack.md) · ports: [deploy/ports.md](deploy/ports.md).
+Historical runbook: [docs/deploy/cxado-default-stack.md](docs/deploy/cxado-default-stack.md) · ports: [deploy/ports.md](deploy/ports.md).
 
 ### Architecture docs site (k3s offline)
 
@@ -80,14 +80,20 @@ flowchart LR
 
 | Path | Repository | Role | Stack |
 |------|------------|------|-------|
-| `projects/veil` | [veil](https://github.com/butbeautifulv/veil) | TI graph, ingest, veil-api, veil-mcp | Go, Neo4j |
-| `projects/veneno` | [veneno](https://github.com/butbeautifulv/veneno) | Pentest execution, tool catalog | Go |
-| `projects/egregore` | [egregore](https://github.com/butbeautifulv/egregore) | Event-driven multi-agent SOC | Python, FastAPI |
 | `projects/fabrica` | [fabrica](https://github.com/butbeautifulv/fabrica) | DevSecOps CI/CD reference | YAML, scripts |
+| `projects/precursor` | [precursor](https://github.com/butbeautifulv/precursor) | SIEM / Nessus / DefectDojo MCP | Go |
 
-Agent entry points per project: [AGENTS.md](AGENTS.md).
+**Archived locally (2026-09)** → `~/Desktop/archive/{veil,veneno,egregore}` (GitHub repos archived):
 
-**Out of cxado scope** (removed from monorepo, local clones on `~/Desktop/`): hexenhammer, tabula, fstec, asoc-api.
+| Former path | Repository | Role |
+|-------------|------------|------|
+| `projects/veil` | [veil](https://github.com/butbeautifulv/veil) | TI graph, veil-api, veil-mcp |
+| `projects/veneno` | [veneno](https://github.com/butbeautifulv/veneno) | Pentest execution |
+| `projects/egregore` | [egregore](https://github.com/butbeautifulv/egregore) | Multi-agent SOC |
+
+Agent entry points: [AGENTS.md](AGENTS.md).
+
+**Out of cxado scope** (standalone on `~/Desktop/`): hexenhammer, tabula, fstec, asoc-api.
 
 # Shared hubs (in meta-repo)
 
